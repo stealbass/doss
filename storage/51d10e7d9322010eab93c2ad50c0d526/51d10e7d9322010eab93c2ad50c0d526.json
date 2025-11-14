@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "dossy-pro-472916",
+  "private_key_id": "178c4b70093df794c9131d9f7d5d2ebcc5024d19",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDPqiDtLS15feyw\nysiGrDzxdTeELhaRKBLX9PUneLgL5Hq1WD3MC12zoVvZ96Kk9msnoNwH6dZuogP5\nsm/fI4mq3dlAH4YOoD8TR+mmGgP4rDmpdDdoIsNY2IoalCMkYZjRDdEYnOJl0Qnr\nbws2Lzq9R9uq3QfbF/xfrvK/2YkNrBWFOp2zR9OOaqE13I1iMpWUipWIV4pV63hk\nIxlPseBpZqGrTx+hj768F10OwYPiLSr26XMKoaOHiLPGr3C+CuqI0YlSD+TXuiAz\noSskjl//ZSvzaYGb5bxIQ2QCoueCU2gDpE32FJmy6rj1lTa3rmWhE3D4NvTlxsw/\n7V1mjncnAgMBAAECggEAZKfb6dpaDmdhEJhZ9h0KNSdRz3nfamB4McEECyvSWcFX\nUQsCeSKROn5d3RrQ9RCUA9NOk29ehqV1M9SvsQKyueVqZlBhVDmMGTZkJCS8BA7G\nrEIukQU4lpnu5s8i8YF05u/BiCKTAjL+keVzE8J0wEZSTVFxe1r28xIDi8ZPThZZ\nTvCWRNRyxvhMw+GBdAIePcuW7GbqtYDsgHVYtccz1C1a7ez0Np7gc9PWJB8swudv\nAn3PJLy8s6fyHDmq2OB5/CoQvSGL7gyKbrKLRhmYAByJgh7faxsbxfgBx/NQpT6C\nJ4fr3t7rdIc08dG3Y9a4+F+ivL8M4T1UHoSrCdfWsQKBgQDyyfqjU5bpQ4G/nKuJ\n5996ffipzucYKgaD792vUjhU1e+oBCIrvmKVCP5O97uby6EmQ9ry5YCTImk0A0TV\nkdpHe5kOk53MSyOXwvYJguvEcnCXsTz8fLYVvgh/TQSxsQ7syR5wZRx8vctMBZAZ\nOctFx7+t0YeAQkHsCM/DElNgdQKBgQDa9t7oEY/gcwSz6z7MurgMytViZnc9H8r0\n7TRmd6YdQRfKUhcgw1GYwxm/lIWysF/OySnrhJBg5otUVyeQNUURQqrDkibI4cBC\nG59uFt6Y9T/u5mlu4RysOIvnXoY8+CJt3dg3ar9Tx1/7WMO/XfTxuhX9XaIELp1Q\n0N+qXLfFqwKBgQDVr4GCWKK9IWZEEA9GbCdcNx0xz2HD+dEMNISHtzTPLhAlb6Xn\nnERF6clyFUYxBBMMi7JcEDSOyz2OwsXFtv5H5fe7RZ8f3I4yFyzXCDycBSEl0Z/c\nlaLpFf2ClXXpMu3w5757q/Jbs+wHN+ow2ZYYD4ub34uEDkzZApRhm3J4tQKBgEJL\nMB3PA2KPMENQ3AicF5E37/cE0uEcuRQCpTTI0PBWft9wjzQKLrAzkZ4hV4FMSRWQ\nbjKyRgwwgMqeQIo2tpyNNKpVm4yCXPUm69Qm9GoXBq5L8Gvzl/zEegco5TecYMAm\nxImytg6ldHfi3hEYX0q4bmPxb1YYzuRi+PTZcYJVAoGBAKaDUWcnVA+90Dscu6+a\ni0tS8rBHwk2oIuL7W8wDb32VbOCCT8RiPtTh7/1fGpEa4H7mEiFHq6JS0C63Xy/o\nRyF2naUgmrj2X9Q0BeiliXo9C2YGnbuHkiIrEN9ZdtUtZoFx+Tro0ix8Bfu0MTay\n2496bYcjXWcNKXfvC5qCJ2oH\n-----END PRIVATE KEY-----\n",
+  "client_email": "dossy-pro@dossy-pro-472916.iam.gserviceaccount.com",
+  "client_id": "106249111586815249527",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/dossy-pro%40dossy-pro-472916.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

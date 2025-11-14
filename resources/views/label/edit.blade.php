@@ -1,0 +1,35 @@
+{{ Form::model($label, ['route' => ['label.update', $label->id], 'method' => 'PUT', 'class' => 'needs-validation', 'novalidate']) }}
+<div class="modal-body">
+    <div class="row">
+        <div class="form-group">
+            {{ Form::label('name', __('Label Name'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            {{ Form::text('name', null, ['class' => 'form-control', 'placeholder' => __('Enter Label Name'), 'required' => 'required']) }}
+        </div>
+        <div class="form-group">
+            {{ Form::label('name', __('Pipeline'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            {{ Form::select('pipeline_id', $pipelines, null, ['class' => 'form-control multi-select', 'id' => 'pipeline_id', 'required' => 'required']) }}
+            <div class="text-xs mt-1">
+                Create Pipeline. <a class="dash-link" href="{{ route('pipeline.index') }}"><b>Click here</b></a>
+            </div>
+        </div>
+        <div class="form-group">
+            {{ Form::label('name', __('Color'), ['class' => 'col-form-label']) }}<x-required></x-required>
+            <div class="row gutters-xs">
+                @foreach ($colors as $color)
+                <div class="col-auto">
+                    <label class="colorinput">
+                        <input name="color" type="radio" value="{{ $color }}" class="colorinput-input"
+                            required {{ $label->color == $color ? 'checked' : '' }}>
+                        <span class="colorinput-color bg-{{ $color }}"></span>
+                    </label>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn  btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+    {{ Form::submit(__('Update'), ['class' => 'btn btn-primary']) }}
+</div>
+{{ Form::close() }}
