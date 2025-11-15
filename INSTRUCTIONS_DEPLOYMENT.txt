@@ -1,0 +1,146 @@
+=============================================================================
+  INSTRUCTIONS DE DÉPLOIEMENT - BIBLIOTHÈQUE JURIDIQUE SUPER ADMIN
+=============================================================================
+
+✅ MODIFICATIONS TERMINÉES ET POUSSÉES SUR GITHUB
+
+📌 Pull Request: https://github.com/stealbass/doss/pull/3
+📌 Branche: genspark_ai_developer
+📌 Commits: 2 commits (2d7cf236 + 20fbb268)
+
+=============================================================================
+  ÉTAPE 1 : MERGER LA PULL REQUEST
+=============================================================================
+
+1. Allez sur : https://github.com/stealbass/doss/pull/3
+2. Cliquez sur "Merge pull request"
+3. Confirmez le merge
+
+=============================================================================
+  ÉTAPE 2 : DÉPLOYER SUR VOTRE SERVEUR
+=============================================================================
+
+Via SSH sur votre serveur AlwaysData :
+
+# 1. Aller dans le répertoire
+cd /home/stealbass/www
+
+# 2. Récupérer les dernières modifications
+git pull origin main
+
+# 3. Vider les caches Laravel
+php artisan cache:clear
+php artisan view:clear
+php artisan config:clear
+
+# 4. Vérifier/créer le lien symbolique storage
+php artisan storage:link
+
+# 5. Vérifier les permissions
+chmod -R 775 storage/app/public/legal_documents
+
+=============================================================================
+  ÉTAPE 3 : TESTER
+=============================================================================
+
+Test 1 - Prévisualisation PDF (correction erreur 404) :
+----------------------------------------
+1. Connectez-vous en tant qu'utilisateur
+2. Allez dans "Bibliothèque Juridique"
+3. Cliquez sur un document
+4. Cliquez sur "Voir"
+5. ✅ Le PDF devrait s'afficher (plus d'erreur 404)
+
+Test 2 - Architecture Super Admin :
+----------------------------------------
+1. Connectez-vous en tant que SUPER ADMIN
+2. ✅ Vérifiez "Bibliothèque Juridique" au-dessus de "Plan Request"
+3. Créez une catégorie "Test"
+4. Ajoutez un document PDF
+
+5. Déconnectez-vous
+
+6. Connectez-vous en tant qu'utilisateur Entreprise A
+7. ✅ Vérifiez que vous voyez la catégorie "Test"
+
+8. Déconnectez-vous
+
+9. Connectez-vous en tant qu'utilisateur Entreprise B
+10. ✅ Vérifiez que vous voyez la MÊME catégorie "Test"
+
+=============================================================================
+  MIGRATION DES DONNÉES EXISTANTES (OPTIONNEL)
+=============================================================================
+
+Si vous avez déjà des catégories/documents au niveau entreprise et voulez
+les rendre globaux :
+
+Dans phpMyAdmin, exécutez :
+
+UPDATE legal_categories SET created_by = 0;
+UPDATE legal_documents SET created_by = 0;
+
+=============================================================================
+  DOCUMENTATION COMPLÈTE
+=============================================================================
+
+📄 LEGAL_LIBRARY_SUPERADMIN_UPDATE.md     - Documentation technique complète
+📄 RÉSUMÉ_MODIFICATIONS_SUPERADMIN.md     - Résumé en français
+
+=============================================================================
+  CE QUI A CHANGÉ
+=============================================================================
+
+✅ CORRIGÉ : Erreur 404 lors de la prévisualisation PDF
+   → Les PDFs s'affichent maintenant dans le navigateur
+
+✅ RESTRUCTURÉ : De niveau Entreprise → Super Admin Global
+   → Plus besoin d'ajouter les documents dans chaque entreprise
+   → Le Super Admin ajoute UNE FOIS, tout le monde voit
+
+✅ NAVIGATION : Lien déplacé dans la section Super Admin
+   → Au-dessus de "Plan Request"
+   → Plus dans le menu "Paramètres"
+
+=============================================================================
+  COMPORTEMENT FINAL
+=============================================================================
+
+Super Admin :
+  • Voit "Bibliothèque Juridique" au-dessus de "Plan Request"
+  • Peut créer/modifier/supprimer catégories et documents
+  • Modifications visibles immédiatement pour TOUS les utilisateurs
+
+Utilisateurs :
+  • Voient "Bibliothèque Juridique" dans le menu principal
+  • Peuvent parcourir, rechercher, prévisualiser, télécharger
+  • Voient EXACTEMENT le même contenu (global)
+
+=============================================================================
+  EN CAS DE PROBLÈME
+=============================================================================
+
+Problème : PDF toujours en erreur 404
+Solution : 
+  php artisan storage:link
+  chmod -R 775 storage/app/public/legal_documents
+
+Problème : Super Admin ne voit pas le lien
+Solution :
+  php artisan cache:clear
+  php artisan view:clear
+
+Problème : Utilisateurs ne voient pas les documents
+Solution :
+  • Vérifier que created_by = 0 dans la base de données
+  • php artisan cache:clear
+
+=============================================================================
+  SUPPORT
+=============================================================================
+
+Tous les fichiers de documentation sont dans le dépôt GitHub.
+
+Pull Request : https://github.com/stealbass/doss/pull/3
+
+=============================================================================
