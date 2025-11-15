@@ -152,6 +152,15 @@
                     </li>
                 @endcan
 
+                @can('view legal library')
+                    <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['library']) ? ' active' : '' }}">
+                        <a href="{{ route('user.legal-library.index') }}" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-book"></i></span>
+                            <span class="dash-mtext">{{ __('Legal Library') }}</span>
+                        </a>
+                    </li>
+                @endcan
+
                 @can('manage bill')
                     <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['bills']) ? ' active' : '' }}">
                         <a href="{{ route('bills.index') }}" class="dash-link">
@@ -359,6 +368,13 @@
                                 <li class="dash-item ">
                                     <a class="dash-link"
                                         href="{{ route('doctsubype.index') }}">{{ __('Document Sub-type') }}</a>
+                                </li>
+                            @endcan
+
+                            @can('manage legal library')
+                                <li class="dash-item ">
+                                    <a class="dash-link"
+                                        href="{{ route('legal-library.index') }}">{{ __('Legal Library (Admin)') }}</a>
                                 </li>
                             @endcan
 
