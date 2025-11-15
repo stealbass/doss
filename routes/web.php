@@ -6,8 +6,10 @@ use App\Http\Controllers\CaseTypeController;
 use App\Http\Controllers\CinetPayController;
 use App\Http\Controllers\FedapayController;
 use App\Http\Controllers\KhaltiPaymentController;
+use App\Http\Controllers\LegalLibraryController;
 use App\Http\Controllers\NepalstePaymnetController;
 use App\Http\Controllers\OzowController;
+use App\Http\Controllers\UserLegalLibraryController;
 use App\Http\Controllers\PaiementProController;
 use App\Http\Controllers\TapPaymentController;
 use Illuminate\Support\Facades\Route;
@@ -203,7 +205,34 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
 
     Route::resource('documents', DocumentController::class);
 
-    
+    // Legal Library Routes - Administration
+    Route::prefix('legal-library')->name('legal-library.')->group(function () {
+        Route::get('/', [LegalLibraryController::class, 'index'])->name('index');
+        
+        // Category routes
+        Route::get('/category/create', [LegalLibraryController::class, 'createCategory'])->name('category.create');
+        Route::post('/category/store', [LegalLibraryController::class, 'storeCategory'])->name('category.store');
+        Route::get('/category/{id}/edit', [LegalLibraryController::class, 'editCategory'])->name('category.edit');
+        Route::put('/category/{id}', [LegalLibraryController::class, 'updateCategory'])->name('category.update');
+        Route::delete('/category/{id}', [LegalLibraryController::class, 'destroyCategory'])->name('category.destroy');
+        
+        // Document routes
+        Route::get('/category/{categoryId}/documents', [LegalLibraryController::class, 'showDocuments'])->name('documents');
+        Route::get('/category/{categoryId}/document/create', [LegalLibraryController::class, 'createDocument'])->name('document.create');
+        Route::post('/category/{categoryId}/document/store', [LegalLibraryController::class, 'storeDocument'])->name('document.store');
+        Route::get('/document/{id}/edit', [LegalLibraryController::class, 'editDocument'])->name('document.edit');
+        Route::put('/document/{id}', [LegalLibraryController::class, 'updateDocument'])->name('document.update');
+        Route::delete('/document/{id}', [LegalLibraryController::class, 'destroyDocument'])->name('document.destroy');
+        Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('document.download');
+    });
+
+    // Legal Library Routes - User Access
+    Route::prefix('library')->name('user.legal-library.')->group(function () {
+        Route::get('/', [UserLegalLibraryController::class, 'index'])->name('index');
+        Route::get('/category/{categoryId}', [UserLegalLibraryController::class, 'showCategory'])->name('category');
+        Route::get('/document/{id}/view', [UserLegalLibraryController::class, 'viewDocument'])->name('view');
+        Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('download');
+    });
 
     Route::resource('cause', CauseController::class);
     Route::post('/cause/get-highcourts', [CauseController::class, 'getHighCourt'])->name('get.highcourt');
