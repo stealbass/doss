@@ -152,14 +152,16 @@
                     </li>
                 @endcan
 
-                @can('view legal library')
-                    <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['library']) ? ' active' : '' }}">
-                        <a href="{{ route('user.legal-library.index') }}" class="dash-link">
-                            <span class="dash-micon"><i class="ti ti-book"></i></span>
-                            <span class="dash-mtext">{{ __('Legal Library') }}</span>
-                        </a>
-                    </li>
-                @endcan
+                @if (\Auth::user()->type != 'super admin')
+                    @can('view legal library')
+                        <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['library']) ? ' active' : '' }}">
+                            <a href="{{ route('user.legal-library.index') }}" class="dash-link">
+                                <span class="dash-micon"><i class="ti ti-book"></i></span>
+                                <span class="dash-mtext">{{ __('Legal Library') }}</span>
+                            </a>
+                        </li>
+                    @endcan
+                @endif
 
                 @can('manage bill')
                     <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['bills']) ? ' active' : '' }}">
@@ -371,13 +373,6 @@
                                 </li>
                             @endcan
 
-                            @can('manage legal library')
-                                <li class="dash-item ">
-                                    <a class="dash-link"
-                                        href="{{ route('legal-library.index') }}">{{ __('Legal Library (Admin)') }}</a>
-                                </li>
-                            @endcan
-
                             {{-- <li class="dash-item ">
                                 <a class="dash-link" href="{{ route('hearingType.index') }}">{{ __('Hearing Type') }}</a>
                             </li> --}}
@@ -415,6 +410,13 @@
                 @endif
 
                 @if (\Auth::user()->type == 'super admin')
+                    <li class="dash-item {{ request()->is('legal-library*') ? 'active' : '' }}">
+                        <a href="{{ route('legal-library.index') }}" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-book"></i></span>
+                            <span class="dash-mtext">{{ __('Legal Library') }}</span>
+                        </a>
+                    </li>
+                    
                     <li class="dash-item {{ request()->is('plan_request*') ? 'active' : '' }}">
                         <a href="{{ route('plan_request.index') }}" class="dash-link">
                             <span class="dash-micon"><i class="ti ti-git-pull-request"></i></span>

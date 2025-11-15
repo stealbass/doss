@@ -16,9 +16,9 @@ class LegalLibraryController extends Controller
      */
     public function index()
     {
-        if (Auth::user()->can('manage legal library')) {
-            $categories = LegalCategory::where('created_by', Auth::user()->creatorId())
-                ->withCount('documents')
+        // Restrict to Super Admin only - global library management
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
+            $categories = LegalCategory::withCount('documents')
                 ->get();
             return view('legal-library.index', compact('categories'));
         } else {
@@ -31,7 +31,7 @@ class LegalLibraryController extends Controller
      */
     public function createCategory()
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             return view('legal-library.create-category');
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
@@ -43,7 +43,7 @@ class LegalLibraryController extends Controller
      */
     public function storeCategory(Request $request)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $validator = FacadesValidator::make(
                 $request->all(),
                 [
@@ -60,7 +60,7 @@ class LegalLibraryController extends Controller
             LegalCategory::create([
                 'name' => $request->name,
                 'description' => $request->description,
-                'created_by' => Auth::user()->creatorId(),
+                'created_by' => 0, // Super Admin level - no company association
             ]);
 
             return redirect()->route('legal-library.index')->with('success', __('Category successfully created.'));
@@ -74,7 +74,7 @@ class LegalLibraryController extends Controller
      */
     public function editCategory($id)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $category = LegalCategory::find($id);
             if (!$category) {
                 return redirect()->back()->with('error', __('Category not found.'));
@@ -90,7 +90,7 @@ class LegalLibraryController extends Controller
      */
     public function updateCategory(Request $request, $id)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $category = LegalCategory::find($id);
             if (!$category) {
                 return redirect()->back()->with('error', __('Category not found.'));
@@ -125,7 +125,7 @@ class LegalLibraryController extends Controller
      */
     public function destroyCategory($id)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $category = LegalCategory::find($id);
             if ($category) {
                 $category->delete();
@@ -142,14 +142,14 @@ class LegalLibraryController extends Controller
      */
     public function showDocuments($categoryId)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $category = LegalCategory::find($categoryId);
             if (!$category) {
                 return redirect()->back()->with('error', __('Category not found.'));
             }
 
+            // Get all documents for this category (global library)
             $documents = LegalDocument::where('category_id', $categoryId)
-                ->where('created_by', Auth::user()->creatorId())
                 ->get();
 
             return view('legal-library.documents', compact('category', 'documents'));
@@ -163,7 +163,7 @@ class LegalLibraryController extends Controller
      */
     public function createDocument($categoryId)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $category = LegalCategory::find($categoryId);
             if (!$category) {
                 return redirect()->back()->with('error', __('Category not found.'));
@@ -179,7 +179,7 @@ class LegalLibraryController extends Controller
      */
     public function storeDocument(Request $request, $categoryId)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $category = LegalCategory::find($categoryId);
             if (!$category) {
                 return redirect()->back()->with('error', __('Category not found.'));
@@ -211,7 +211,7 @@ class LegalLibraryController extends Controller
                     'file_path' => $filePath,
                     'file_name' => $file->getClientOriginalName(),
                     'file_size' => $file->getSize(),
-                    'created_by' => Auth::user()->creatorId(),
+                    'created_by' => 0, // Super Admin level - no company association
                 ]);
 
                 return redirect()->route('legal-library.documents', $categoryId)
@@ -229,7 +229,7 @@ class LegalLibraryController extends Controller
      */
     public function editDocument($id)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $document = LegalDocument::with('category')->find($id);
             if (!$document) {
                 return redirect()->back()->with('error', __('Document not found.'));
@@ -245,7 +245,7 @@ class LegalLibraryController extends Controller
      */
     public function updateDocument(Request $request, $id)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $document = LegalDocument::find($id);
             if (!$document) {
                 return redirect()->back()->with('error', __('Document not found.'));
@@ -300,7 +300,7 @@ class LegalLibraryController extends Controller
      */
     public function destroyDocument($id)
     {
-        if (Auth::user()->can('manage legal library')) {
+        if (Auth::user()->type == 'super admin' && Auth::user()->can('manage legal library')) {
             $document = LegalDocument::find($id);
             if ($document) {
                 $categoryId = $document->category_id;
