@@ -213,7 +213,6 @@
                                                                     class="form-group price-input input-group search-form">
                                                                     {{ Form::number('discount', '', [
                                                                         'class' => 'form-control discount',
-                                                                        'required' => 'required',
                                                                         'placeholder' => __('Discount'),
                                                                     ]) }}
                                                                 </div>
@@ -224,7 +223,6 @@
                                                                     {{ Form::select('tax', $taxes, '', [
                                                                         'class' => 'form-control ptax ',
                                                                         'id' => 'tax',
-                                                                        'required' => 'required',
                                                                     ]) }}
                                                                 </div>
                                                             </td>
