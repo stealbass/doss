@@ -205,28 +205,7 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
 
     Route::resource('documents', DocumentController::class);
 
-    // Legal Library Routes - Administration
-    Route::prefix('legal-library')->name('legal-library.')->group(function () {
-        Route::get('/', [LegalLibraryController::class, 'index'])->name('index');
-        
-        // Category routes
-        Route::get('/category/create', [LegalLibraryController::class, 'createCategory'])->name('category.create');
-        Route::post('/category/store', [LegalLibraryController::class, 'storeCategory'])->name('category.store');
-        Route::get('/category/{id}/edit', [LegalLibraryController::class, 'editCategory'])->name('category.edit');
-        Route::put('/category/{id}', [LegalLibraryController::class, 'updateCategory'])->name('category.update');
-        Route::delete('/category/{id}', [LegalLibraryController::class, 'destroyCategory'])->name('category.destroy');
-        
-        // Document routes
-        Route::get('/category/{categoryId}/documents', [LegalLibraryController::class, 'showDocuments'])->name('documents');
-        Route::get('/category/{categoryId}/document/create', [LegalLibraryController::class, 'createDocument'])->name('document.create');
-        Route::post('/category/{categoryId}/document/store', [LegalLibraryController::class, 'storeDocument'])->name('document.store');
-        Route::get('/document/{id}/edit', [LegalLibraryController::class, 'editDocument'])->name('document.edit');
-        Route::put('/document/{id}', [LegalLibraryController::class, 'updateDocument'])->name('document.update');
-        Route::delete('/document/{id}', [LegalLibraryController::class, 'destroyDocument'])->name('document.destroy');
-        Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('document.download');
-    });
-
-    // Legal Library Routes - User Access
+    // Legal Library Routes - User Access (All authenticated users)
     Route::prefix('library')->name('user.legal-library.')->group(function () {
         Route::get('/', [UserLegalLibraryController::class, 'index'])->name('index');
         Route::get('/category/{categoryId}', [UserLegalLibraryController::class, 'showCategory'])->name('category');
@@ -252,6 +231,27 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('/payment/{code}', [PlanController::class, 'payment'])->name('payment');
     Route::post('update-plan-status', [PlanController::class, 'updateStatus'])->name('update.plan.status');
     Route::get('plan-refund/{id}/{orderId}', [PlanController::class, 'Refund'])->name('plan.refund');
+
+    // Legal Library Routes - Super Admin Management (Global Library)
+    Route::prefix('legal-library')->name('legal-library.')->group(function () {
+        Route::get('/', [LegalLibraryController::class, 'index'])->name('index');
+        
+        // Category routes
+        Route::get('/category/create', [LegalLibraryController::class, 'createCategory'])->name('category.create');
+        Route::post('/category/store', [LegalLibraryController::class, 'storeCategory'])->name('category.store');
+        Route::get('/category/{id}/edit', [LegalLibraryController::class, 'editCategory'])->name('category.edit');
+        Route::put('/category/{id}', [LegalLibraryController::class, 'updateCategory'])->name('category.update');
+        Route::delete('/category/{id}', [LegalLibraryController::class, 'destroyCategory'])->name('category.destroy');
+        
+        // Document routes
+        Route::get('/category/{categoryId}/documents', [LegalLibraryController::class, 'showDocuments'])->name('documents');
+        Route::get('/category/{categoryId}/document/create', [LegalLibraryController::class, 'createDocument'])->name('document.create');
+        Route::post('/category/{categoryId}/document/store', [LegalLibraryController::class, 'storeDocument'])->name('document.store');
+        Route::get('/document/{id}/edit', [LegalLibraryController::class, 'editDocument'])->name('document.edit');
+        Route::put('/document/{id}', [LegalLibraryController::class, 'updateDocument'])->name('document.update');
+        Route::delete('/document/{id}', [LegalLibraryController::class, 'destroyDocument'])->name('document.destroy');
+        Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('document.download');
+    });
 
     Route::get('plan_request', [PlanRequestController::class, 'index'])->name('plan_request.index');
     Route::get('request_send/{id}', [PlanRequestController::class, 'userRequest'])->name('send.request');

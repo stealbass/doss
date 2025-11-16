@@ -18,16 +18,14 @@ class UserLegalLibraryController extends Controller
         if (Auth::user()->can('view legal library')) {
             $search = $request->get('search');
             
-            // Get all categories with document count
-            $categories = LegalCategory::where('created_by', Auth::user()->creatorId())
-                ->withCount('documents')
+            // Get all categories with document count (Super Admin level - global library)
+            $categories = LegalCategory::withCount('documents')
                 ->get();
 
             // If there's a search query, get matching documents
             $documents = null;
             if ($search) {
-                $documents = LegalDocument::where('created_by', Auth::user()->creatorId())
-                    ->where(function($query) use ($search) {
+                $documents = LegalDocument::where(function($query) use ($search) {
                         $query->where('title', 'like', '%' . $search . '%')
                               ->orWhere('description', 'like', '%' . $search . '%');
                     })
@@ -53,8 +51,8 @@ class UserLegalLibraryController extends Controller
                 return redirect()->back()->with('error', __('Category not found.'));
             }
 
+            // Get all documents from this category (Super Admin level - global library)
             $documents = LegalDocument::where('category_id', $categoryId)
-                ->where('created_by', Auth::user()->creatorId())
                 ->get();
 
             return view('user-legal-library.category', compact('category', 'documents'));
