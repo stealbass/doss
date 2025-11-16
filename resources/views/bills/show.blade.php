@@ -34,6 +34,15 @@
             </div>
 
             <div class="action-btn mx-1">
+                <a href="#" class="btn btn-sm btn-primary" data-ajax-popup="true" data-size="md"
+                    data-title="{{ __('Send Bill by Email') }}"
+                    data-url="{{ route('bill.send.email', $bill->id) }}" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="{{ __('Send by Email') }}">
+                    <i class="ti ti-mail"></i>
+                </a>
+            </div>
+
+            <div class="action-btn mx-1">
                 <a href="#" class="btn btn-sm btn-primary  cp_link"
                     data-link="{{ route('pay.invoice', \Illuminate\Support\Facades\Crypt::encrypt($bill->id)) }}"
                     data-bs-toggle="tooltip" title="{{ __('Copy invoice link') }}">

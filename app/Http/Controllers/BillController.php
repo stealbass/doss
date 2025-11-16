@@ -517,4 +517,132 @@ class BillController extends Controller
         ob_end_clean();
         return $data;
     }
+
+    /**
+     * Show the form for sending bill via email
+     */
+    public function sendEmail($id)
+    {
+        if (Auth::user()->can('view bill')) {
+            $bill = Bill::find($id);
+            
+            if (!$bill) {
+                return redirect()->back()->with('error', __('Bill not found.'));
+            }
+            
+            // Récupérer l'email du client
+            $user = User::find($bill->bill_to);
+            $clientEmail = $user ? $user->email : '';
+            
+            return view('bills.send_email', compact('bill', 'clientEmail'));
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+    }
+
+    /**
+     * Send bill via email with PDF attachment
+     */
+    public function postSendEmail(Request $request, $id)
+    {
+        if (Auth::user()->can('view bill')) {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'email' => 'required|email',
+                    'subject' => 'required|string',
+                ]
+            );
+
+            if ($validator->fails()) {
+                $messages = $validator->getMessageBag();
+                return redirect()->back()->with('error', $messages->first());
+            }
+
+            try {
+                $bill = Bill::find($id);
+                
+                if (!$bill) {
+                    return redirect()->back()->with('error', __('Bill not found.'));
+                }
+
+                // Préparer les données pour le PDF
+                $settings = Utility::settings();
+                $logo = Utility::get_file('uploads/logo');
+                $company_logo = Utility::get_company_logo();
+                $advocate = Advocate::where('user_id', $bill->advocate)->first();
+                $user = User::getUser($bill->bill_to);
+                $userDetail = UserDetail::getUserDetail($user->id);
+                $items = json_decode($bill->items, true);
+                $payments = BillPayment::where('bill_id', $bill->id)->get();
+                
+                // Générer le HTML pour le PDF
+                $pdfData = [
+                    'bill' => $bill,
+                    'settings' => $settings,
+                    'logo' => $logo,
+                    'company_logo' => $company_logo,
+                    'advocate' => $advocate,
+                    'user' => $user,
+                    'userDetail' => $userDetail,
+                    'items' => $items,
+                    'payments' => $payments,
+                ];
+                
+                // Charger la vue PDF et générer le contenu
+                try {
+                    // Essayer d'utiliser DomPDF si disponible
+                    $pdf = \PDF::loadView('bills.pdf', $pdfData);
+                    $pdfContent = $pdf->output();
+                } catch (\Exception $e) {
+                    // Fallback : générer le HTML et utiliser une méthode alternative
+                    // Pour l'instant, on génère juste le HTML du PDF
+                    $pdfHtml = view('bills.pdf', $pdfData)->render();
+                    
+                    // On va utiliser le mailable sans PDF pour le moment
+                    // L'administrateur devra installer barryvdh/laravel-dompdf
+                    $pdfContent = null;
+                }
+                
+                // Préparer les données pour l'email
+                $emailData = [
+                    'bill' => $bill,
+                    'subject' => $request->subject,
+                    'messageContent' => $request->message,
+                ];
+                
+                // Configurer l'email
+                $email = $request->email;
+                $subject = $request->subject;
+                
+                // Envoyer l'email avec le PDF en pièce jointe si disponible
+                if ($pdfContent) {
+                    \Mail::send('email.bill_send', $emailData, function($message) use ($email, $subject, $pdfContent, $bill) {
+                        $message->to($email)
+                                ->subject($subject)
+                                ->attachData($pdfContent, 'facture-' . $bill->bill_number . '.pdf', [
+                                    'mime' => 'application/pdf',
+                                ]);
+                    });
+                } else {
+                    // Envoyer sans PDF
+                    \Mail::send('email.bill_send', $emailData, function($message) use ($email, $subject) {
+                        $message->to($email)
+                                ->subject($subject);
+                    });
+                }
+                
+                if ($pdfContent) {
+                    return redirect()->back()->with('success', __('Bill sent successfully with PDF attachment to') . ' ' . $email);
+                } else {
+                    return redirect()->back()->with('warning', __('Bill sent to') . ' ' . $email . '. ' . __('Note: PDF generation requires barryvdh/laravel-dompdf package. Please install it with: composer require barryvdh/laravel-dompdf'));
+                }
+                
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', __('Error sending email: ') . $e->getMessage());
+            }
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+    }
 }
