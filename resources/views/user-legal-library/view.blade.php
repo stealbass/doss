@@ -61,7 +61,7 @@
                         <h6 class="mb-3">{{ __('Document Preview') }}:</h6>
                         <div class="ratio ratio-16x9" style="min-height: 600px;">
                             <iframe 
-                                src="{{ asset('storage/' . $document->file_path) }}" 
+                                src="{{ route('user.legal-library.stream', $document->id) }}" 
                                 type="application/pdf" 
                                 width="100%" 
                                 height="100%"

@@ -83,6 +83,33 @@ class UserLegalLibraryController extends Controller
     }
 
     /**
+     * Stream a document for preview (inline display)
+     */
+    public function streamDocument($id)
+    {
+        if (Auth::user()->can('view legal library')) {
+            $document = LegalDocument::find($id);
+            
+            if (!$document) {
+                abort(404, 'Document not found');
+            }
+
+            $filePath = storage_path('app/public/' . $document->file_path);
+            
+            if (!file_exists($filePath)) {
+                abort(404, 'File not found');
+            }
+
+            return response()->file($filePath, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $document->file_name . '"'
+            ]);
+        } else {
+            abort(403, 'Permission Denied');
+        }
+    }
+
+    /**
      * Download a document
      */
     public function downloadDocument($id)
