@@ -217,7 +217,6 @@ $chatgpt_enable = Utility::getChatGPTSettings();
                                                                 {{ Form::number('discount', '', [
                                                                         'class' => 'form-control discount',
                                                                         'placeholder' => __('Discount'),
-                                                                        'required' => 'required',
                                                                     ]) }}
                                                             </div>
                                                         </td>
@@ -226,7 +225,6 @@ $chatgpt_enable = Utility::getChatGPTSettings();
                                                                 {{ Form::select('tax', $taxes, '', [
                                                                         'class' => 'form-control ptax ',
                                                                         'id' => 'tax',
-                                                                        'required' => 'required',
                                                                     ]) }}
                                                                    
                                                             </div>    
