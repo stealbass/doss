@@ -210,6 +210,7 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
         Route::get('/', [UserLegalLibraryController::class, 'index'])->name('index');
         Route::get('/category/{categoryId}', [UserLegalLibraryController::class, 'showCategory'])->name('category');
         Route::get('/document/{id}/view', [UserLegalLibraryController::class, 'viewDocument'])->name('view');
+        Route::get('/document/{id}/stream', [UserLegalLibraryController::class, 'streamDocument'])->name('stream');
         Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('download');
     });
 

@@ -3,7 +3,7 @@
 @section('page-title', __('Legal Documents'))
 
 @section('action-button')
-    @can('manage legal library')
+    @if(\Auth::user()->type == 'super admin')
         <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
             <a href="{{ route('legal-library.document.create', $category->id) }}" class="btn btn-sm btn-primary mx-1">
                 <i class="ti ti-plus"></i> {{ __('Upload Document') }}
@@ -12,7 +12,7 @@
                 <i class="ti ti-arrow-left"></i> {{ __('Back to Categories') }}
             </a>
         </div>
-    @endcan
+    @endif
 @endsection
 
 @section('breadcrumb')
@@ -56,7 +56,7 @@
                                         </td>
                                         <td>{{ $document->created_at->format('d M Y') }}</td>
                                         <td>
-                                            @can('manage legal library')
+                                            @if(\Auth::user()->type == 'super admin')
                                                 <div class="d-flex">
                                                     <a href="{{ route('legal-library.document.download', $document->id) }}" 
                                                        class="btn btn-sm btn-primary me-2" 
@@ -86,7 +86,7 @@
                                                     ]) !!}
                                                     {!! Form::close() !!}
                                                 </div>
-                                            @endcan
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

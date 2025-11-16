@@ -3,13 +3,13 @@
 @section('page-title', __('Legal Library - Categories'))
 
 @section('action-button')
-    @can('manage legal library')
+    @if(\Auth::user()->type == 'super admin')
         <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
             <a href="{{ route('legal-library.category.create') }}" class="btn btn-sm btn-primary mx-1">
                 <i class="ti ti-plus"></i> {{ __('Create Category') }}
             </a>
         </div>
-    @endcan
+    @endif
 @endsection
 
 @section('breadcrumb')
@@ -46,7 +46,7 @@
                                             <span class="badge bg-primary">{{ $category->documents_count }}</span>
                                         </td>
                                         <td>
-                                            @can('manage legal library')
+                                            @if(\Auth::user()->type == 'super admin')
                                                 <div class="d-flex">
                                                     <a href="{{ route('legal-library.documents', $category->id) }}" 
                                                        class="btn btn-sm btn-success me-2" 
@@ -76,7 +76,7 @@
                                                     ]) !!}
                                                     {!! Form::close() !!}
                                                 </div>
-                                            @endcan
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

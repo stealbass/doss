@@ -398,7 +398,7 @@ $chatgpt_enable = Utility::getChatGPTSettings();
 </script>
 
 <script>
-    $(document).on('keyup', '.numbers', function() {
+    $(document).on('keyup change', '.numbers', function() {
         var el = $(this).parent().parent().parent();
         if (!el.find('.particulars').val()) {
             if (el.find('.particulars').parent().find('small').length == 0) {
@@ -407,10 +407,11 @@ $chatgpt_enable = Utility::getChatGPTSettings();
         } else {
             el.find('.particulars').parent().find('small').remove()
         }
-        add_tax(el.find('.ptax'))
+        calculateRow(el);
+        calculateTotal();
     });
 
-    $(document).on('keyup', '.cost', function() {
+    $(document).on('keyup change', '.cost', function() {
         var el = $(this).parent().parent().parent();
         if (!el.find('.particulars').val()) {
             if (el.find('.particulars').parent().find('small').length == 0) {
@@ -419,10 +420,11 @@ $chatgpt_enable = Utility::getChatGPTSettings();
         } else {
             el.find('.particulars').parent().find('small').remove()
         }
-        add_tax(el.find('.ptax'))
+        calculateRow(el);
+        calculateTotal();
     });
 
-    $(document).on('keyup', '.discount', function() {
+    $(document).on('keyup change', '.discount', function() {
         var el = $(this).parent().parent().parent();
         if (!el.find('.particulars').val()) {
             if (el.find('.particulars').parent().find('small').length == 0) {
@@ -431,66 +433,99 @@ $chatgpt_enable = Utility::getChatGPTSettings();
         } else {
             el.find('.particulars').parent().find('small').remove()
         }
-        add_tax(el.find('.ptax'))
+        calculateRow(el);
+        calculateTotal();
     });
 
     $(document).on('change', '.ptax', function() {
-        add_tax($(this));
+        var el = $(this).parent().parent().parent().parent().parent();
+        calculateRow(el);
+        calculateTotal();
     });
 
-    function add_tax(taxbox) {
-        var selected = taxbox.val();
-        var el = taxbox.parent().parent().parent().parent().parent();
-
-        if (selected > 0) {
+    // Calculer le montant d'une ligne
+    function calculateRow(el) {
+        var quantity = parseFloat($(el.find('.numbers')).val()) || 0;
+        var price = parseFloat($(el.find('.cost')).val()) || 0;
+        var discount = parseFloat($(el.find('.discount')).val()) || 0;
+        var taxId = $(el.find('.ptax')).val();
+        
+        var subtotal = quantity * price;
+        var totalItemPrice = subtotal - discount;
+        
+        // Si une taxe est sélectionnée, la récupérer
+        if (taxId && taxId > 0) {
             $.ajax({
                 url: "{{ route('get.tax') }}",
                 type: "POST",
                 data: {
-                    selected: selected,
+                    selected: taxId,
                     _token: "{{ csrf_token() }}",
                 },
                 dataType: "json",
                 success: function(result) {
-                    var tr_total = $(el.find('.amount')).html();
-                    var tax_cal = (tr_total * result.rate) / 100;
-                    var included_tax = parseFloat(tr_total) + parseFloat(tax_cal);
-                    var cost = $(el.find('.numbers')).val();
-                    var numbers = $(el.find('.cost')).val();
-                    var discount = $(el.find('.discount')).val();
-                    var totalItemPrice = (numbers * cost);
-
-                    totalItemPrice = totalItemPrice + totalItemPrice * result.rate / 100;
-                    totalItemPrice = totalItemPrice - discount;
-
+                    var taxAmount = (subtotal - discount) * result.rate / 100;
+                    totalItemPrice = subtotal - discount + taxAmount;
                     $(el.find('.amount')).html(totalItemPrice.toFixed(2));
-
-                    var totol_amount = 0;
-                    var inputs_quantity = $('.cost');
-                    var priceInput = $('.numbers');
-                    var discInput = $('.discount');
-                    var total_tax = 0;
-                    var totalDisc = 0;
-
-                    for (var j = 0; j < priceInput.length; j++) {
-                        totol_amount += (parseFloat(priceInput[j].value) * parseFloat(inputs_quantity[j].value));
-                        total_tax = totol_amount * result.rate / 100;
-                        totalDisc = totalDisc + parseFloat(discInput[j].value);
-                    }
-
-                    $('.totalAmount').html((parseFloat(totol_amount) + parseFloat(total_tax)).toFixed(2) - totalDisc);
-                    $('.totalTax').html(total_tax);
-                    $('.subTotal').html(totol_amount);
-                    $('.TotalDiscount').html(totalDisc)
-
-                    $('#total_amount').val((parseFloat(totol_amount) + parseFloat(total_tax)).toFixed(2) - totalDisc);
-                    $('#total_tax').val(total_tax);
-                    $('#subtotal').val(totol_amount);
-                    $('#total_disc').val(totalDisc);
+                    calculateTotal();
                 },
+                error: function() {
+                    $(el.find('.amount')).html(totalItemPrice.toFixed(2));
+                    calculateTotal();
+                }
             });
+        } else {
+            $(el.find('.amount')).html(totalItemPrice.toFixed(2));
         }
     }
+    
+    // Calculer les totaux généraux
+    function calculateTotal() {
+        var subTotal = 0;
+        var totalTax = 0;
+        var totalDisc = 0;
+        
+        // Parcourir toutes les lignes
+        $('.repeater tbody tr').each(function() {
+            var quantity = parseFloat($(this).find('.numbers').val()) || 0;
+            var price = parseFloat($(this).find('.cost').val()) || 0;
+            var discount = parseFloat($(this).find('.discount').val()) || 0;
+            var amount = parseFloat($(this).find('.amount').html()) || 0;
+            
+            var lineSubtotal = quantity * price;
+            subTotal += lineSubtotal;
+            totalDisc += discount;
+        });
+        
+        // Calculer la taxe totale
+        var amounts = $('.amount');
+        var amountTotal = 0;
+        for (var i = 0; i < amounts.length; i++) {
+            amountTotal += parseFloat($(amounts[i]).html()) || 0;
+        }
+        
+        totalTax = amountTotal - (subTotal - totalDisc);
+        
+        // Montant total
+        var totalAmount = subTotal + totalTax - totalDisc;
+        
+        // Afficher les totaux
+        $('.subTotal').html(subTotal.toFixed(2));
+        $('.totalTax').html(totalTax.toFixed(2));
+        $('.TotalDiscount').html(totalDisc.toFixed(2));
+        $('.totalAmount').html(totalAmount.toFixed(2));
+        
+        // Mettre à jour les champs cachés
+        $('#subtotal').val(subTotal.toFixed(2));
+        $('#total_tax').val(totalTax.toFixed(2));
+        $('#total_disc').val(totalDisc.toFixed(2));
+        $('#total_amount').val(totalAmount.toFixed(2));
+    }
+    
+    // Calculer au chargement de la page
+    $(document).ready(function() {
+        calculateTotal();
+    });
 </script>
 
 <script>
