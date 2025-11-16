@@ -15,12 +15,15 @@ use App\Models\Timesheet;
 use App\Models\ToDo;
 use App\Models\User;
 use App\Models\Utility;
+use App\Models\CaseNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Mail\NewCaseNotification;
 
 class CaseController extends Controller
 {
@@ -226,6 +229,82 @@ class CaseController extends Controller
 
             $case['case_docs'] = !empty($file_name) ? implode(',', $file_name) : '';
             $case->save();
+            
+            // Envoyer l'email de notification automatique
+            try {
+                // Configurer les paramètres SMTP depuis la base de données
+                Utility::getSMTPDetails(Auth::user()->creatorId());
+                
+                // Préparer les données pour l'email
+                $creator = User::find(Auth::user()->creatorId());
+                
+                // Déterminer le destinataire (company ou advocate principal)
+                $recipientEmail = '';
+                $recipientName = '';
+                
+                if ($creator->type == 'company') {
+                    $recipientEmail = $creator->email;
+                    $recipientName = Utility::getcompanyValByName('name');
+                } else {
+                    // Si c'est un avocat qui crée
+                    $recipientEmail = $creator->email;
+                    $recipientName = $creator->name;
+                }
+                
+                // Préparer les données des clients (plaignants)
+                $clients = [];
+                if (!empty($case->your_party_name)) {
+                    $your_parties = json_decode($case->your_party_name, true);
+                    if (is_array($your_parties)) {
+                        foreach ($your_parties as $party) {
+                            if (isset($party['name']) && !empty($party['name'])) {
+                                $clients[] = [
+                                    'name' => $party['name'],
+                                    'client_id' => $party['clients'] ?? null
+                                ];
+                            }
+                        }
+                    }
+                }
+                
+                // Récupérer le nom du tribunal
+                $courtName = '';
+                if ($case->court) {
+                    $court = Court::find($case->court);
+                    if ($court) {
+                        $courtName = $court->name;
+                    }
+                }
+                
+                // URL pour voir l'affaire
+                $caseUrl = route('cases.show', $case->id);
+                
+                // Préparer les données pour l'email
+                $emailData = [
+                    'case' => $case,
+                    'recipientName' => $recipientName,
+                    'clients' => $clients,
+                    'courtName' => $courtName,
+                    'caseUrl' => $caseUrl,
+                ];
+                
+                // Envoyer l'email
+                if (!empty($recipientEmail)) {
+                    Mail::to($recipientEmail)->send(new NewCaseNotification($case, $emailData));
+                    \Log::info('Email notification nouvelle affaire envoyé', [
+                        'case_id' => $case->id,
+                        'to' => $recipientEmail,
+                        'title' => $case->title
+                    ]);
+                }
+                
+            } catch (\Exception $e) {
+                \Log::error('Erreur envoi email notification affaire', [
+                    'case_id' => $case->id,
+                    'message' => $e->getMessage()
+                ]);
+                // On ne bloque pas la création de l'affaire si l'email échoue
+            }
 
             return redirect()->route('cases.index')->with('success', __('Case successfully created.'));
         } else {
@@ -251,7 +330,14 @@ class CaseController extends Controller
             }
 
             $hearings = Hearing::where('case_id', $id)->get();
-            return view('cases.view', compact('case', 'documents', 'hearings', 'docs'));
+            
+            // Get todos for this case
+            $todos = ToDo::where('case', $id)->get();
+            
+            // Get notes for this case (only main notes with their replies)
+            $notes = CaseNote::getMainNotes($id);
+            
+            return view('cases.view', compact('case', 'documents', 'hearings', 'docs', 'todos', 'notes'));
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }

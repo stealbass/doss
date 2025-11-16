@@ -21,6 +21,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdvocateController;
 use App\Http\Controllers\BenchController;
 use App\Http\Controllers\CaseController;
+use App\Http\Controllers\CaseNoteController;
 use App\Http\Controllers\CauseController;
 use App\Http\Controllers\CountryStateCityController;
 use App\Http\Controllers\CourtController;
@@ -206,6 +207,13 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('data/get_all_data', [CalendarController::class, 'get_call_data'])->name('call.get_call_data');
 
     Route::resource('documents', DocumentController::class);
+
+    // Case Notes Routes
+    Route::get('case-notes/create/{case_id}', [CaseNoteController::class, 'create'])->name('case-notes.create');
+    Route::post('case-notes/store', [CaseNoteController::class, 'store'])->name('case-notes.store');
+    Route::get('case-notes/reply-form/{note_id}', [CaseNoteController::class, 'replyForm'])->name('case-notes.reply-form');
+    Route::post('case-notes/reply', [CaseNoteController::class, 'reply'])->name('case-notes.reply');
+    Route::delete('case-notes/{id}', [CaseNoteController::class, 'destroy'])->name('case-notes.destroy');
 
     // Legal Library Routes - User Access (All authenticated users)
     Route::prefix('library')->name('user.legal-library.')->group(function () {
