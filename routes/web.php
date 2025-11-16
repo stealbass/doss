@@ -139,6 +139,8 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('bills/addpayment/{bill_id}', [BillController::class, 'paymentcreate'])->name('create.payment');
     Route::POST('bills/storepayment/{bill_id}', [BillController::class, 'paymentstore'])->name('payment.store');
     Route::get('bill/export', [BillController::class, 'exportFile'])->name('bills.export');
+    Route::get('bill/{id}/send-email', [BillController::class, 'sendEmail'])->name('bill.send.email');
+    Route::post('bill/{id}/send-email', [BillController::class, 'postSendEmail'])->name('bill.post.send.email');
 
     Route::resource('users', UserController::class);
     Route::get('users-list', [UserController::class, 'userList'])->name('users.list');
