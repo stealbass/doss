@@ -19,7 +19,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Mail\SendBillEmail;
 
 class BillController extends Controller
 {
@@ -541,7 +543,7 @@ class BillController extends Controller
     }
 
     /**
-     * Send bill via email with PDF attachment
+     * Send bill via email with full details in email body (no PDF)
      */
     public function postSendEmail(Request $request, $id)
     {
@@ -556,6 +558,10 @@ class BillController extends Controller
 
             if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
+                
+                if ($request->ajax()) {
+                    return response()->json(['error' => $messages->first()], 422);
+                }
                 return redirect()->back()->with('error', $messages->first());
             }
 
@@ -563,85 +569,120 @@ class BillController extends Controller
                 $bill = Bill::find($id);
                 
                 if (!$bill) {
+                    if ($request->ajax()) {
+                        return response()->json(['error' => __('Bill not found.')], 404);
+                    }
                     return redirect()->back()->with('error', __('Bill not found.'));
                 }
 
-                // Préparer les données pour le PDF
+                // Récupérer toutes les données nécessaires
                 $settings = Utility::settings();
-                $logo = Utility::get_file('uploads/logo');
-                $company_logo = Utility::get_company_logo();
                 $advocate = Advocate::where('user_id', $bill->advocate)->first();
                 $user = User::getUser($bill->bill_to);
                 $userDetail = UserDetail::getUserDetail($user->id);
                 $items = json_decode($bill->items, true);
-                $payments = BillPayment::where('bill_id', $bill->id)->get();
                 
-                // Générer le HTML pour le PDF
-                $pdfData = [
-                    'bill' => $bill,
-                    'settings' => $settings,
-                    'logo' => $logo,
-                    'company_logo' => $company_logo,
-                    'advocate' => $advocate,
-                    'user' => $user,
-                    'userDetail' => $userDetail,
-                    'items' => $items,
-                    'payments' => $payments,
-                ];
-                
-                // Charger la vue PDF et générer le contenu
-                try {
-                    // Essayer d'utiliser DomPDF si disponible
-                    $pdf = \PDF::loadView('bills.pdf', $pdfData);
-                    $pdfContent = $pdf->output();
-                } catch (\Exception $e) {
-                    // Fallback : générer le HTML et utiliser une méthode alternative
-                    // Pour l'instant, on génère juste le HTML du PDF
-                    $pdfHtml = view('bills.pdf', $pdfData)->render();
-                    
-                    // On va utiliser le mailable sans PDF pour le moment
-                    // L'administrateur devra installer barryvdh/laravel-dompdf
-                    $pdfContent = null;
+                // Récupérer toutes les taxes pour affichage
+                $allTaxes = Tax::all();
+                $taxes = [];
+                foreach ($allTaxes as $tax) {
+                    $taxes[$tax->id] = [
+                        'name' => $tax->name,
+                        'rate' => $tax->rate
+                    ];
                 }
+                
+                // Préparer les informations d'émetteur
+                $billFrom = $bill->bill_from;
+                $companyName = '';
+                $companyAddress = '';
+                $advocateName = '';
+                $advocateAddress = '';
+                
+                if ($bill->bill_from == 'company') {
+                    $companyName = Utility::getcompanyValByName('name');
+                    $address = Utility::getcompanydetailValByName('address');
+                    $city = Utility::getcompanydetailValByName('city');
+                    $state = Utility::getcompanydetailValByName('state');
+                    $companyAddress = trim($address . ', ' . $city . ', ' . $state, ', ');
+                } elseif ($bill->bill_from == 'advocate' && $advocate) {
+                    $advocateName = Advocate::getAdvocates($bill->advocate);
+                    $address = $advocate->ofc_address_line_1 ?? '';
+                    $city = $advocate->ofc_city ?? '';
+                    $state = $advocate->ofc_state ? \App\Models\State::StatebyId($advocate->ofc_state) : '';
+                    $advocateAddress = trim($address . ', ' . $city . ', ' . $state, ', ');
+                } else {
+                    $advocateName = $bill->custom_advocate ?? '';
+                    $advocateAddress = $bill->custom_address ?? '';
+                }
+                
+                // Préparer les informations du client
+                $clientName = $user->name ?? '';
+                $clientEmail = $user->email ?? '';
+                $clientCity = $userDetail->city ?? '';
+                $clientState = $userDetail->state ?? '';
+                $clientAddressLine = $userDetail->address ?? '';
+                $clientAddress = trim($clientAddressLine . ', ' . $clientCity . ', ' . $clientState, ', ');
                 
                 // Préparer les données pour l'email
                 $emailData = [
                     'bill' => $bill,
                     'subject' => $request->subject,
                     'messageContent' => $request->message,
+                    'items' => $items,
+                    'taxes' => $taxes,
+                    'billFrom' => $billFrom,
+                    'companyName' => $companyName,
+                    'companyAddress' => $companyAddress,
+                    'advocateName' => $advocateName,
+                    'advocateAddress' => $advocateAddress,
+                    'clientName' => $clientName,
+                    'clientEmail' => $clientEmail,
+                    'clientAddress' => $clientAddress,
                 ];
                 
                 // Configurer l'email
                 $email = $request->email;
                 $subject = $request->subject;
                 
-                // Envoyer l'email avec le PDF en pièce jointe si disponible
-                if ($pdfContent) {
-                    \Mail::send('email.bill_send', $emailData, function($message) use ($email, $subject, $pdfContent, $bill) {
-                        $message->to($email)
-                                ->subject($subject)
-                                ->attachData($pdfContent, 'facture-' . $bill->bill_number . '.pdf', [
-                                    'mime' => 'application/pdf',
-                                ]);
-                    });
-                } else {
-                    // Envoyer sans PDF
-                    \Mail::send('email.bill_send', $emailData, function($message) use ($email, $subject) {
-                        $message->to($email)
-                                ->subject($subject);
-                    });
+                // Log pour debug
+                \Log::info('Tentative envoi email facture', [
+                    'to' => $email,
+                    'subject' => $subject,
+                    'bill_id' => $bill->id
+                ]);
+                
+                // Configurer les paramètres SMTP depuis la base de données
+                Utility::getSMTPDetails(Auth::user()->created_by);
+                
+                // Envoyer l'email avec la classe Mailable (utilise les paramètres d'email configurés)
+                Mail::to($email)->send(new SendBillEmail($bill, $emailData, $subject));
+                
+                \Log::info('Email facture envoyé avec succès', ['to' => $email]);
+                
+                $successMessage = __('Bill sent successfully to') . ' ' . $email;
+                
+                if ($request->ajax()) {
+                    return response()->json(['success' => $successMessage], 200);
                 }
                 
-                if ($pdfContent) {
-                    return redirect()->back()->with('success', __('Bill sent successfully with PDF attachment to') . ' ' . $email);
-                } else {
-                    return redirect()->back()->with('warning', __('Bill sent to') . ' ' . $email . '. ' . __('Note: PDF generation requires barryvdh/laravel-dompdf package. Please install it with: composer require barryvdh/laravel-dompdf'));
-                }
+                return redirect()->back()->with('success', $successMessage);
                 
             } catch (\Exception $e) {
+                \Log::error('Erreur envoi email facture', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                if ($request->ajax()) {
+                    return response()->json(['error' => __('Error sending email: ') . $e->getMessage()], 500);
+                }
                 return redirect()->back()->with('error', __('Error sending email: ') . $e->getMessage());
             }
         } else {
+            if ($request->ajax()) {
+                return response()->json(['error' => __('Permission Denied.')], 403);
+            }
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
     }
