@@ -1,0 +1,100 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║         🔧 SOLUTION : ERREUR COMPOSER PHP 8.2                ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📋 VOTRE ERREUR :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Fatal error: Composer detected issues in your platform: 
+Your Composer dependencies require a PHP version ">= 8.2.0". 
+You are running 7.4.33.
+
+🔍 CAUSE :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Le fichier vendor/composer/platform_check.php est compilé
+pour PHP 7.4 alors que votre serveur a PHP 8.2.
+
+✅ SOLUTION AUTOMATIQUE (RECOMMANDÉE) :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Uploadez le fichier : fix-php-composer.sh
+
+2. En SSH :
+   cd /home/threesixty/yyy/Dossy/legal
+   chmod +x fix-php-composer.sh
+   ./fix-php-composer.sh
+
+3. Suivez les instructions affichées
+
+⚡ SOLUTION RAPIDE (MANUELLE) :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 1. Supprimer vendor
+rm -rf vendor/ composer.lock
+
+# 2. Configurer pour PHP 8.2
+composer config platform.php 8.2.0
+
+# 3. Réinstaller (choisir selon votre serveur)
+
+   # Option A - PHP standard
+   php8.2 /usr/local/bin/composer install
+   
+   # Option B - cPanel
+   ea-php82 /usr/local/bin/composer install
+   
+   # Option C - Composer global
+   composer install
+
+# 4. Vérifier
+php artisan --version
+
+🎯 POUR CPANEL SPÉCIFIQUEMENT :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/threesixty/yyy/Dossy/legal
+rm -rf vendor/ composer.lock
+ea-php82 /usr/local/bin/composer config platform.php 8.2.0
+ea-php82 /usr/local/bin/composer install
+ea-php82 artisan migrate
+
+📦 APRÈS LA CORRECTION :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Migrations de la bibliothèque juridique
+php artisan migrate
+
+# Créer le stockage
+mkdir -p storage/app/public/legal_documents
+chmod -R 775 storage/app/public/legal_documents
+php artisan storage:link
+
+# Vider les caches
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+
+🔗 TESTER :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Admin : https://votre-domaine.com/legal-library
+Users : https://votre-domaine.com/library
+
+📚 FICHIERS D'AIDE DISPONIBLES :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ fix-php-composer.sh      - Script automatique
+✓ GUIDE_PHP82_UPDATE.md     - Guide détaillé complet
+✓ QUICK_START.md            - Démarrage rapide
+✓ deploy-legal-library.sh   - Déploiement après correction
+
+🆘 AIDE :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si erreurs persistent, envoyez-moi :
+  php -v
+  which php8.2
+  composer --version
+  pwd
+

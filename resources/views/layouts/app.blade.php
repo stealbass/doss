@@ -282,6 +282,9 @@
             ]
         });
     </script>
+    
+    <!-- Subscription Expired Alert Modal -->
+    @include('components.subscription-expired-alert')
 </body>
 
 </html>

@@ -332,7 +332,7 @@ class CaseController extends Controller
             $hearings = Hearing::where('case_id', $id)->get();
             
             // Get todos for this case
-            $todos = ToDo::where('case', $id)->get();
+            $todos = ToDo::where('relate_to', $id)->get();
             
             // Get notes for this case (only main notes with their replies)
             $notes = CaseNote::getMainNotes($id);

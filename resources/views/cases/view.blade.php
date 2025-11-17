@@ -6,6 +6,43 @@
     <li class="breadcrumb-item">{{ __('Case') }}</li>
 @endsection
 
+@push('css')
+<style>
+    /* Style pour les tabs de l'affaire */
+    #caseTabs .nav-link {
+        color: #6c757d;
+        border: 1px solid transparent;
+        border-bottom: 3px solid transparent;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    #caseTabs .nav-link:hover {
+        color: #28a745;
+        border-bottom-color: #d4edda;
+        background-color: #f8fff9;
+    }
+    
+    #caseTabs .nav-link.active {
+        color: #fff !important;
+        background: linear-gradient(135deg, #28a745 0%, #20923d 100%) !important;
+        border-color: #28a745 #28a745 #28a745 !important;
+        border-radius: 0.375rem 0.375rem 0 0;
+        box-shadow: 0 -2px 8px rgba(40, 167, 69, 0.3);
+        font-weight: 600;
+    }
+    
+    #caseTabs .nav-link.active i {
+        color: #fff !important;
+    }
+    
+    #caseTabs .nav-link i {
+        margin-right: 5px;
+        font-size: 1.1em;
+    }
+</style>
+@endpush
+
 @php
     $docfile = \App\Models\Utility::get_file('uploads/case_docs/');
     $filing_date = '';
@@ -334,6 +371,24 @@
                                                             title="{{ __('Télécharger') }}">
                                                             <i class="ti ti-download"></i>
                                                         </a>
+                                                        @if (Auth::user()->type != 'client')
+                                                            <a href="#"
+                                                                class="btn btn-sm btn-danger bs-pass-para"
+                                                                data-confirm="{{ __('Are You Sure?') }}"
+                                                                data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
+                                                                data-confirm-yes="delete-document-{{ $document->id }}"
+                                                                title="{{ __('Delete') }}"
+                                                                data-bs-toggle="tooltip"
+                                                                data-bs-placement="top">
+                                                                <i class="ti ti-trash"></i>
+                                                            </a>
+                                                            {!! Form::open([
+                                                                'method' => 'DELETE',
+                                                                'route' => ['documents.destroy', $document->id],
+                                                                'id' => 'delete-document-' . $document->id,
+                                                            ]) !!}
+                                                            {!! Form::close() !!}
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @empty
@@ -398,12 +453,39 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        <a href="{{ route('to-do.edit', $todo->id) }}" 
-                                                            class="btn btn-sm btn-info"
-                                                            data-bs-toggle="tooltip"
-                                                            title="{{ __('Modifier') }}">
-                                                            <i class="ti ti-pencil"></i>
-                                                        </a>
+                                                        @if (Auth::user()->type != 'client')
+                                                            <div class="action-btn me-2">
+                                                                <a href="#"
+                                                                    class="mx-3 btn btn-sm btn-info align-items-center"
+                                                                    data-url="{{ route('to-do.edit', $todo->id) }}"
+                                                                    data-size="lg"
+                                                                    data-ajax-popup="true"
+                                                                    data-title="{{ __('Modifier la tâche') }}"
+                                                                    title="{{ __('Modifier') }}"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top">
+                                                                    <i class="ti ti-pencil"></i>
+                                                                </a>
+                                                            </div>
+                                                            <div class="action-btn me-2">
+                                                                <a href="#"
+                                                                    class="mx-3 btn btn-sm btn-danger align-items-center bs-pass-para"
+                                                                    data-confirm="{{ __('Are You Sure?') }}"
+                                                                    data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
+                                                                    data-confirm-yes="delete-todo-{{ $todo->id }}"
+                                                                    title="{{ __('Delete') }}"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top">
+                                                                    <i class="ti ti-trash"></i>
+                                                                </a>
+                                                            </div>
+                                                            {!! Form::open([
+                                                                'method' => 'DELETE',
+                                                                'route' => ['to-do.destroy', $todo->id],
+                                                                'id' => 'delete-todo-' . $todo->id,
+                                                            ]) !!}
+                                                            {!! Form::close() !!}
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @empty

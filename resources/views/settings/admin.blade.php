@@ -29,6 +29,8 @@ $s3_storage_validation = $setting['s3_storage_validation'];
 $s3_storage_validations = explode(',', $s3_storage_validation);
 $wasabi_storage_validation = $setting['wasabi_storage_validation'];
 $wasabi_storage_validations = explode(',', $wasabi_storage_validation);
+$r2_storage_validation = $setting['r2_storage_validation'] ?? '';
+$r2_storage_validations = !empty($r2_storage_validation) ? explode(',', $r2_storage_validation) : [];
 
 $color = isset($settings['color']) ? $settings['color'] : 'theme-1';
 $flag = !empty($setting['color_flag']) ? $setting['color_flag'] : '';
@@ -167,14 +169,22 @@ $google_recaptcha_version = ['v2-checkbox' => __('v2'), 'v3' => __('v3')];
         if ($(this).val() == 's3') {
             $('.s3-setting').removeClass('d-none');
             $('.wasabi-setting').addClass('d-none');
+            $('.r2-setting').addClass('d-none');
             $('.local-setting').addClass('d-none');
         } else if ($(this).val() == 'wasabi') {
             $('.s3-setting').addClass('d-none');
             $('.wasabi-setting').removeClass('d-none');
+            $('.r2-setting').addClass('d-none');
+            $('.local-setting').addClass('d-none');
+        } else if ($(this).val() == 'r2') {
+            $('.s3-setting').addClass('d-none');
+            $('.wasabi-setting').addClass('d-none');
+            $('.r2-setting').removeClass('d-none');
             $('.local-setting').addClass('d-none');
         } else {
             $('.s3-setting').addClass('d-none');
             $('.wasabi-setting').addClass('d-none');
+            $('.r2-setting').addClass('d-none');
             $('.local-setting').removeClass('d-none');
         }
     });
@@ -3894,6 +3904,14 @@ $google_recaptcha_version = ['v2-checkbox' => __('v2'), 'v3' => __('v3')];
                         <label class="btn btn-outline-primary"
                             for="wasabi-outlined">{{ __('Wasabi') }}</label>
                     </div>
+
+                    <div class="pe-2">
+                        <input type="radio" class="btn-check" name="storage_setting"
+                            id="r2-outlined" autocomplete="off"
+                            {{ $setting['storage_setting'] == 'r2' ? 'checked' : '' }} value="r2">
+                        <label class="btn btn-outline-primary"
+                            for="r2-outlined">{{ __('Cloudflare R2') }}</label>
+                    </div>
                 </div>
                 <div class="mt-2">
                     <div
@@ -4078,6 +4096,91 @@ $google_recaptcha_version = ['v2-checkbox' => __('v2'), 'v3' => __('v3')];
                                     <input type="number" name="wasabi_max_upload_size"
                                         class="form-control"
                                         value="{{ !isset($setting['wasabi_max_upload_size']) || is_null($setting['wasabi_max_upload_size']) ? '' : $setting['wasabi_max_upload_size'] }}"
+                                        placeholder="{{ __('Max upload size') }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="r2-setting row {{ $setting['storage_setting'] == 'r2' ? ' ' : 'd-none' }}">
+                        <div class=" row ">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_key">{{ __('R2 Access Key ID') }}</label>
+                                    <input type="text" name="r2_key" class="form-control"
+                                        value="{{ !isset($setting['r2_key']) || is_null($setting['r2_key']) ? '' : $setting['r2_key'] }}"
+                                        placeholder="{{ __('R2 Access Key ID') }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_secret">{{ __('R2 Secret Access Key') }}</label>
+                                    <input type="text" name="r2_secret" class="form-control"
+                                        value="{{ !isset($setting['r2_secret']) || is_null($setting['r2_secret']) ? '' : $setting['r2_secret'] }}"
+                                        placeholder="{{ __('R2 Secret Access Key') }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_bucket">{{ __('R2 Bucket') }}</label>
+                                    <input type="text" name="r2_bucket" class="form-control"
+                                        value="{{ !isset($setting['r2_bucket']) || is_null($setting['r2_bucket']) ? '' : $setting['r2_bucket'] }}"
+                                        placeholder="{{ __('R2 Bucket') }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_endpoint">{{ __('R2 Endpoint') }}</label>
+                                    <input type="text" name="r2_endpoint" class="form-control"
+                                        value="{{ !isset($setting['r2_endpoint']) || is_null($setting['r2_endpoint']) ? '' : $setting['r2_endpoint'] }}"
+                                        placeholder="{{ __('https://accountid.r2.cloudflarestorage.com') }}">
+                                    <small class="form-text text-muted">{{ __('Example: https://your-account-id.r2.cloudflarestorage.com') }}</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_url">{{ __('R2 Public URL (Optional)') }}</label>
+                                    <input type="text" name="r2_url" class="form-control"
+                                        value="{{ !isset($setting['r2_url']) || is_null($setting['r2_url']) ? '' : $setting['r2_url'] }}"
+                                        placeholder="{{ __('https://your-domain.com') }}">
+                                    <small class="form-text text-muted">{{ __('Leave empty to use R2 endpoint') }}</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_region">{{ __('R2 Region') }}</label>
+                                    <input type="text" name="r2_region" class="form-control"
+                                        value="{{ !isset($setting['r2_region']) || is_null($setting['r2_region']) ? 'auto' : $setting['r2_region'] }}"
+                                        placeholder="auto">
+                                    <small class="form-text text-muted">{{ __('Use "auto" for automatic region') }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group col-8 switch-width">
+                                {{ Form::label('r2_storage_validation', __('Only Upload Files'), ['class' => 'form-label']) }}
+
+                                <select name="r2_storage_validation[]" class=" multi-select"
+                                    id="choises-multiple-r2" id="r2_storage_validation" multiple>
+                                    @foreach ($file_type as $f)
+                                    <option @if (in_array($f, $r2_storage_validations)) selected @endif>
+                                        {{ $f }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        for="r2_max_upload_size">{{ __('Max upload size (In KB)') }}</label>
+                                    <input type="number" name="r2_max_upload_size"
+                                        class="form-control"
+                                        value="{{ !isset($setting['r2_max_upload_size']) || is_null($setting['r2_max_upload_size']) ? '' : $setting['r2_max_upload_size'] }}"
                                         placeholder="{{ __('Max upload size') }}">
                                 </div>
                             </div>

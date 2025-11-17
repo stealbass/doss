@@ -21,6 +21,32 @@
 
 @section('content')
     <div class="row">
+        @php
+            $hasFreePlan = Auth::user()->hasFreePlan();
+        @endphp
+
+        @if($hasFreePlan)
+        <!-- Free Plan Blocking Alert -->
+        <div class="col-xl-12">
+            <div class="alert alert-danger" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%); border: 2px solid #dc3545;">
+                <div class="text-center py-5">
+                    <div style="font-size: 80px; margin-bottom: 20px;">🔒</div>
+                    <h3 class="mb-3" style="color: #842029;">
+                        <i class="ti ti-crown"></i> Accès Restreint - Plan Gratuit
+                    </h3>
+                    <p class="mb-4" style="color: #842029; font-size: 18px;">
+                        La visualisation et le téléchargement des documents PDF nécessitent un abonnement premium.
+                    </p>
+                    <a href="{{ route('plans.index') }}" class="btn btn-danger btn-lg me-2">
+                        <i class="ti ti-credit-card"></i> Souscrire à un Plan Premium
+                    </a>
+                    <a href="{{ route('user.legal-library.index') }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="ti ti-arrow-left"></i> Retour à la Bibliothèque
+                    </a>
+                </div>
+            </div>
+        </div>
+        @else
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-header">
@@ -82,6 +108,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
     @push('style')

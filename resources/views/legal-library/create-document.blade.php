@@ -37,7 +37,7 @@
                         <div class="form-group col-md-12">
                             {!! Form::label('file', __('PDF File'), ['class' => 'form-label']) !!}<span class="text-danger">*</span>
                             <input type="file" name="file" class="form-control" accept=".pdf" required>
-                            <small class="form-text text-muted">{{ __('Maximum file size: 20MB. Only PDF files are allowed.') }}</small>
+                            <small class="form-text text-muted">{{ __('Maximum file size: 50MB. Only PDF files are allowed.') }}</small>
                         </div>
                     </div>
                 </div>

@@ -258,6 +258,11 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
         Route::get('/category/{categoryId}/documents', [LegalLibraryController::class, 'showDocuments'])->name('documents');
         Route::get('/category/{categoryId}/document/create', [LegalLibraryController::class, 'createDocument'])->name('document.create');
         Route::post('/category/{categoryId}/document/store', [LegalLibraryController::class, 'storeDocument'])->name('document.store');
+        
+        // Bulk upload routes
+        Route::get('/category/{categoryId}/bulk-upload', [LegalLibraryController::class, 'bulkUploadForm'])->name('bulk-upload.form');
+        Route::post('/category/{categoryId}/bulk-upload', [LegalLibraryController::class, 'bulkUploadStore'])->name('bulk-upload.store');
+        
         Route::get('/document/{id}/edit', [LegalLibraryController::class, 'editDocument'])->name('document.edit');
         Route::put('/document/{id}', [LegalLibraryController::class, 'updateDocument'])->name('document.update');
         Route::delete('/document/{id}', [LegalLibraryController::class, 'destroyDocument'])->name('document.destroy');

@@ -5,8 +5,14 @@
 @section('action-button')
     @if(\Auth::user()->type == 'super admin')
         <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
+            <a href="{{ route('legal-library.bulk-upload.form', $category->id) }}" 
+               class="btn btn-sm btn-success mx-1"
+               data-bs-toggle="tooltip"
+               title="{{ __('Upload multiple PDF files at once') }}">
+                <i class="ti ti-file-upload"></i> {{ __('Import Multiple') }}
+            </a>
             <a href="{{ route('legal-library.document.create', $category->id) }}" class="btn btn-sm btn-primary mx-1">
-                <i class="ti ti-plus"></i> {{ __('Upload Document') }}
+                <i class="ti ti-plus"></i> {{ __('Upload Single') }}
             </a>
             <a href="{{ route('legal-library.index') }}" class="btn btn-sm btn-secondary mx-1">
                 <i class="ti ti-arrow-left"></i> {{ __('Back to Categories') }}

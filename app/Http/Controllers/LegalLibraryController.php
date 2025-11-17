@@ -190,7 +190,7 @@ class LegalLibraryController extends Controller
                 [
                     'title' => 'required|max:255',
                     'description' => 'nullable',
-                    'file' => 'required|file|mimes:pdf|max:20480', // 20MB max
+                    'file' => 'required|file|mimes:pdf|max:51200', // 50MB max
                 ]
             );
 
@@ -219,6 +219,95 @@ class LegalLibraryController extends Controller
             }
 
             return redirect()->back()->with('error', __('File upload failed.'));
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+    }
+
+    /**
+     * Show the form for bulk upload documents
+     */
+    public function bulkUploadForm($categoryId)
+    {
+        if (Auth::user()->type == 'super admin') {
+            $category = LegalCategory::find($categoryId);
+            if (!$category) {
+                return redirect()->back()->with('error', __('Category not found.'));
+            }
+            return view('legal-library.bulk-upload', compact('category'));
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+    }
+
+    /**
+     * Store multiple documents at once
+     */
+    public function bulkUploadStore(Request $request, $categoryId)
+    {
+        if (Auth::user()->type == 'super admin') {
+            $category = LegalCategory::find($categoryId);
+            if (!$category) {
+                return redirect()->back()->with('error', __('Category not found.'));
+            }
+
+            $validator = FacadesValidator::make(
+                $request->all(),
+                [
+                    'files' => 'required|array|min:1',
+                    'files.*' => 'required|file|mimes:pdf|max:51200', // 50MB max per file
+                ]
+            );
+
+            if ($validator->fails()) {
+                $messages = $validator->getMessageBag();
+                return redirect()->back()->with('error', $messages->first());
+            }
+
+            $uploadedCount = 0;
+            $errors = [];
+
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    try {
+                        // Generate unique filename
+                        $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                        $filePath = $file->storeAs('legal_documents', $fileName, 'public');
+
+                        // Extract title from filename (remove extension)
+                        $title = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+
+                        // Create document record
+                        LegalDocument::create([
+                            'category_id' => $categoryId,
+                            'title' => $title,
+                            'description' => null, // Can be updated later
+                            'file_path' => $filePath,
+                            'file_name' => $file->getClientOriginalName(),
+                            'file_size' => $file->getSize(),
+                            'created_by' => 0,
+                        ]);
+
+                        $uploadedCount++;
+                    } catch (\Exception $e) {
+                        $errors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
+                    }
+                }
+            }
+
+            // Build success/error message
+            $message = '';
+            if ($uploadedCount > 0) {
+                $message = __('Successfully uploaded :count document(s).', ['count' => $uploadedCount]);
+            }
+            if (!empty($errors)) {
+                $message .= ' ' . __('Errors: ') . implode(', ', $errors);
+                return redirect()->route('legal-library.documents', $categoryId)
+                    ->with('warning', $message);
+            }
+
+            return redirect()->route('legal-library.documents', $categoryId)
+                ->with('success', $message);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }

@@ -337,6 +337,29 @@ class SettingController extends Controller
             $post['wasabi_storage_validation'] = $wasabi_storage_validation;
         }
 
+        if (isset($request->storage_setting) && $request->storage_setting == 'r2') {
+            $request->validate(
+                [
+                    'r2_key' => 'required',
+                    'r2_secret' => 'required',
+                    'r2_bucket' => 'required',
+                    'r2_endpoint' => 'required',
+                    'r2_max_upload_size' => 'required',
+                    'r2_storage_validation' => 'required',
+                ]
+            );
+            $post['storage_setting'] = $request->storage_setting;
+            $post['r2_key'] = $request->r2_key;
+            $post['r2_secret'] = $request->r2_secret;
+            $post['r2_region'] = $request->r2_region ?? 'auto';
+            $post['r2_bucket'] = $request->r2_bucket;
+            $post['r2_endpoint'] = $request->r2_endpoint;
+            $post['r2_url'] = $request->r2_url ?? '';
+            $post['r2_max_upload_size'] = $request->r2_max_upload_size;
+            $r2_storage_validation = implode(',', $request->r2_storage_validation);
+            $post['r2_storage_validation'] = $r2_storage_validation;
+        }
+
         foreach ($post as $key => $data) {
 
             $arr = [

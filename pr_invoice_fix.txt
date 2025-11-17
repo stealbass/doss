@@ -1,0 +1,148 @@
+# 🧾 Correction du Calcul Automatique des Factures
+
+## 📋 Résumé des Problèmes Corrigés
+
+Cette Pull Request corrige **trois problèmes critiques** dans le système de facturation :
+
+### 1️⃣ Montants des éléments 2 et 3+ ne s'actualisent pas
+**Problème** : Lorsqu'on ajoute plusieurs éléments à une facture, seul le premier élément calcule correctement son montant. Les éléments suivants (2ème, 3ème, etc.) affichent 0.00 ou le montant du premier élément.
+
+**Cause** : L'ancienne fonction `add_tax()` ne se déclenchait que lors du changement de taxe, pas lors des modifications de quantité ou prix.
+
+**Solution** : 
+- Création d'une fonction `calculateRow(el)` dédiée au calcul de chaque ligne
+- Ajout d'événements `keyup` et `change` sur tous les champs (quantity, price, discount)
+- Calcul immédiat et automatique pour chaque modification
+
+### 2️⃣ Montant total invisible sans remise
+**Problème** : Le montant total ne s'affiche que si on entre une valeur dans le champ "Remise". Sans remise, le total reste vide.
+
+**Cause** : La logique de calcul du total était imbriquée dans le callback AJAX de la taxe et ne s'exécutait pas sans taxe.
+
+**Solution** :
+- Fonction `calculateTotal()` indépendante qui s'exécute toujours
+- Calcule le total avec ou sans taxe, avec ou sans remise
+- Affichage automatique et permanent du montant total
+
+### 3️⃣ Montants figés en mode édition
+**Problème** : Lors de l'édition d'une facture existante, les montants ne se recalculent pas quand on modifie les valeurs.
+
+**Cause** : Aucun calcul automatique au chargement de la page en mode édition.
+
+**Solution** :
+- Ajout de `$(document).ready()` qui calcule toutes les lignes au chargement
+- Pour le mode édition : `setTimeout()` pour s'assurer que le DOM est prêt
+- Recalcul automatique dès qu'on modifie une valeur
+
+---
+
+## 🔧 Modifications Techniques
+
+### Fichiers Modifiés
+
+#### 1. `resources/views/bills/create.blade.php` (lignes 401-493)
+- **Nouvelle fonction `calculateRow(el)`**
+  - Calcule : Quantité × Prix - Remise + Taxe
+  - Gère les taxes via AJAX de manière asynchrone
+  - Fonctionne même sans taxe sélectionnée
+
+- **Nouvelle fonction `calculateTotal()`**
+  - Parcourt toutes les lignes du tableau
+  - Calcule : Sous-total, Total Taxe, Total Remise, Montant Total
+  - Met à jour l'affichage et les champs cachés
+
+- **Gestionnaires d'événements mis à jour**
+  ```javascript
+  $(document).on('keyup change', '.numbers', function() { ... });
+  $(document).on('keyup change', '.cost', function() { ... });
+  $(document).on('keyup change', '.discount', function() { ... });
+  $(document).on('change', '.ptax', function() { ... });
+  ```
+
+- **Calcul automatique au chargement**
+  ```javascript
+  $(document).ready(function() {
+      calculateTotal();
+  });
+  ```
+
+#### 2. `resources/views/bills/edit.blade.php` (lignes 408-507)
+- Modifications identiques à `create.blade.php`
+- **Calcul spécial pour les données existantes**
+  ```javascript
+  $(document).ready(function() {
+      $('.repeater tbody tr').each(function() {
+          calculateRow($(this));
+      });
+      setTimeout(function() {
+          calculateTotal();
+      }, 500);
+  });
+  ```
+
+---
+
+## ✅ Résultats Attendus
+
+### Avant
+- ❌ Élément 1 : calcule → Élément 2 : 0.00 → Élément 3 : 0.00
+- ❌ Total visible seulement avec remise
+- ❌ Mode édition : valeurs figées, pas de recalcul
+
+### Après
+- ✅ Tous les éléments calculent automatiquement leur montant
+- ✅ Total toujours visible, avec ou sans remise
+- ✅ Mode édition : recalcul automatique au chargement et à chaque modification
+- ✅ Interface réactive et intuitive
+- ✅ Taxe optionnelle (calculs fonctionnent sans taxe)
+
+---
+
+## 🧪 Tests Recommandés
+
+1. **Création de facture**
+   - Ajouter 5 éléments avec différentes quantités et prix
+   - Vérifier que tous les montants s'affichent correctement
+   - Tester avec et sans taxe
+   - Tester avec et sans remise
+   - Vérifier que le montant total est toujours visible
+
+2. **Édition de facture**
+   - Ouvrir une facture existante
+   - Vérifier que tous les montants s'affichent au chargement
+   - Modifier quantité, prix, remise d'un élément
+   - Vérifier le recalcul immédiat
+   - Changer la taxe et vérifier la mise à jour
+
+3. **Cas limites**
+   - Facture sans taxe
+   - Facture sans remise
+   - Facture avec 10+ éléments
+   - Valeurs décimales (1.5, 2.25, etc.)
+
+---
+
+## 📝 Documentation
+
+Documentation technique complète créée : `CORRECTION_CALCUL_FACTURES.md`
+- Explication détaillée du problème
+- Code avant/après
+- Exemples de calculs
+- Cas de tests
+
+---
+
+## 🔗 Commits Inclus
+
+1. `c5941ee6` - fix: Amélioration du calcul automatique des factures
+2. `8eeb2715` - docs: Add final PDF 404 fix documentation
+3. `abd05b09` - fix: Implement PDF streaming for preview instead of relying on storage link
+4. `2e8de942` - docs: Add documentation for admin buttons fix
+5. `5841aa21` - fix: Replace permission checks with super admin checks in Legal Library views
+
+---
+
+**Type de PR** : 🐛 Bug Fix  
+**Impact** : 🔴 Critique (fonctionnalité principale cassée)  
+**Tests** : ⚠️ À tester manuellement  
+**Breaking Changes** : ❌ Non
