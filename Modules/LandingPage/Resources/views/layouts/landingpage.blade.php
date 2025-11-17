@@ -550,27 +550,24 @@
                                         class="text-sm">/{{ $value->duration }}</small>
                                 </span>
                                 <p>{{ $value->description }}</p>
-                                
-                                    <p class="mb-0">
-                                        <span> Période d'essai </span> {{ $value->trial_days }} <span> Jours </span>
-                                    </p>
 
                                 <ul class="list-unstyled my-4">
-                                    <li>
-                                        {{ $value->max_users < 0 ? __('Unlimited') : $value->max_users }}
-                                        {{ __('Users') }}
+                                    <li class="mb-3">
+                                        <i class="ti ti-check text-success me-2"></i>
+                                        {{ __('Bibliothèque juridique gratuite') }}
                                     </li>
-                                    <li>
-                                        {{ $value->max_advocates < 0 ? __('Unlimited') : $value->max_advocates }}
-                                        {{ __('Advocates') }}
+                                    <li class="mb-3">
+                                        <i class="ti ti-check text-success me-2"></i>
+                                        {{ __('IA juridique gratuite') }}
                                     </li>
-                                    <li>
-                                        {{ $value->storage_limit < 0 ? __('Unlimited') : $value->storage_limit }} <span> (MB) </span>
-                                        {{ __('Storage Limit') }}
+                                    <li class="mb-3">
+                                        <i class="ti ti-check text-success me-2"></i>
+                                        @if($value->storage_limit < 0)
+                                            {{ __('Stockage illimité') }}
+                                        @else
+                                            {{ number_format($value->storage_limit / 1024, 0) }}GB {{ __('Stockage') }}
+                                        @endif
                                     </li>
-                                    <!--<li>
-                                        {{ $value->enable_chatgpt == 'on' ? __('Enable Chat GPT') : __('Disable Chat GPT') }}
-                                    </li> -->
                                 </ul>
                                 <div class="d-grid">
                                     <a href="{{ route('payment', \Illuminate\Support\Facades\Crypt::encrypt($value->id)) }}"
@@ -583,10 +580,207 @@
                     </div>
                 @endforeach
             </div>
+            
+            <!-- Features Comparison Table Toggle -->
+            <div class="row mt-5">
+                <div class="col-lg-12 text-center">
+                    <button class="btn btn-outline-light btn-lg" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#featuresComparison" 
+                            aria-expanded="false" 
+                            aria-controls="featuresComparison"
+                            id="toggleFeaturesBtn">
+                        {{ __('Découvrir toutes les fonctionnalités') }}
+                        <i class="ti ti-chevron-down ms-2" id="toggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Features Comparison Table (Hidden by default) -->
+            <div class="collapse mt-4" id="featuresComparison">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card bg-white">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">{{ __('Comparaison Détaillée des Fonctionnalités') }}</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 text-dark">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 40%;">{{ __('Fonctionnalités') }}</th>
+                                                @foreach ($collection as $plan)
+                                                <th class="text-center" style="width: {{ 60 / count($collection) }}%;">
+                                                    <strong>{{ $plan->name }}</strong>
+                                                </th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Utilisateurs -->
+                                            <tr>
+                                                <td><strong>{{ __('Nombre d\'utilisateurs') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    @if($plan->max_users < 0)
+                                                        <i class="ti ti-infinity text-success" style="font-size: 1.5rem;"></i>
+                                                    @else
+                                                        {{ $plan->max_users }}
+                                                    @endif
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Avocats/Juristes -->
+                                            <tr>
+                                                <td><strong>{{ __('Avocats/Juristes') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    @if($plan->max_advocates < 0)
+                                                        <i class="ti ti-infinity text-success" style="font-size: 1.5rem;"></i>
+                                                    @else
+                                                        {{ $plan->max_advocates }}
+                                                    @endif
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Stockage -->
+                                            <tr>
+                                                <td><strong>{{ __('Espace de stockage') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    @if($plan->storage_limit < 0)
+                                                        <i class="ti ti-infinity text-success" style="font-size: 1.5rem;"></i>
+                                                    @else
+                                                        {{ number_format($plan->storage_limit / 1024, 0) }}GB
+                                                    @endif
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Bibliothèque Juridique -->
+                                            <tr>
+                                                <td><strong>{{ __('Bibliothèque juridique') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    <i class="ti ti-check text-success" style="font-size: 1.5rem;"></i>
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- IA Juridique -->
+                                            <tr>
+                                                <td><strong>{{ __('IA juridique (ChatGPT)') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    @if($plan->enable_chatgpt == 'on')
+                                                        <i class="ti ti-check text-success" style="font-size: 1.5rem;"></i>
+                                                    @else
+                                                        <i class="ti ti-x text-danger" style="font-size: 1.5rem;"></i>
+                                                    @endif
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Gestion des dossiers -->
+                                            <tr>
+                                                <td><strong>{{ __('Gestion des dossiers') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    <i class="ti ti-check text-success" style="font-size: 1.5rem;"></i>
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Calendrier & Audiences -->
+                                            <tr>
+                                                <td><strong>{{ __('Calendrier & Audiences') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    <i class="ti ti-check text-success" style="font-size: 1.5rem;"></i>
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Facturation -->
+                                            <tr>
+                                                <td><strong>{{ __('Facturation') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    <i class="ti ti-check text-success" style="font-size: 1.5rem;"></i>
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Support -->
+                                            <tr>
+                                                <td><strong>{{ __('Support technique') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    @if($plan->price == 0)
+                                                        {{ __('Email') }}
+                                                    @elseif($plan->price > 0 && $plan->price < 500000)
+                                                        {{ __('Email + Chat') }}
+                                                    @else
+                                                        {{ __('Prioritaire 24/7') }}
+                                                    @endif
+                                                </td>
+                                                @endforeach
+                                            </tr>
+
+                                            <!-- Formation -->
+                                            <tr>
+                                                <td><strong>{{ __('Formation gratuite') }}</strong></td>
+                                                @foreach ($collection as $plan)
+                                                <td class="text-center">
+                                                    @if($plan->price > 0)
+                                                        <i class="ti ti-check text-success" style="font-size: 1.5rem;"></i>
+                                                    @else
+                                                        <i class="ti ti-x text-danger" style="font-size: 1.5rem;"></i>
+                                                    @endif
+                                                </td>
+                                                @endforeach
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 @endif
 <!-- [ subscription ] end -->
+
+@push('script')
+<script>
+// Toggle icon rotation when features table is shown/hidden
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggleFeaturesBtn');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const featuresTable = document.getElementById('featuresComparison');
+    
+    if (toggleBtn && toggleIcon && featuresTable) {
+        featuresTable.addEventListener('shown.bs.collapse', function () {
+            toggleIcon.classList.remove('ti-chevron-down');
+            toggleIcon.classList.add('ti-chevron-up');
+            toggleBtn.innerHTML = '{{ __('Masquer les fonctionnalités') }} <i class="ti ti-chevron-up ms-2" id="toggleIcon"></i>';
+        });
+        
+        featuresTable.addEventListener('hidden.bs.collapse', function () {
+            toggleIcon.classList.remove('ti-chevron-up');
+            toggleIcon.classList.add('ti-chevron-down');
+            toggleBtn.innerHTML = '{{ __('Découvrir toutes les fonctionnalités') }} <i class="ti ti-chevron-down ms-2" id="toggleIcon"></i>';
+        });
+    }
+});
+</script>
+@endpush
 <!-- [ FAqs ] start -->
 @if ($settings['faq_status'] == 'on')
     <section class="faqs section-gap bg-gray-100" id="faq">

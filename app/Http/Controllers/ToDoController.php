@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TaskAssignedNotification;
 
 class ToDoController extends Controller
 {
@@ -280,6 +282,53 @@ class ToDoController extends Controller
                 $request1->start_date = $request->assigned_date;
                 $request1->end_date = $request->due_date;
                 Utility::addCalendarData($request1, $type);
+            }
+
+            // Send email notification to assigned users
+            try {
+                Utility::getSMTPDetails(Auth::user()->creatorId());
+                
+                // Get assigned users
+                $assignedUserIds = !empty($request->assign_to) ? $request->assign_to : [];
+                
+                foreach ($assignedUserIds as $userId) {
+                    $assignedUser = User::find($userId);
+                    if ($assignedUser && $assignedUser->email) {
+                        // Get case name if related
+                        $caseName = null;
+                        if ($request->relate_to) {
+                            $case = Cases::find($request->relate_to);
+                            if ($case) {
+                                $caseName = $case->title;
+                            }
+                        }
+                        
+                        // Prepare email data
+                        $emailData = [
+                            'task' => $todo,
+                            'assignedToName' => $assignedUser->name,
+                            'assignedByName' => Auth::user()->name,
+                            'caseName' => $caseName,
+                            'taskUrl' => route('to-do.show', $todo->id),
+                        ];
+                        
+                        // Send email
+                        Mail::to($assignedUser->email)->send(
+                            new TaskAssignedNotification($todo, $emailData)
+                        );
+                        
+                        \Log::info('Task assignment email sent', [
+                            'task_id' => $todo->id,
+                            'to' => $assignedUser->email
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error sending task assignment email', [
+                    'task_id' => $todo->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't block task creation if email fails
             }
 
             return redirect()->route('to-do.index')->with('success', __('To-Do successfully created.'));

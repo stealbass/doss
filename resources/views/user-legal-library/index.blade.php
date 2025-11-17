@@ -8,6 +8,32 @@
 
 @section('content')
     <div class="row p-0">
+        @php
+            $hasFreePlan = Auth::user()->hasFreePlan();
+        @endphp
+
+        @if($hasFreePlan)
+        <!-- Free Plan Alert -->
+        <div class="col-xl-12 mb-4">
+            <div class="alert alert-warning" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe6a8 100%); border: 2px solid #ffc107;">
+                <div class="d-flex align-items-center">
+                    <div style="font-size: 40px; margin-right: 15px;">🔒</div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1" style="color: #856404;">
+                            <i class="ti ti-crown"></i> Accès Limité - Plan Gratuit
+                        </h5>
+                        <p class="mb-2" style="color: #856404; font-size: 14px;">
+                            Vous pouvez consulter les catégories, mais l'accès aux documents nécessite un abonnement premium.
+                        </p>
+                        <a href="{{ route('plans.index') }}" class="btn btn-sm btn-warning">
+                            <i class="ti ti-credit-card"></i> Souscrire à un Plan Premium
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Search Section -->
         <div class="col-xl-12 mb-4">
             <div class="card">
@@ -19,14 +45,20 @@
                                        name="search" 
                                        class="form-control" 
                                        placeholder="{{ __('Search legal documents by title or description...') }}"
-                                       value="{{ $search ?? '' }}">
+                                       value="{{ $search ?? '' }}"
+                                       @if($hasFreePlan) disabled title="Recherche disponible uniquement pour les plans premium" @endif>
                             </div>
                             <div class="col-md-2">
-                                <button type="submit" class="btn btn-primary w-100">
+                                <button type="submit" class="btn btn-primary w-100" @if($hasFreePlan) disabled @endif>
                                     <i class="ti ti-search"></i> {{ __('Search') }}
                                 </button>
                             </div>
                         </div>
+                        @if($hasFreePlan)
+                        <small class="text-muted mt-2 d-block">
+                            <i class="ti ti-info-circle"></i> La recherche de documents est disponible uniquement avec un plan premium.
+                        </small>
+                        @endif
                     </form>
                 </div>
             </div>
@@ -123,10 +155,18 @@
                                                     <span class="badge bg-primary">
                                                         {{ $category->documents_count }} {{ __('document(s)') }}
                                                     </span>
-                                                    <a href="{{ route('user.legal-library.category', $category->id) }}" 
-                                                       class="btn btn-sm btn-outline-primary">
-                                                        {{ __('Browse') }} <i class="ti ti-arrow-right"></i>
-                                                    </a>
+                                                    @if($hasFreePlan)
+                                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                                disabled 
+                                                                title="Abonnement premium requis">
+                                                            <i class="ti ti-lock"></i> {{ __('Premium') }}
+                                                        </button>
+                                                    @else
+                                                        <a href="{{ route('user.legal-library.category', $category->id) }}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            {{ __('Browse') }} <i class="ti ti-arrow-right"></i>
+                                                        </a>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>

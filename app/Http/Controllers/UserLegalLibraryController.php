@@ -45,6 +45,12 @@ class UserLegalLibraryController extends Controller
     public function showCategory($categoryId)
     {
         if (Auth::user()->can('view legal library')) {
+            // Check if user has free plan
+            if (Auth::user()->hasFreePlan()) {
+                return redirect()->route('user.legal-library.index')
+                    ->with('error', __('Cette fonctionnalité nécessite un abonnement premium. Veuillez souscrire à un plan pour accéder aux documents.'));
+            }
+
             $category = LegalCategory::find($categoryId);
             
             if (!$category) {
@@ -67,6 +73,12 @@ class UserLegalLibraryController extends Controller
     public function viewDocument($id)
     {
         if (Auth::user()->can('view legal library')) {
+            // Check if user has free plan
+            if (Auth::user()->hasFreePlan()) {
+                return redirect()->route('user.legal-library.index')
+                    ->with('error', __('Cette fonctionnalité nécessite un abonnement premium. Veuillez souscrire à un plan pour accéder aux documents.'));
+            }
+
             $document = LegalDocument::with('category')->find($id);
             
             if (!$document) {
@@ -88,6 +100,11 @@ class UserLegalLibraryController extends Controller
     public function streamDocument($id)
     {
         if (Auth::user()->can('view legal library')) {
+            // Check if user has free plan
+            if (Auth::user()->hasFreePlan()) {
+                abort(403, 'Cette fonctionnalité nécessite un abonnement premium.');
+            }
+
             $document = LegalDocument::find($id);
             
             if (!$document) {
@@ -115,6 +132,12 @@ class UserLegalLibraryController extends Controller
     public function downloadDocument($id)
     {
         if (Auth::user()->can('view legal library')) {
+            // Check if user has free plan
+            if (Auth::user()->hasFreePlan()) {
+                return redirect()->route('user.legal-library.index')
+                    ->with('error', __('Cette fonctionnalité nécessite un abonnement premium. Veuillez souscrire à un plan pour télécharger des documents.'));
+            }
+
             $document = LegalDocument::find($id);
             
             if (!$document) {

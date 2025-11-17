@@ -8,11 +8,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 use Lab404\Impersonate\Models\Impersonate;
+use App\Mail\SubscriptionConfirmation;
+use App\Mail\AdminSubscriptionNotification;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -179,6 +182,68 @@ class User extends Authenticatable implements MustVerifyEmail
             }
             $user->save();
 
+            // Send subscription confirmation emails
+            try {
+                Utility::getSMTPDetails(1); // Admin SMTP settings
+                
+                $planPrice = Utility::getValByName('currency_symbol') . number_format($plan->price, 2);
+                $planDuration = $plan->duration === 'month' ? 'Mensuel (1 mois)' : 'Annuel (12 mois)';
+                $paymentMethod = session('payment_method', 'Paiement en ligne'); // Try to get from session
+                
+                // Send email to user
+                if ($user->email) {
+                    $userEmailData = [
+                        'userName' => $user->name,
+                        'planName' => $plan->name,
+                        'planPrice' => $planPrice,
+                        'planDuration' => $planDuration,
+                        'expirationDate' => $user->plan_expire_date,
+                        'paymentMethod' => $paymentMethod,
+                        'dashboardUrl' => route('home'),
+                    ];
+                    
+                    Mail::to($user->email)->send(
+                        new SubscriptionConfirmation($user, $plan, $userEmailData)
+                    );
+                    
+                    \Log::info('Subscription confirmation email sent', [
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id
+                    ]);
+                }
+                
+                // Send email to admin
+                $adminEmail = Utility::getValByName('mail_from_address');
+                if ($adminEmail) {
+                    $adminEmailData = [
+                        'type' => 'new',
+                        'userName' => $user->name,
+                        'userEmail' => $user->email,
+                        'planName' => $plan->name,
+                        'planPrice' => $planPrice,
+                        'expirationDate' => $user->plan_expire_date,
+                        'paymentMethod' => $paymentMethod,
+                        'adminUrl' => route('users.index'),
+                    ];
+                    
+                    Mail::to($adminEmail)->send(
+                        new AdminSubscriptionNotification($user, $plan, $adminEmailData, 'new')
+                    );
+                    
+                    \Log::info('Admin notification sent for new subscription', [
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error sending subscription confirmation emails', [
+                    'user_id' => $user->id,
+                    'plan_id' => $plan->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't block plan assignment if email fails
+            }
+
             return ['is_success' => true];
         } else {
             return [
@@ -203,6 +268,15 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $user = User::find($this->creatorId());
         return Plan::find($user->plan);
+    }
+
+    /**
+     * Check if user has a free plan (price = 0 or null)
+     */
+    public function hasFreePlan()
+    {
+        $plan = $this->getPlan();
+        return $plan ? ($plan->price <= 0) : true;
     }
 
     public static function MakeRole($company_id)

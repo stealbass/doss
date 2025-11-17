@@ -107,29 +107,26 @@
                                 <p class="mb-0">
                                     {{ $plan->description }}
                                 </p>
-                                {{-- @if ($plan->trial == 1) --}}
-                                    <p class="mb-0">
-                                        {{ __('Free Trial Days: ' . $plan->trial_days) }}
-                                    </p>
-                                {{-- @endif --}}
+                                {{-- Trial days removed as per requirements --}}
                                 <ul class="list-unstyled my-4">
                                     <li>
                                         <span class="theme-avtar">
                                             <i class="text-primary ti ti-circle-plus"></i></span>
-                                        {{ $plan->max_users < 0 ? __('Unlimited') : $plan->max_users }}
-                                        {{ __('Users') }}
+                                        {{ __('Bibliothèque juridique gratuite') }}
                                     </li>
                                     <li>
                                         <span class="theme-avtar">
                                             <i class="text-primary ti ti-circle-plus"></i></span>
-                                        {{ $plan->max_advocates < 0 ? __('Unlimited') : $plan->max_advocates }}
-                                        {{ __('Advocates') }}
+                                        {{ __('IA juridique gratuite') }}
                                     </li>
                                     <li>
                                         <span class="theme-avtar">
                                             <i class="text-primary ti ti-circle-plus"></i></span>
-                                        {{ $plan->storage_limit < 0 ? __('Unlimited') : $plan->storage_limit }}
-                                        {{ __('Storage Limit') }}
+                                        @if ($plan->storage_limit < 0)
+                                            {{ __('Stockage illimité') }}
+                                        @else
+                                            {{ number_format($plan->storage_limit / 1024, 0) }}GB {{ __('Stockage') }}
+                                        @endif
                                     </li>
                                     <li>
                                         <span class="theme-avtar">
