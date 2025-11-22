@@ -74,6 +74,14 @@ class Utility extends Model
             "wasabi_root" => "",
             "wasabi_max_upload_size" => "",
             "wasabi_storage_validation" => "",
+            "r2_key" => "",
+            "r2_secret" => "",
+            "r2_region" => "auto",
+            "r2_bucket" => "",
+            "r2_endpoint" => "",
+            "r2_url" => "",
+            "r2_max_upload_size" => "",
+            "r2_storage_validation" => "",
             "company_logo_light" => "logo-light.png",
             "company_logo_dark" => "logo-dark.png",
             "company_favicon" => "",
@@ -172,6 +180,18 @@ class Utility extends Model
                         'filesystems.disks.s3.region' => $settings['s3_region'],
                         'filesystems.disks.s3.bucket' => $settings['s3_bucket'],
                         'filesystems.disks.s3.use_path_style_endpoint' => false,
+                    ]
+                );
+            } elseif ($settings['storage_setting'] == 'r2') {
+                config(
+                    [
+                        'filesystems.disks.r2.key' => $settings['r2_key'],
+                        'filesystems.disks.r2.secret' => $settings['r2_secret'],
+                        'filesystems.disks.r2.region' => $settings['r2_region'] ?? 'auto',
+                        'filesystems.disks.r2.bucket' => $settings['r2_bucket'],
+                        'filesystems.disks.r2.endpoint' => $settings['r2_endpoint'],
+                        'filesystems.disks.r2.url' => $settings['r2_url'],
+                        'filesystems.disks.r2.use_path_style_endpoint' => false,
                     ]
                 );
             }
@@ -311,6 +331,20 @@ class Utility extends Model
                     );
                     $max_size = !empty($settings['s3_max_upload_size']) ? $settings['s3_max_upload_size'] : '2048';
                     $mimes = !empty($settings['s3_storage_validation']) ? $settings['s3_storage_validation'] : '';
+                } else if ($settings['storage_setting'] == 'r2') {
+                    config(
+                        [
+                            'filesystems.disks.r2.key' => $settings['r2_key'],
+                            'filesystems.disks.r2.secret' => $settings['r2_secret'],
+                            'filesystems.disks.r2.region' => $settings['r2_region'] ?? 'auto',
+                            'filesystems.disks.r2.bucket' => $settings['r2_bucket'],
+                            'filesystems.disks.r2.endpoint' => $settings['r2_endpoint'],
+                            'filesystems.disks.r2.url' => $settings['r2_url'],
+                            'filesystems.disks.r2.use_path_style_endpoint' => false,
+                        ]
+                    );
+                    $max_size = !empty($settings['r2_max_upload_size']) ? $settings['r2_max_upload_size'] : '2048';
+                    $mimes = !empty($settings['r2_storage_validation']) ? $settings['r2_storage_validation'] : '';
                 } else {
                     $max_size = !empty($settings['local_storage_max_upload_size']) ? $settings['local_storage_max_upload_size'] : '2048';
 
@@ -367,6 +401,13 @@ class Utility extends Model
                     } else if ($settings['storage_setting'] == 's3') {
 
                         $path = Storage::disk('s3')->putFileAs(
+                            $path,
+                            $file,
+                            $name
+                        );
+                    } else if ($settings['storage_setting'] == 'r2') {
+
+                        $path = Storage::disk('r2')->putFileAs(
                             $path,
                             $file,
                             $name
@@ -476,6 +517,14 @@ class Utility extends Model
             "wasabi_root" => "",
             "wasabi_max_upload_size" => "",
             "wasabi_storage_validation" => "",
+            "r2_key" => "",
+            "r2_secret" => "",
+            "r2_region" => "auto",
+            "r2_bucket" => "",
+            "r2_endpoint" => "",
+            "r2_url" => "",
+            "r2_max_upload_size" => "",
+            "r2_storage_validation" => "",
         ];
 
         foreach ($data as $row) {
