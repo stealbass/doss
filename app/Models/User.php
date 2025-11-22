@@ -521,4 +521,150 @@ class User extends Authenticatable implements MustVerifyEmail
             }
         }
     }
+
+    // ========== RELATIONS DOSSY IA MOBILE APP ==========
+
+    /**
+     * Relation: Abonnement mobile actif de l'utilisateur
+     */
+    public function activeMobileSubscription()
+    {
+        return $this->hasOne(MobileAppSubscription::class)
+                    ->where('status', 'active')
+                    ->where('expires_at', '>', now())
+                    ->latest();
+    }
+
+    /**
+     * Relation: Tous les abonnements mobiles
+     */
+    public function mobileSubscriptions()
+    {
+        return $this->hasMany(MobileAppSubscription::class);
+    }
+
+    /**
+     * Relation: Conversations de l'utilisateur
+     */
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class);
+    }
+
+    /**
+     * Relation: Paiements mobiles
+     */
+    public function mobilePayments()
+    {
+        return $this->hasMany(MobileAppPayment::class);
+    }
+
+    /**
+     * Relation: Parrainages effectués (en tant que parrain)
+     */
+    public function referralsMade()
+    {
+        return $this->hasMany(Referral::class, 'referrer_user_id');
+    }
+
+    /**
+     * Relation: Parrainages reçus (en tant que filleul)
+     */
+    public function referralsReceived()
+    {
+        return $this->hasMany(Referral::class, 'referred_user_id');
+    }
+
+    /**
+     * Relation: Récompenses de parrainage
+     */
+    public function referralRewards()
+    {
+        return $this->hasMany(ReferralReward::class);
+    }
+
+    /**
+     * Relation: Documents soumis
+     */
+    public function submittedDocuments()
+    {
+        return $this->hasMany(SubmittedDocument::class);
+    }
+
+    /**
+     * Relation: Téléchargements de documents
+     */
+    public function documentDownloads()
+    {
+        return $this->hasMany(DocumentDownload::class);
+    }
+
+    /**
+     * Relation: Utilisation du chat web
+     */
+    public function webChatUsage()
+    {
+        return $this->hasOne(WebChatUsage::class)
+                    ->where('quota_month', now()->startOfMonth()->toDateString());
+    }
+
+    /**
+     * Récupère ou crée l'usage du chat web pour le mois en cours
+     */
+    public function getOrCreateWebChatUsage()
+    {
+        $quota = $this->getWebChatQuota();
+        return WebChatUsage::getOrCreateForUser($this->id, $quota);
+    }
+
+    /**
+     * Détermine le quota de chat web basé sur le plan Dossy Pro
+     */
+    public function getWebChatQuota()
+    {
+        $plan = $this->getPlan();
+        
+        if (!$plan) {
+            return 10; // Plan gratuit par défaut
+        }
+
+        // Mapping des plans Dossy Pro vers quotas chat web
+        $quotaMap = [
+            'Gratuit' => 10,
+            'Solo' => 100,
+            'Basic' => 200,
+            'Pro' => 400,
+        ];
+
+        return $quotaMap[$plan->name] ?? 10;
+    }
+
+    /**
+     * Génère un code de parrainage unique pour l'utilisateur
+     */
+    public function generateReferralCode()
+    {
+        if (!$this->referral_code) {
+            $this->referral_code = Referral::generateUniqueCode();
+            $this->save();
+        }
+        return $this->referral_code;
+    }
+
+    /**
+     * Vérifie si l'utilisateur a un abonnement mobile actif
+     */
+    public function hasMobileSubscription()
+    {
+        return $this->activeMobileSubscription()->exists();
+    }
+
+    /**
+     * Récupère le plan mobile actif
+     */
+    public function getMobilePlan()
+    {
+        $subscription = $this->activeMobileSubscription;
+        return $subscription ? $subscription->plan : null;
+    }
 }
