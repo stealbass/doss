@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LegalCategory;
 use App\Models\LegalDocument;
+use App\Models\Utility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +12,17 @@ use Illuminate\Support\Facades\Validator as FacadesValidator;
 
 class LegalLibraryController extends Controller
 {
+    /**
+     * Get the configured storage disk (local or r2)
+     */
+    private function getStorageDisk()
+    {
+        $settings = Utility::settings();
+        $storageSetting = $settings['storage_setting'] ?? 'local';
+        
+        // Si R2 configuré, utiliser R2, sinon public (local)
+        return ($storageSetting === 'r2') ? 'r2' : 'public';
+    }
     /**
      * Display a listing of categories
      */
@@ -202,7 +214,8 @@ class LegalLibraryController extends Controller
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('legal_documents', $fileName, 'public');
+                $disk = $this->getStorageDisk();
+                $filePath = $file->storeAs('legal_documents', $fileName, $disk);
 
                 LegalDocument::create([
                     'category_id' => $categoryId,
@@ -268,11 +281,12 @@ class LegalLibraryController extends Controller
             $errors = [];
 
             if ($request->hasFile('files')) {
+                $disk = $this->getStorageDisk();
                 foreach ($request->file('files') as $file) {
                     try {
                         // Generate unique filename
                         $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
-                        $filePath = $file->storeAs('legal_documents', $fileName, 'public');
+                        $filePath = $file->storeAs('legal_documents', $fileName, $disk);
 
                         // Extract title from filename (remove extension)
                         $title = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -361,14 +375,16 @@ class LegalLibraryController extends Controller
 
             // If a new file is uploaded
             if ($request->hasFile('file')) {
+                $disk = $this->getStorageDisk();
+                
                 // Delete old file
-                if (Storage::disk('public')->exists($document->file_path)) {
-                    Storage::disk('public')->delete($document->file_path);
+                if (Storage::disk($disk)->exists($document->file_path)) {
+                    Storage::disk($disk)->delete($document->file_path);
                 }
 
                 $file = $request->file('file');
                 $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('legal_documents', $fileName, 'public');
+                $filePath = $file->storeAs('legal_documents', $fileName, $disk);
 
                 $updateData['file_path'] = $filePath;
                 $updateData['file_name'] = $file->getClientOriginalName();

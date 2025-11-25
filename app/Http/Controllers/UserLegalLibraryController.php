@@ -144,16 +144,31 @@ class UserLegalLibraryController extends Controller
                 return redirect()->back()->with('error', __('Document not found.'));
             }
 
-            $filePath = storage_path('app/public/' . $document->file_path);
+            // Get storage setting
+            $settings = \App\Models\Utility::settings();
+            $storageSetting = $settings['storage_setting'] ?? 'local';
             
-            if (!file_exists($filePath)) {
-                return redirect()->back()->with('error', __('File not found.'));
+            if ($storageSetting === 'r2') {
+                // For R2: redirect to public URL
+                $url = \App\Models\Utility::get_file($document->file_path);
+                
+                // Increment download count
+                $document->incrementDownloads();
+                
+                return redirect($url);
+            } else {
+                // For local storage: direct download
+                $filePath = storage_path('app/public/' . $document->file_path);
+                
+                if (!file_exists($filePath)) {
+                    return redirect()->back()->with('error', __('File not found.'));
+                }
+
+                // Increment download count
+                $document->incrementDownloads();
+
+                return response()->download($filePath, $document->file_name);
             }
-
-            // Increment download count
-            $document->incrementDownloads();
-
-            return response()->download($filePath, $document->file_name);
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }

@@ -70,6 +70,7 @@ $directories = [
     'uploads/logo',                 // Logos entreprises
     'uploads/documents',            // Documents
     'uploads/bill',                 // Factures
+    'legal_documents',              // Bibliothèque juridique (PDFs)
     'uploads',                      // Autres fichiers à la racine
 ];
 
