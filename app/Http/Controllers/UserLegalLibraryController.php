@@ -111,16 +111,33 @@ class UserLegalLibraryController extends Controller
                 abort(404, 'Document not found');
             }
 
-            $filePath = storage_path('app/public/' . $document->file_path);
+            // Get storage setting
+            $settings = \App\Models\Utility::settings();
+            $storageSetting = $settings['storage_setting'] ?? 'local';
             
-            if (!file_exists($filePath)) {
-                abort(404, 'File not found');
-            }
+            if ($storageSetting === 'r2') {
+                // For R2: redirect to public URL for inline preview
+                $url = \App\Models\Utility::get_file($document->file_path);
+                
+                if (empty($url)) {
+                    abort(404, 'File not found on R2');
+                }
+                
+                // Redirect to R2 public URL (browser will display PDF inline)
+                return redirect($url);
+            } else {
+                // For local storage: stream file directly
+                $filePath = storage_path('app/public/' . $document->file_path);
+                
+                if (!file_exists($filePath)) {
+                    abort(404, 'File not found');
+                }
 
-            return response()->file($filePath, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $document->file_name . '"'
-            ]);
+                return response()->file($filePath, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $document->file_name . '"'
+                ]);
+            }
         } else {
             abort(403, 'Permission Denied');
         }
