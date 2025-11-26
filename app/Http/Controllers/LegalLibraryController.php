@@ -20,8 +20,21 @@ class LegalLibraryController extends Controller
         $settings = Utility::settings();
         $storageSetting = $settings['storage_setting'] ?? 'local';
         
-        // Si R2 configuré, utiliser R2, sinon public (local)
-        return ($storageSetting === 'r2') ? 'r2' : 'public';
+        // Configure R2 disk with DB credentials if R2 is selected
+        if ($storageSetting === 'r2') {
+            config([
+                'filesystems.disks.r2.key' => $settings['r2_key'],
+                'filesystems.disks.r2.secret' => $settings['r2_secret'],
+                'filesystems.disks.r2.region' => $settings['r2_region'] ?? 'auto',
+                'filesystems.disks.r2.bucket' => $settings['r2_bucket'],
+                'filesystems.disks.r2.endpoint' => $settings['r2_endpoint'],
+                'filesystems.disks.r2.url' => $settings['r2_url'],
+                'filesystems.disks.r2.use_path_style_endpoint' => false,
+            ]);
+            return 'r2';
+        }
+        
+        return 'public';
     }
     /**
      * Display a listing of categories
