@@ -1,0 +1,158 @@
+═══════════════════════════════════════════════════════════════════
+  🔧 FIX URGENT : Nouveaux uploads ne vont pas vers R2
+═══════════════════════════════════════════════════════════════════
+
+PROBLÈME IDENTIFIÉ
+------------------
+❌ Les nouveaux documents uploadés via Legal Library restent en LOCAL
+❌ Ils n'apparaissent pas sur Cloudflare R2
+❌ Les utilisateurs ne peuvent pas les télécharger
+
+CAUSE
+-----
+Le paramètre storage_setting dans la base de données n'est PAS 'r2'
+
+
+═══════════════════════════════════════════════════════════════════
+  ⚡ SOLUTION RAPIDE (5 minutes)
+═══════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : Connexion SSH
+------------------------
+ssh dossypro@ssh-dossypro.alwaysdata.net
+cd ~/public_html
+
+
+ÉTAPE 2 : Récupérer le code
+---------------------------
+git pull origin main
+
+
+ÉTAPE 3 : Diagnostic
+--------------------
+php diagnose_storage.php
+
+ATTENDU : Ce script vous dira si storage_setting = 'r2' ou autre chose
+
+
+ÉTAPE 4 : Correction automatique
+---------------------------------
+php fix_storage_r2.php
+
+CE SCRIPT VA :
+✅ Mettre storage_setting = 'r2' dans la base de données
+✅ Vider tous les caches Laravel
+✅ Vérifier que la config R2 est complète
+✅ Confirmer que tout est OK
+
+
+ÉTAPE 5 : Vérification
+----------------------
+php artisan tinker
+
+Dans le shell Tinker :
+App\Models\Utility::getValByName('storage_setting');
+
+ATTENDU : "r2"
+
+Tapez : exit
+
+
+ÉTAPE 6 : Test Upload
+---------------------
+1. Connectez-vous en tant que Super Admin
+2. Legal Library → Choisir une catégorie
+3. Add Document
+4. Uploadez un PDF de test (ex: test_r2_2025.pdf)
+5. Save
+
+
+ÉTAPE 7 : Vérifier sur R2
+-------------------------
+1. Ouvrez Cloudflare Dashboard → R2
+2. Ouvrez votre bucket
+3. Naviguez vers : legal_documents/
+4. Le fichier test_r2_2025.pdf DOIT apparaître avec timestamp récent
+
+
+ÉTAPE 8 : Test Client
+---------------------
+1. Connectez-vous en tant qu'utilisateur normal
+2. Bibliothèque Juridique
+3. Trouvez le document test_r2_2025.pdf
+4. Cliquez sur Télécharger
+5. Le PDF doit s'afficher depuis :
+   https://files.dossypro.com/legal_documents/xxxxxx_test_r2_2025.pdf
+
+
+═══════════════════════════════════════════════════════════════════
+  🎯 RÉSULTAT FINAL
+═══════════════════════════════════════════════════════════════════
+
+Après ces étapes :
+✅ storage_setting = 'r2' dans la base de données
+✅ Cache Laravel vidé
+✅ Tous les NOUVEAUX uploads vont vers R2 automatiquement
+✅ Les utilisateurs peuvent télécharger les nouveaux documents
+✅ Les fichiers apparaissent dans Cloudflare R2
+
+
+═══════════════════════════════════════════════════════════════════
+  ❓ SI ÇA NE MARCHE PAS
+═══════════════════════════════════════════════════════════════════
+
+Envoyez-moi :
+
+1. La sortie complète de : php diagnose_storage.php
+2. La sortie complète de : php fix_storage_r2.php
+3. Cette requête SQL :
+   SELECT `key`, `value` FROM settings WHERE `key` = 'storage_setting';
+4. Screenshot de l'erreur lors du téléchargement
+
+
+═══════════════════════════════════════════════════════════════════
+  📋 ALTERNATIVE : Correction manuelle via SQL
+═══════════════════════════════════════════════════════════════════
+
+Si les scripts ne fonctionnent pas, vous pouvez corriger manuellement :
+
+1. Connectez-vous à phpMyAdmin ou MySQL
+2. Exécutez cette requête :
+
+   UPDATE settings SET value = 'r2' WHERE `key` = 'storage_setting';
+
+3. Puis via SSH :
+
+   cd ~/public_html
+   php artisan cache:clear
+   php artisan config:clear
+
+
+═══════════════════════════════════════════════════════════════════
+  📚 DOCUMENTATION COMPLÈTE
+═══════════════════════════════════════════════════════════════════
+
+Fichiers disponibles dans le repo :
+- FIX_NOUVEAUX_UPLOADS_R2.md : Guide détaillé complet
+- diagnose_storage.php : Script de diagnostic
+- fix_storage_r2.php : Script de correction automatique
+- MIGRATION_LEGAL_DOCUMENTS_R2.md : Guide migration complète
+
+
+═══════════════════════════════════════════════════════════════════
+  ✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+□ git pull origin main
+□ php diagnose_storage.php exécuté
+□ php fix_storage_r2.php exécuté
+□ Vérification : storage_setting = 'r2'
+□ Cache vidé
+□ Test upload document
+□ Fichier visible dans R2 Dashboard
+□ Test téléchargement client
+□ URL commence par https://files.dossypro.com/
+
+
+Date : 2025-11-26
+Pull Request : https://github.com/stealbass/doss/pull/10
