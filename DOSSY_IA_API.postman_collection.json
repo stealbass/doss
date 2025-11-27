@@ -1,0 +1,807 @@
+{
+  "info": {
+    "name": "Dossy IA - Mobile API",
+    "description": "Collection complète pour l'API Mobile Dossy IA avec RAG, Chat AI, Documents, Subscriptions et Referrals",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dossy.alwaysdata.net/api/mobile",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "payment_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('user_id', jsonData.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jean Dupont\",\n  \"email\": \"jean@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"phone\": \"+237670000000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": ["{{base_url}}"],
+              "path": ["register"]
+            },
+            "description": "Créer un nouveau compte utilisateur avec plan gratuit automatique"
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('user_id', jsonData.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jean@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Connexion utilisateur avec génération de token Sanctum"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            },
+            "description": "Obtenir le profil utilisateur avec subscription et quotas"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jean-Pierre Dupont\",\n  \"phone\": \"+237670000001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            },
+            "description": "Mettre à jour le profil utilisateur"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token', jsonData.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/refresh-token",
+              "host": ["{{base_url}}"],
+              "path": ["refresh-token"]
+            },
+            "description": "Rafraîchir le token d'authentification"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            },
+            "description": "Déconnexion et révocation du token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat AI",
+      "item": [
+        {
+          "name": "Create Conversation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('conversation_id', jsonData.data.conversation.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Question sur le droit du travail\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chat/conversation",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "conversation"]
+            },
+            "description": "Créer une nouvelle conversation"
+          }
+        },
+        {
+          "name": "Get All Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chat/conversations",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "conversations"]
+            },
+            "description": "Obtenir la liste de toutes les conversations de l'utilisateur"
+          }
+        },
+        {
+          "name": "Get Conversation Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chat/conversation/{{conversation_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "conversation", "{{conversation_id}}", "messages"]
+            },
+            "description": "Obtenir l'historique des messages d'une conversation"
+          }
+        },
+        {
+          "name": "Send Message - RAG Simple",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation_id\": {{conversation_id}},\n  \"message\": \"Qu'est-ce qu'un contrat synallagmatique ?\",\n  \"use_rag\": true,\n  \"rag_type\": \"simple\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chat/send",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "send"]
+            },
+            "description": "Envoyer un message avec RAG Simple (bibliothèque juridique)"
+          }
+        },
+        {
+          "name": "Send Message - RAG Advanced",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation_id\": {{conversation_id}},\n  \"message\": \"Analyse mon contrat de travail uploadé\",\n  \"use_rag\": true,\n  \"rag_type\": \"advanced\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chat/send",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "send"]
+            },
+            "description": "Envoyer un message avec RAG Advanced (documents utilisateur)"
+          }
+        },
+        {
+          "name": "Send Message - RAG Both",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation_id\": {{conversation_id}},\n  \"message\": \"Compare mon contrat avec le code du travail camerounais\",\n  \"use_rag\": true,\n  \"rag_type\": \"both\",\n  \"model\": \"gpt-3.5-turbo\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chat/send",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "send"]
+            },
+            "description": "Envoyer un message avec RAG Both (bibliothèque + documents utilisateur)"
+          }
+        },
+        {
+          "name": "Send Message - No RAG",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation_id\": {{conversation_id}},\n  \"message\": \"Bonjour, peux-tu m'aider ?\",\n  \"use_rag\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chat/send",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "send"]
+            },
+            "description": "Envoyer un message sans RAG (chat simple)"
+          }
+        },
+        {
+          "name": "Delete Conversation",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chat/conversation/{{conversation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "conversation", "{{conversation_id}}"]
+            },
+            "description": "Supprimer une conversation et tous ses messages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "Upload Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('document_id', jsonData.data.document.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/document.pdf"
+                },
+                {
+                  "key": "title",
+                  "value": "Mon contrat de travail",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Contrat CDI signé en 2023",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/documents/upload",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "upload"]
+            },
+            "description": "Upload un document PDF avec extraction de texte et indexation Pinecone"
+          }
+        },
+        {
+          "name": "Get My Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents/my-documents",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "my-documents"]
+            },
+            "description": "Obtenir la liste des documents uploadés par l'utilisateur"
+          }
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents/{{document_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "{{document_id}}"]
+            },
+            "description": "Supprimer un document uploadé (et de Pinecone)"
+          }
+        },
+        {
+          "name": "Search Legal Documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"prescription acquisitive immobilière\",\n  \"limit\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/documents/search",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "search"]
+            },
+            "description": "Rechercher dans la bibliothèque juridique (MySQL FULLTEXT)"
+          }
+        },
+        {
+          "name": "Download Legal Document",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents/legal/15/download",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "legal", "15", "download"]
+            },
+            "description": "Télécharger un document de la bibliothèque juridique"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscription",
+      "item": [
+        {
+          "name": "Get Plans",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/plans",
+              "host": ["{{base_url}}"],
+              "path": ["plans"]
+            },
+            "description": "Obtenir la liste de tous les plans disponibles (public)"
+          }
+        },
+        {
+          "name": "Get Current Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscription/current",
+              "host": ["{{base_url}}"],
+              "path": ["subscription", "current"]
+            },
+            "description": "Obtenir les détails de l'abonnement actuel avec usage des quotas"
+          }
+        },
+        {
+          "name": "Initiate Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('payment_id', jsonData.data.payment.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": 2,\n  \"billing_cycle\": \"monthly\",\n  \"payment_method\": \"mobile_money\",\n  \"phone_number\": \"+237670000000\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/subscription/initiate",
+              "host": ["{{base_url}}"],
+              "path": ["subscription", "initiate"]
+            },
+            "description": "Initier un paiement pour un plan (Flutterwave)"
+          }
+        },
+        {
+          "name": "Activate Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_id\": {{payment_id}},\n  \"transaction_reference\": \"DOSSY1732xxxxxx1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/subscription/activate",
+              "host": ["{{base_url}}"],
+              "path": ["subscription", "activate"]
+            },
+            "description": "Activer l'abonnement après paiement réussi"
+          }
+        },
+        {
+          "name": "Cancel Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscription/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["subscription", "cancel"]
+            },
+            "description": "Annuler l'abonnement (accès reste jusqu'à expiration)"
+          }
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscription/payments",
+              "host": ["{{base_url}}"],
+              "path": ["subscription", "payments"]
+            },
+            "description": "Obtenir l'historique des paiements"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Referral",
+      "item": [
+        {
+          "name": "Validate Referral Code",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referral_code\": \"JD123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/referral/validate",
+              "host": ["{{base_url}}"],
+              "path": ["referral", "validate"]
+            },
+            "description": "Valider un code de parrainage (public)"
+          }
+        },
+        {
+          "name": "Get My Referral Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/referral/code",
+              "host": ["{{base_url}}"],
+              "path": ["referral", "code"]
+            },
+            "description": "Obtenir mon code de parrainage et progression"
+          }
+        },
+        {
+          "name": "Get Referral History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/referral/history",
+              "host": ["{{base_url}}"],
+              "path": ["referral", "history"]
+            },
+            "description": "Obtenir l'historique de mes parrainages"
+          }
+        },
+        {
+          "name": "Get Referral Rewards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/referral/rewards",
+              "host": ["{{base_url}}"],
+              "path": ["referral", "rewards"]
+            },
+            "description": "Obtenir mes récompenses de parrainage"
+          }
+        }
+      ]
+    }
+  ]
+}
