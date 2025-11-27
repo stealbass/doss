@@ -1,0 +1,135 @@
+═══════════════════════════════════════════════════════════════════════════
+  🚀 INSTALLATION RAPIDE - PHASE 2 DEPENDENCIES
+═══════════════════════════════════════════════════════════════════════════
+
+📦 Nouvelles Dépendances Ajoutées
+───────────────────────────────────────────────────────────────────────────
+
+✅ openai-php/client (^0.10.1)    - Client OpenAI officiel
+✅ probots-io/pinecone-php (^1.1) - SDK Pinecone vector DB
+✅ smalot/pdfparser (^2.10)       - Extraction texte PDF
+
+═══════════════════════════════════════════════════════════════════════════
+  🔧 INSTALLATION SUR ALWAYSDATA (PRODUCTION)
+═══════════════════════════════════════════════════════════════════════════
+
+1️⃣  SSH sur le serveur
+    ────────────────────────────────────────────────────────────────────
+    ssh utilisateur@ssh-utilisateur.alwaysdata.net
+    cd ~/www/
+
+
+2️⃣  Pull le code
+    ────────────────────────────────────────────────────────────────────
+    git pull origin main
+
+
+3️⃣  Installer les dépendances
+    ────────────────────────────────────────────────────────────────────
+    composer install --optimize-autoloader --no-dev
+
+    OU si mise à jour complète:
+    composer update --optimize-autoloader --no-dev
+
+
+4️⃣  Tester l'installation
+    ────────────────────────────────────────────────────────────────────
+    php test_dependencies.php
+
+    Résultat attendu: ✅ TOUTES LES DÉPENDANCES INSTALLÉES
+
+
+5️⃣  Configurer .env
+    ────────────────────────────────────────────────────────────────────
+    Ajouter:
+    
+    OPENAI_API_KEY=sk-proj-YOUR_KEY_HERE
+    PINECONE_API_KEY=YOUR_PINECONE_KEY
+    PINECONE_ENVIRONMENT=us-east-1
+    PINECONE_INDEX=dossy-documents
+
+
+6️⃣  Vider les caches
+    ────────────────────────────────────────────────────────────────────
+    php artisan config:clear
+    php artisan cache:clear
+    php artisan route:clear
+
+
+7️⃣  Migrations & Seeders (si pas déjà fait)
+    ────────────────────────────────────────────────────────────────────
+    php artisan migrate
+    php artisan db:seed --class=MobileAppPlansSeeder
+
+
+8️⃣  Tester l'API Mobile
+    ────────────────────────────────────────────────────────────────────
+    curl -X POST https://dossy.alwaysdata.net/api/mobile/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "Test",
+        "email": "test@example.com",
+        "password": "password123",
+        "password_confirmation": "password123",
+        "phone": "+237670000000"
+      }'
+
+    Résultat attendu: 200 + token + plan "Gratuit"
+
+═══════════════════════════════════════════════════════════════════════════
+  🧪 VÉRIFICATION
+═══════════════════════════════════════════════════════════════════════════
+
+Vérifier packages installés:
+    composer show | grep -E "openai-php|pinecone|pdfparser"
+
+Résultat attendu:
+    openai-php/client         v0.10.1
+    probots-io/pinecone-php   v1.1.x
+    smalot/pdfparser          v2.10.x
+
+═══════════════════════════════════════════════════════════════════════════
+  🐛 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════
+
+Erreur: "Class 'OpenAI' not found"
+    → composer dump-autoload
+    → php artisan config:clear
+
+Erreur: "Memory limit exceeded"
+    → php -d memory_limit=512M /usr/local/bin/composer install
+
+Erreur: "Your requirements could not be resolved"
+    → composer self-update
+    → composer install --ignore-platform-reqs
+
+═══════════════════════════════════════════════════════════════════════════
+  📚 DOCUMENTATION
+═══════════════════════════════════════════════════════════════════════════
+
+Guide complet:        INSTALL_DEPENDENCIES.md
+Script de test:       php test_dependencies.php
+Documentation API:    API_DOCUMENTATION_MOBILE.md
+Collection Postman:   DOSSY_IA_API.postman_collection.json
+
+═══════════════════════════════════════════════════════════════════════════
+  ✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════════════
+
+☐ git pull origin main
+☐ composer install --optimize-autoloader --no-dev
+☐ php test_dependencies.php (✅ all passed)
+☐ OPENAI_API_KEY configurée dans .env
+☐ PINECONE_API_KEY configurée dans .env
+☐ php artisan config:clear
+☐ php artisan cache:clear
+☐ Test API register (curl)
+☐ Test API chat avec RAG
+
+═══════════════════════════════════════════════════════════════════════════
+
+Date: 2025-11-27
+Phase: 2 - RAG Services + Mobile API
+Status: Dependencies Ready for Installation
+
+═══════════════════════════════════════════════════════════════════════════
