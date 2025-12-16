@@ -13,6 +13,7 @@ use App\Http\Controllers\UserLegalLibraryController;
 use App\Http\Controllers\PaiementProController;
 use App\Http\Controllers\TapPaymentController;
 use App\Http\Controllers\MobileAppSettingsController;
+use App\Http\Controllers\MobileUsersController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -345,6 +346,17 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('mobile-app-settings/update-features', [MobileAppSettingsController::class, 'updateFeatures'])->name('mobile-app-settings.update-features');
     Route::post('mobile-app-settings/update-limits', [MobileAppSettingsController::class, 'updateLimits'])->name('mobile-app-settings.update-limits');
     Route::post('mobile-app-settings/update-info', [MobileAppSettingsController::class, 'updateInfo'])->name('mobile-app-settings.update-info');
+
+    // Mobile Users Management Routes
+    Route::get('mobile-users', [MobileUsersController::class, 'index'])->name('mobile-users.index');
+    Route::get('mobile-users/{id}', [MobileUsersController::class, 'show'])->name('mobile-users.show');
+    Route::post('mobile-users/{id}/suspend', [MobileUsersController::class, 'suspend'])->name('mobile-users.suspend');
+    Route::post('mobile-users/{id}/reactivate', [MobileUsersController::class, 'reactivate'])->name('mobile-users.reactivate');
+    Route::post('mobile-users/{id}/change-plan', [MobileUsersController::class, 'changePlan'])->name('mobile-users.change-plan');
+    Route::post('mobile-users/{id}/extend-subscription', [MobileUsersController::class, 'extendSubscription'])->name('mobile-users.extend-subscription');
+    Route::post('mobile-users/{id}/reset-password', [MobileUsersController::class, 'resetPassword'])->name('mobile-users.reset-password');
+    Route::get('mobile-users/export/csv', [MobileUsersController::class, 'export'])->name('mobile-users.export');
+    Route::get('mobile-users/statistics/ajax', [MobileUsersController::class, 'statistics'])->name('mobile-users.statistics');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
