@@ -10,6 +10,7 @@ import 'core/constants/app_constants.dart';
 import 'data/providers/auth_provider.dart';
 import 'data/providers/chat_provider.dart';
 import 'data/providers/subscription_provider.dart';
+import 'data/providers/document_provider.dart';
 import 'data/providers/locale_provider.dart';
 import 'data/providers/theme_provider.dart';
 import 'presentation/screens/splash/splash_screen.dart';
@@ -17,6 +18,7 @@ import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
+import 'presentation/screens/subscription/subscription_plans_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +55,7 @@ class DossyChatIAApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => DocumentProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
@@ -81,6 +84,7 @@ class DossyChatIAApp extends StatelessWidget {
                   '/login': (context) => const LoginScreen(),
                   '/register': (context) => const RegisterScreen(),
                   '/home': (context) => const HomeScreen(),
+                  '/subscription': (context) => const SubscriptionPlansScreen(),
                 },
               );
             },

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/auth_provider.dart';
 import '../chat/chat_screen.dart';
+import '../documents/documents_screen.dart';
+import '../profile/profile_settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,9 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const ChatScreen(),
-    const LibraryTabScreen(),
+    const DocumentsScreen(),
     const ToolsTabScreen(),
-    const ProfileTabScreen(),
+    const ProfileSettingsScreen(),
   ];
 
   @override
@@ -43,9 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Chat',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.library_books_outlined),
-            activeIcon: Icon(Icons.library_books),
-            label: 'Bibliothèque',
+            icon: Icon(Icons.folder_outlined),
+            activeIcon: Icon(Icons.folder),
+            label: 'Documents',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.build_outlined),
@@ -58,26 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Profil',
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Library Tab Screen (Placeholder)
-class LibraryTabScreen extends StatelessWidget {
-  const LibraryTabScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bibliothèque Juridique'),
-      ),
-      body: Center(
-        child: Text(
-          'Bibliothèque Juridique',
-          style: TextStyle(fontSize: 18.sp),
-        ),
       ),
     );
   }
@@ -103,112 +85,4 @@ class ToolsTabScreen extends StatelessWidget {
   }
 }
 
-// Profile Tab Screen (Placeholder)
-class ProfileTabScreen extends StatelessWidget {
-  const ProfileTabScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: Navigate to settings
-            },
-          ),
-        ],
-      ),
-      body: user == null
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(16.w),
-              child: Column(
-                children: [
-                  // Profile Avatar
-                  CircleAvatar(
-                    radius: 50.r,
-                    backgroundColor: AppColors.primary,
-                    child: user.avatar != null
-                        ? null
-                        : Icon(
-                            Icons.person,
-                            size: 50.sp,
-                            color: Colors.white,
-                          ),
-                  ),
-                  
-                  SizedBox(height: 16.h),
-                  
-                  // Name
-                  Text(
-                    user.name,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  
-                  SizedBox(height: 4.h),
-                  
-                  // Email
-                  Text(
-                    user.email,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  
-                  SizedBox(height: 24.h),
-                  
-                  // Plan Badge
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.getPlanColor(user.plan).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: AppColors.getPlanColor(user.plan),
-                      ),
-                    ),
-                    child: Text(
-                      user.plan,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.getPlanColor(user.plan),
-                      ),
-                    ),
-                  ),
-                  
-                  SizedBox(height: 32.h),
-                  
-                  // Logout Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await authProvider.logout();
-                        if (!context.mounted) return;
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Se déconnecter'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-    );
-  }
-}
