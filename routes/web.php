@@ -16,6 +16,7 @@ use App\Http\Controllers\MobileAppSettingsController;
 use App\Http\Controllers\MobileUsersController;
 use App\Http\Controllers\MobileAppPlansController;
 use App\Http\Controllers\MobileAnalyticsController;
+use App\Http\Controllers\PushNotificationsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -378,6 +379,20 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('mobile-analytics', [MobileAnalyticsController::class, 'index'])->name('mobile-analytics.index');
     Route::get('mobile-analytics/realtime', [MobileAnalyticsController::class, 'realtime'])->name('mobile-analytics.realtime');
     Route::get('mobile-analytics/export', [MobileAnalyticsController::class, 'export'])->name('mobile-analytics.export');
+
+    // Push Notifications Management Routes
+    Route::get('push-notifications', [PushNotificationsController::class, 'index'])->name('push-notifications.index');
+    Route::get('push-notifications/create', [PushNotificationsController::class, 'create'])->name('push-notifications.create');
+    Route::post('push-notifications', [PushNotificationsController::class, 'store'])->name('push-notifications.store');
+    Route::get('push-notifications/{id}', [PushNotificationsController::class, 'show'])->name('push-notifications.show');
+    Route::get('push-notifications/{id}/edit', [PushNotificationsController::class, 'edit'])->name('push-notifications.edit');
+    Route::put('push-notifications/{id}', [PushNotificationsController::class, 'update'])->name('push-notifications.update');
+    Route::delete('push-notifications/{id}', [PushNotificationsController::class, 'destroy'])->name('push-notifications.destroy');
+    Route::post('push-notifications/{id}/send', [PushNotificationsController::class, 'send'])->name('push-notifications.send');
+    Route::get('push-notifications/{id}/duplicate', [PushNotificationsController::class, 'duplicate'])->name('push-notifications.duplicate');
+    Route::post('push-notifications/{id}/cancel', [PushNotificationsController::class, 'cancel'])->name('push-notifications.cancel');
+    Route::get('push-notifications-preview-recipients', [PushNotificationsController::class, 'previewRecipients'])->name('push-notifications.preview-recipients');
+    Route::get('push-notifications-statistics', [PushNotificationsController::class, 'statistics'])->name('push-notifications.statistics');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
