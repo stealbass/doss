@@ -2,7 +2,17 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/api_helpers.dart';
 
+/// Service API principal pour toutes les requêtes backend
+/// 
+/// Utilitaires disponibles (lib/core/utils/api_helpers.dart):
+/// - ApiHelpers.hasInternetConnection() - Vérifier la connexion
+/// - ApiHelpers.parseApiError(error) - Parser les erreurs
+/// - ApiHelpers.retryWithBackoff() - Retry automatique
+/// - ApiHelpers.isValidEmail() / isValidPhone() - Validation
+/// - NetworkHelper() - Surveillance de la connexion
+/// - ApiInterceptor (pour Dio) - Logs automatiques
 class ApiService {
   final String baseUrl = AppConstants.baseUrl;
   
