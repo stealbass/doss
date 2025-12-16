@@ -407,6 +407,61 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                   ),
                 ),
 
+                SizedBox(height: 24.h),
+
+                // Professional Features Section
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fonctionnalités',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Referral Program
+                      ListTile(
+                        leading: Icon(Icons.card_giftcard, color: AppColors.primary),
+                        title: const Text('Programme de parrainage'),
+                        subtitle: const Text('Gagnez des récompenses'),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/referral');
+                        },
+                      ),
+
+                      // Anonymization (Pro only)
+                      if (user.plan == 'Professionnel' || user.plan == 'Cabinet/Entreprise')
+                        ListTile(
+                          leading: Icon(Icons.shield, color: AppColors.primary),
+                          title: const Text('Anonymisation de documents'),
+                          subtitle: const Text('Protection des données'),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () {
+                            Navigator.pushNamed(context, '/anonymization');
+                          },
+                        ),
+
+                      // Legal Monitoring (Pro only)
+                      if (user.plan == 'Professionnel' || user.plan == 'Cabinet/Entreprise')
+                        ListTile(
+                          leading: Icon(Icons.newspaper, color: AppColors.primary),
+                          title: const Text('Veille juridique'),
+                          subtitle: const Text('Actualités et alertes'),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          onTap: () {
+                            Navigator.pushNamed(context, '/legal-monitoring');
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+
                 SizedBox(height: 32.h),
 
                 // Logout Button

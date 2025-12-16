@@ -43,6 +43,7 @@ dependencies:
   image_picker: ^1.0.5
   flutter_document_picker: ^5.2.1
   path: ^1.8.3
+  share_plus: ^7.2.1
   
   # PDF & Documents
   pdf: ^3.10.7

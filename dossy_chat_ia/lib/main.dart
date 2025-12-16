@@ -23,6 +23,9 @@ import 'presentation/screens/tools/fiche_arret_screen.dart';
 import 'presentation/screens/tools/qcm_generator_screen.dart';
 import 'presentation/screens/tools/revision_active_screen.dart';
 import 'presentation/screens/tools/audio_transcription_screen.dart';
+import 'presentation/screens/referral/referral_screen.dart';
+import 'presentation/screens/professional/anonymization_screen.dart';
+import 'presentation/screens/professional/legal_monitoring_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -93,6 +96,9 @@ class DossyChatIAApp extends StatelessWidget {
                   '/qcm-generator': (context) => const QcmGeneratorScreen(),
                   '/revision-active': (context) => const RevisionActiveScreen(),
                   '/audio-transcription': (context) => const AudioTranscriptionScreen(),
+                  '/referral': (context) => const ReferralScreen(),
+                  '/anonymization': (context) => const AnonymizationScreen(),
+                  '/legal-monitoring': (context) => const LegalMonitoringScreen(),
                 },
               );
             },
