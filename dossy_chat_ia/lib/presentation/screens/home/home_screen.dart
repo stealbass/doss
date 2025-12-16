@@ -6,6 +6,7 @@ import '../../../data/providers/auth_provider.dart';
 import '../chat/chat_screen.dart';
 import '../documents/documents_screen.dart';
 import '../profile/profile_settings_screen.dart';
+import '../tools/tools_hub_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const ChatScreen(),
     const DocumentsScreen(),
-    const ToolsTabScreen(),
+    const ToolsHubScreen(),
     const ProfileSettingsScreen(),
   ];
 
@@ -65,24 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Tools Tab Screen (Placeholder)
-class ToolsTabScreen extends StatelessWidget {
-  const ToolsTabScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Outils'),
-      ),
-      body: Center(
-        child: Text(
-          'Outils pour Étudiants & Professionnels',
-          style: TextStyle(fontSize: 18.sp),
-        ),
-      ),
-    );
-  }
-}
 
 

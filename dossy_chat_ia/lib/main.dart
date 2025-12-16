@@ -19,6 +19,10 @@ import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/subscription/subscription_plans_screen.dart';
+import 'presentation/screens/tools/fiche_arret_screen.dart';
+import 'presentation/screens/tools/qcm_generator_screen.dart';
+import 'presentation/screens/tools/revision_active_screen.dart';
+import 'presentation/screens/tools/audio_transcription_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,7 +88,11 @@ class DossyChatIAApp extends StatelessWidget {
                   '/login': (context) => const LoginScreen(),
                   '/register': (context) => const RegisterScreen(),
                   '/home': (context) => const HomeScreen(),
-                  '/subscription': (context) => const SubscriptionPlansScreen(),
+                  '/subscription-plans': (context) => const SubscriptionPlansScreen(),
+                  '/fiche-arret': (context) => const FicheArretScreen(),
+                  '/qcm-generator': (context) => const QcmGeneratorScreen(),
+                  '/revision-active': (context) => const RevisionActiveScreen(),
+                  '/audio-transcription': (context) => const AudioTranscriptionScreen(),
                 },
               );
             },
