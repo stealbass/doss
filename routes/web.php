@@ -14,6 +14,7 @@ use App\Http\Controllers\PaiementProController;
 use App\Http\Controllers\TapPaymentController;
 use App\Http\Controllers\MobileAppSettingsController;
 use App\Http\Controllers\MobileUsersController;
+use App\Http\Controllers\MobileAppPlansController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -357,6 +358,20 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('mobile-users/{id}/reset-password', [MobileUsersController::class, 'resetPassword'])->name('mobile-users.reset-password');
     Route::get('mobile-users/export/csv', [MobileUsersController::class, 'export'])->name('mobile-users.export');
     Route::get('mobile-users/statistics/ajax', [MobileUsersController::class, 'statistics'])->name('mobile-users.statistics');
+
+    // Mobile App Plans Management Routes
+    Route::get('mobile-app-plans', [MobileAppPlansController::class, 'index'])->name('mobile-app-plans.index');
+    Route::get('mobile-app-plans/create', [MobileAppPlansController::class, 'create'])->name('mobile-app-plans.create');
+    Route::post('mobile-app-plans', [MobileAppPlansController::class, 'store'])->name('mobile-app-plans.store');
+    Route::get('mobile-app-plans/{id}/edit', [MobileAppPlansController::class, 'edit'])->name('mobile-app-plans.edit');
+    Route::put('mobile-app-plans/{id}', [MobileAppPlansController::class, 'update'])->name('mobile-app-plans.update');
+    Route::delete('mobile-app-plans/{id}', [MobileAppPlansController::class, 'destroy'])->name('mobile-app-plans.destroy');
+    Route::get('mobile-app-plans/comparison', [MobileAppPlansController::class, 'comparison'])->name('mobile-app-plans.comparison');
+    Route::post('mobile-app-plans/{id}/toggle-active', [MobileAppPlansController::class, 'toggleActive'])->name('mobile-app-plans.toggle-active');
+    Route::get('mobile-app-plans/{id}/duplicate', [MobileAppPlansController::class, 'duplicate'])->name('mobile-app-plans.duplicate');
+    Route::get('mobile-app-plans/{id}/statistics', [MobileAppPlansController::class, 'statistics'])->name('mobile-app-plans.statistics');
+    Route::get('mobile-app-plans/{id}/chart-data', [MobileAppPlansController::class, 'chartData'])->name('mobile-app-plans.chart-data');
+    Route::get('mobile-app-plans/export/csv', [MobileAppPlansController::class, 'export'])->name('mobile-app-plans.export');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
