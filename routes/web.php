@@ -17,6 +17,7 @@ use App\Http\Controllers\MobileUsersController;
 use App\Http\Controllers\MobileAppPlansController;
 use App\Http\Controllers\MobileAnalyticsController;
 use App\Http\Controllers\PushNotificationsController;
+use App\Http\Controllers\MobileLegalLibraryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -393,6 +394,17 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('push-notifications/{id}/cancel', [PushNotificationsController::class, 'cancel'])->name('push-notifications.cancel');
     Route::get('push-notifications-preview-recipients', [PushNotificationsController::class, 'previewRecipients'])->name('push-notifications.preview-recipients');
     Route::get('push-notifications-statistics', [PushNotificationsController::class, 'statistics'])->name('push-notifications.statistics');
+
+    // Mobile Legal Library Management Routes
+    Route::get('mobile-legal-library', [MobileLegalLibraryController::class, 'index'])->name('mobile-legal-library.index');
+    Route::post('mobile-legal-library/{id}/toggle', [MobileLegalLibraryController::class, 'toggleVisibility'])->name('mobile-legal-library.toggle');
+    Route::post('mobile-legal-library/bulk-toggle', [MobileLegalLibraryController::class, 'bulkToggleVisibility'])->name('mobile-legal-library.bulk-toggle');
+    Route::post('mobile-legal-library/category/{id}/sync', [MobileLegalLibraryController::class, 'syncCategory'])->name('mobile-legal-library.sync-category');
+    Route::get('mobile-legal-library/force-sync', [MobileLegalLibraryController::class, 'forceSync'])->name('mobile-legal-library.force-sync');
+    Route::get('mobile-legal-library/statistics', [MobileLegalLibraryController::class, 'statistics'])->name('mobile-legal-library.statistics');
+    Route::get('mobile-legal-library/export', [MobileLegalLibraryController::class, 'export'])->name('mobile-legal-library.export');
+    Route::get('mobile-legal-library/logs', [MobileLegalLibraryController::class, 'syncLogs'])->name('mobile-legal-library.logs');
+    Route::post('mobile-legal-library/clear-old-logs', [MobileLegalLibraryController::class, 'clearOldLogs'])->name('mobile-legal-library.clear-old-logs');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
