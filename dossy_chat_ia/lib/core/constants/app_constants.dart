@@ -1,0 +1,190 @@
+class AppConstants {
+  // App Information
+  static const String appName = 'DOSSY CHAT IA';
+  static const String appSlogan = 'Analyse et Assistant Juridique, Fiscal & Social';
+  static const String appVersion = '1.0.0';
+  
+  // API Configuration
+  static const String baseUrl = 'https://dossy.alwaysdata.net/api/mobile';
+  static const String filesBaseUrl = 'https://files.dossypro.com';
+  
+  // Storage Keys
+  static const String tokenKey = 'auth_token';
+  static const String userKey = 'user_data';
+  static const String localeKey = 'app_locale';
+  static const String themeKey = 'app_theme';
+  static const String onboardingKey = 'onboarding_completed';
+  static const String jurisdictionKey = 'selected_jurisdiction';
+  
+  // Subscription Plans
+  static const List<String> plans = [
+    'Gratuit',
+    'Étudiant',
+    'Professionnel',
+    'Cabinet/Entreprise',
+  ];
+  
+  // African Francophone Countries
+  static const List<Map<String, String>> countries = [
+    {'code': 'CM', 'name': 'Cameroun', 'flag': '🇨🇲'},
+    {'code': 'CI', 'name': 'Côte d\'Ivoire', 'flag': '🇨🇮'},
+    {'code': 'SN', 'name': 'Sénégal', 'flag': '🇸🇳'},
+    {'code': 'ML', 'name': 'Mali', 'flag': '🇲🇱'},
+    {'code': 'TG', 'name': 'Togo', 'flag': '🇹🇬'},
+    {'code': 'CD', 'name': 'République Démocratique du Congo', 'flag': '🇨🇩'},
+    {'code': 'CG', 'name': 'République du Congo', 'flag': '🇨🇬'},
+    {'code': 'BJ', 'name': 'Bénin', 'flag': '🇧🇯'},
+    {'code': 'BF', 'name': 'Burkina Faso', 'flag': '🇧🇫'},
+    {'code': 'NE', 'name': 'Niger', 'flag': '🇳🇪'},
+    {'code': 'TD', 'name': 'Tchad', 'flag': '🇹🇩'},
+    {'code': 'GA', 'name': 'Gabon', 'flag': '🇬🇦'},
+    {'code': 'GN', 'name': 'Guinée', 'flag': '🇬🇳'},
+    {'code': 'CF', 'name': 'République Centrafricaine', 'flag': '🇨🇫'},
+  ];
+  
+  // Legal Categories
+  static const List<String> legalCategories = [
+    'Droit des affaires',
+    'Droit du travail',
+    'Droit fiscal',
+    'Droit civil',
+    'Droit pénal',
+    'Droit administratif',
+    'Droit social',
+    'Droit commercial',
+  ];
+  
+  // Student Tools
+  static const List<Map<String, dynamic>> studentTools = [
+    {
+      'id': 'fiche_arret',
+      'name': 'Fiche d\'Arrêt',
+      'icon': '📋',
+      'description': 'Générez automatiquement une fiche d\'arrêt complète',
+    },
+    {
+      'id': 'fiche_revision',
+      'name': 'Fiche de Révision',
+      'icon': '📚',
+      'description': 'Créez des fiches de révision synthétiques',
+    },
+    {
+      'id': 'dissertation',
+      'name': 'Plan de Dissertation',
+      'icon': '✍️',
+      'description': 'Problématique et plan détaillé de dissertation',
+    },
+    {
+      'id': 'qcm',
+      'name': 'QCM',
+      'icon': '❓',
+      'description': 'Quiz à choix multiples pour tester vos connaissances',
+    },
+    {
+      'id': 'revision_active',
+      'name': 'Révision Active',
+      'icon': '🎯',
+      'description': 'Questions guidées pour révision interactive',
+    },
+  ];
+  
+  // Document Templates (Enterprise)
+  static const List<Map<String, dynamic>> documentTemplates = [
+    {
+      'category': 'RH & Paie',
+      'templates': [
+        'Contrat CDI',
+        'Contrat CDD',
+        'Contrat Consultant',
+        'Lettre d\'Avertissement',
+        'Lettre de Licenciement',
+        'Règlement Intérieur',
+        'Simulateur Coût d\'Embauche',
+        'Calculateur Indemnités',
+      ]
+    },
+    {
+      'category': 'Fiscal & Comptable',
+      'templates': [
+        'Lettre de Réclamation',
+        'Demande de Moratoire',
+        'Checklist Contrôle Fiscal',
+        'Calendrier Fiscal',
+      ]
+    },
+    {
+      'category': 'Sociétés',
+      'templates': [
+        'PV d\'Assemblée Générale',
+        'Rapport de Gestion',
+        'Conventions Réglementées',
+      ]
+    },
+  ];
+  
+  // Chat Prompt Suggestions
+  static const List<String> chatPromptSuggestions = [
+    'Expliquez-moi les conditions de validité d\'un contrat OHADA',
+    'Quels sont les délais de prescription en droit civil camerounais ?',
+    'Comment calculer les indemnités de licenciement ?',
+    'Quelles sont les obligations fiscales d\'une SARL ?',
+    'Rédigez un modèle de contrat de bail commercial',
+  ];
+  
+  // Feature Limits by Plan
+  static const Map<String, Map<String, dynamic>> planLimits = {
+    'Gratuit': {
+      'searches': 5,
+      'analyses': 2,
+      'downloads': 0,
+      'audio_transcription': false,
+      'anonymization': false,
+      'multi_accounts': false,
+      'legal_alerts': false,
+      'word_export': false,
+    },
+    'Étudiant': {
+      'searches': 50,
+      'analyses': 20,
+      'downloads': 10,
+      'audio_transcription': true,
+      'anonymization': false,
+      'multi_accounts': false,
+      'legal_alerts': false,
+      'word_export': false,
+    },
+    'Professionnel': {
+      'searches': 200,
+      'analyses': 100,
+      'downloads': 50,
+      'audio_transcription': true,
+      'anonymization': true,
+      'multi_accounts': false,
+      'legal_alerts': true,
+      'word_export': true,
+    },
+    'Cabinet/Entreprise': {
+      'searches': -1, // unlimited
+      'analyses': -1,
+      'downloads': -1,
+      'audio_transcription': true,
+      'anonymization': true,
+      'multi_accounts': true,
+      'legal_alerts': true,
+      'word_export': true,
+    },
+  };
+  
+  // Referral Configuration
+  static const int referralThreshold = 10;
+  static const double referralBonus = 5000; // XAF
+  
+  // Email Templates Categories
+  static const List<String> emailTemplateCategories = [
+    'Bienvenue',
+    'Promotion',
+    'Relance Inactivité',
+    'Renouvellement',
+    'Remerciement Parrainage',
+  ];
+}
