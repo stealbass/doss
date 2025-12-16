@@ -12,6 +12,7 @@ use App\Http\Controllers\OzowController;
 use App\Http\Controllers\UserLegalLibraryController;
 use App\Http\Controllers\PaiementProController;
 use App\Http\Controllers\TapPaymentController;
+use App\Http\Controllers\MobileAppSettingsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -335,6 +336,15 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('pusher-setting', [SettingController::class, 'savePusherSettings'])->name('pusher.setting');
     Route::post('setting/google-calender', [SettingController::class, 'saveGoogleCalenderSettings'])->name('google.calender.settings');
     Route::post('chatgptkey', [SettingController::class, 'chatgptkey'])->name('settings.chatgptkey');
+
+    // Mobile App Settings Routes
+    Route::get('mobile-app-settings', [MobileAppSettingsController::class, 'index'])->name('mobile-app-settings.index');
+    Route::post('mobile-app-settings/update-version', [MobileAppSettingsController::class, 'updateVersion'])->name('mobile-app-settings.update-version');
+    Route::post('mobile-app-settings/update-maintenance', [MobileAppSettingsController::class, 'updateMaintenance'])->name('mobile-app-settings.update-maintenance');
+    Route::post('mobile-app-settings/update-api-keys', [MobileAppSettingsController::class, 'updateApiKeys'])->name('mobile-app-settings.update-api-keys');
+    Route::post('mobile-app-settings/update-features', [MobileAppSettingsController::class, 'updateFeatures'])->name('mobile-app-settings.update-features');
+    Route::post('mobile-app-settings/update-limits', [MobileAppSettingsController::class, 'updateLimits'])->name('mobile-app-settings.update-limits');
+    Route::post('mobile-app-settings/update-info', [MobileAppSettingsController::class, 'updateInfo'])->name('mobile-app-settings.update-info');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');

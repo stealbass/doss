@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Mobile\AuthController;
 use App\Http\Controllers\Api\Mobile\ChatController;
+use App\Http\Controllers\Api\Mobile\ConfigController;
 use App\Http\Controllers\Api\Mobile\DocumentController;
 use App\Http\Controllers\Api\Mobile\SubscriptionController;
 use App\Http\Controllers\Api\Mobile\ReferralController;
@@ -31,6 +32,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // Public routes (no authentication required)
 Route::prefix('mobile')->group(function () {
+    // App Configuration (checked on app startup)
+    Route::get('/config', [ConfigController::class, 'getConfig']);
+    
     // Authentication
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -87,4 +91,7 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
         Route::get('/history', [ReferralController::class, 'getReferralHistory']);
         Route::get('/rewards', [ReferralController::class, 'getReferralRewards']);
     });
+    
+    // User's plan limits
+    Route::get('/limits', [ConfigController::class, 'getPlanLimits']);
 });
