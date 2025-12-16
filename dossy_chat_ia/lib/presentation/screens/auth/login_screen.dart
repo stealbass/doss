@@ -248,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        // TODO: Navigate to register screen
+                        Navigator.pushNamed(context, '/register');
                       },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,

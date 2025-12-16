@@ -15,6 +15,7 @@ import 'data/providers/theme_provider.dart';
 import 'presentation/screens/splash/splash_screen.dart';
 import 'presentation/screens/onboarding/onboarding_screen.dart';
 import 'presentation/screens/auth/login_screen.dart';
+import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 
 void main() async {
@@ -78,6 +79,7 @@ class DossyChatIAApp extends StatelessWidget {
                   '/splash': (context) => const SplashScreen(),
                   '/onboarding': (context) => const OnboardingScreen(),
                   '/login': (context) => const LoginScreen(),
+                  '/register': (context) => const RegisterScreen(),
                   '/home': (context) => const HomeScreen(),
                 },
               );
