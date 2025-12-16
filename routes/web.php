@@ -15,6 +15,7 @@ use App\Http\Controllers\TapPaymentController;
 use App\Http\Controllers\MobileAppSettingsController;
 use App\Http\Controllers\MobileUsersController;
 use App\Http\Controllers\MobileAppPlansController;
+use App\Http\Controllers\MobileAnalyticsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -372,6 +373,11 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('mobile-app-plans/{id}/statistics', [MobileAppPlansController::class, 'statistics'])->name('mobile-app-plans.statistics');
     Route::get('mobile-app-plans/{id}/chart-data', [MobileAppPlansController::class, 'chartData'])->name('mobile-app-plans.chart-data');
     Route::get('mobile-app-plans/export/csv', [MobileAppPlansController::class, 'export'])->name('mobile-app-plans.export');
+
+    // Mobile Analytics Dashboard Routes
+    Route::get('mobile-analytics', [MobileAnalyticsController::class, 'index'])->name('mobile-analytics.index');
+    Route::get('mobile-analytics/realtime', [MobileAnalyticsController::class, 'realtime'])->name('mobile-analytics.realtime');
+    Route::get('mobile-analytics/export', [MobileAnalyticsController::class, 'export'])->name('mobile-analytics.export');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
