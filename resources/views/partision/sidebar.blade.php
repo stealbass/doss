@@ -475,6 +475,69 @@
                     </li>
                 @endcan
 
+                {{-- Mobile App Management --}}
+                @if (\Auth::user()->type == 'super admin')
+                    <li class="dash-item dash-hasmenu {{ request()->is('mobile-*') || request()->is('push-notifications*') ? 'active dash-trigger' : '' }}">
+                        <a href="#!" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-device-mobile"></i></span>
+                            <span class="dash-mtext">{{ __('Mobile App') }}</span>
+                            <span class="dash-arrow"><i data-feather="chevron-right"></i></span>
+                        </a>
+                        <ul class="dash-submenu {{ request()->is('mobile-*') || request()->is('push-notifications*') ? 'show' : '' }}">
+                            
+                            <li class="dash-item {{ request()->is('mobile-dashboard') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile.dashboard') }}">
+                                    <span class="dash-micon"><i class="ti ti-dashboard"></i></span>
+                                    <span class="dash-mtext">{{ __('Dashboard') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('mobile-app-settings*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile-app-settings.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-settings"></i></span>
+                                    <span class="dash-mtext">{{ __('App Settings') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('mobile-users*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile-users.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-users"></i></span>
+                                    <span class="dash-mtext">{{ __('Mobile Users') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('mobile-app-plans*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile-app-plans.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-credit-card"></i></span>
+                                    <span class="dash-mtext">{{ __('Subscription Plans') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('mobile-analytics*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile-analytics.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-chart-bar"></i></span>
+                                    <span class="dash-mtext">{{ __('Analytics') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('push-notifications*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('push-notifications.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-bell"></i></span>
+                                    <span class="dash-mtext">{{ __('Push Notifications') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('mobile-legal-library*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile-legal-library.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-books"></i></span>
+                                    <span class="dash-mtext">{{ __('Legal Library Sync') }}</span>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </li>
+                @endif
+
             </ul>
         </div>
     </div>

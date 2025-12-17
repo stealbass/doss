@@ -342,6 +342,11 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('setting/google-calender', [SettingController::class, 'saveGoogleCalenderSettings'])->name('google.calender.settings');
     Route::post('chatgptkey', [SettingController::class, 'chatgptkey'])->name('settings.chatgptkey');
 
+    // Mobile App Dashboard
+    Route::get('mobile-dashboard', function() {
+        return view('mobile-dashboard');
+    })->name('mobile.dashboard');
+
     // Mobile App Settings Routes
     Route::get('mobile-app-settings', [MobileAppSettingsController::class, 'index'])->name('mobile-app-settings.index');
     Route::post('mobile-app-settings/update-version', [MobileAppSettingsController::class, 'updateVersion'])->name('mobile-app-settings.update-version');
