@@ -4,9 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
+import 'core/services/firebase_service.dart';
+import 'core/utils/network_utils.dart';
 import 'data/providers/auth_provider.dart';
 import 'data/providers/chat_provider.dart';
 import 'data/providers/subscription_provider.dart';
@@ -19,6 +22,7 @@ import 'presentation/screens/auth/login_screen.dart';
 import 'presentation/screens/auth/register_screen.dart';
 import 'presentation/screens/home/home_screen.dart';
 import 'presentation/screens/subscription/subscription_plans_screen.dart';
+import 'presentation/screens/search/search_screen.dart';
 import 'presentation/screens/tools/fiche_arret_screen.dart';
 import 'presentation/screens/tools/qcm_generator_screen.dart';
 import 'presentation/screens/tools/revision_active_screen.dart';
@@ -32,6 +36,15 @@ void main() async {
   
   // Initialize Hive
   await Hive.initFlutter();
+  
+  // Initialize Firebase
+  await FirebaseService().initialize();
+  
+  // Setup Firebase background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
+  // Initialize Network monitoring
+  await NetworkUtils().initialize();
   
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -91,6 +104,7 @@ class DossyChatIAApp extends StatelessWidget {
                   '/login': (context) => const LoginScreen(),
                   '/register': (context) => const RegisterScreen(),
                   '/home': (context) => const HomeScreen(),
+                  '/search': (context) => const SearchScreen(),
                   '/subscription-plans': (context) => const SubscriptionPlansScreen(),
                   '/fiche-arret': (context) => const FicheArretScreen(),
                   '/qcm-generator': (context) => const QcmGeneratorScreen(),
