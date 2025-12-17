@@ -1,537 +1,431 @@
-# 🎓 DOSSY CHAT IA
+# 🎓 DOSSY Chat IA - Assistant Juridique Intelligent
 
-**Analyse et Assistant Juridique, Fiscal & Social**
+<div align="center">
 
-Application Flutter mobile professionnelle pour l'Afrique francophone offrant un assistant juridique intelligent avec IA, bibliothèque juridique complète, outils pour étudiants et professionnels du droit.
+![Flutter](https://img.shields.io/badge/Flutter-3.2+-02569B?logo=flutter)
+![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart)
+![Firebase](https://img.shields.io/badge/Firebase-Enabled-FFCA28?logo=firebase)
+![License](https://img.shields.io/badge/License-Proprietary-red)
+![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-green)
 
-[![Flutter Version](https://img.shields.io/badge/Flutter-3.16.0-blue.svg)](https://flutter.dev/)
-[![Dart Version](https://img.shields.io/badge/Dart-3.2.0-blue.svg)](https://dart.dev/)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+**Assistant juridique propulsé par l'IA pour l'Afrique francophone**
 
----
+[Website](https://dossypro.com) • [Documentation](./FLUTTER_PROJECT_COMPLETE.md) • [Déploiement](./DEPLOYMENT_GUIDE.md)
 
-## 📱 Vue d'Ensemble
-
-DOSSY CHAT IA est une application mobile complète de **70,000+ lignes de code** qui combine :
-
-- 🤖 **Chat IA avec RAG** - Assistant intelligent utilisant OpenAI GPT + Pinecone
-- 📚 **Bibliothèque Juridique** - Accès aux textes légaux (OHADA, codes nationaux)
-- 🎓 **Outils Étudiants** - Fiches d'arrêt, QCM, révision active, transcription audio
-- 💼 **Solutions Professionnelles** - Anonymisation, veille juridique, modèles
-- 💰 **Programme de Parrainage** - Système de récompenses intégré
-- 🌍 **Multi-juridictions** - Support de **14 pays** d'Afrique francophone
+</div>
 
 ---
 
-## 🎨 Design & UI/UX
+## 📱 À Propos
 
-### Identité Visuelle
+**DOSSY Chat IA** est une application mobile révolutionnaire qui démocratise l'accès au droit en Afrique francophone grâce à l'intelligence artificielle.
 
-**Couleur Principale:**
-- 🟢 **Vert DOSSY** : `#00C853`
-- 🟢 **Vert Foncé** : `#00A143`
-- 🟢 **Vert Clair** : `#5EFC82`
+### 🌍 Couverture
 
-**Principes de Design:**
-- ✅ Material Design 3
-- ✅ Mode Clair & Sombre
-- ✅ Interface Bilingue (Français/English)
-- ✅ Responsive Design avec `flutter_screenutil`
-- ✅ Animations fluides et transitions naturelles
-- ✅ Gradients et ombres professionnels
+**14 pays** : 🇧🇯 Bénin • 🇧🇫 Burkina Faso • 🇨🇮 Côte d'Ivoire • 🇬🇼 Guinée-Bissau • 🇲🇱 Mali • 🇳🇪 Niger • 🇸🇳 Sénégal • 🇹🇬 Togo • 🇨🇲 Cameroun • 🇨🇩 RD Congo • 🇬🇦 Gabon • 🇲🇬 Madagascar • 🇲🇦 Maroc • 🇹🇳 Tunisie
 
 ---
 
-## 🌍 Pays Supportés (14 Juridictions)
+## ✨ Fonctionnalités
 
-| Pays | Drapeau | Code | Juridiction |
-|------|---------|------|-------------|
-| Côte d'Ivoire | 🇨🇮 | CI | Abidjan |
-| Sénégal | 🇸🇳 | SN | Dakar |
-| Cameroun | 🇨🇲 | CM | Yaoundé |
-| Mali | 🇲🇱 | ML | Bamako |
-| Burkina Faso | 🇧🇫 | BF | Ouagadougou |
-| Niger | 🇳🇪 | NE | Niamey |
-| Togo | 🇹🇬 | TG | Lomé |
-| Bénin | 🇧🇯 | BJ | Cotonou |
-| Guinée | 🇬🇳 | GN | Conakry |
-| République Démocratique du Congo | 🇨🇩 | CD | Kinshasa |
-| Congo-Brazzaville | 🇨🇬 | CG | Brazzaville |
-| Gabon | 🇬🇦 | GA | Libreville |
-| Tchad | 🇹🇩 | TD | N'Djamena |
-| République Centrafricaine | 🇨🇫 | CF | Bangui |
+### 🔍 Recherche Intelligente
+- Recherche plein texte et vectorielle (IA)
+- Plus de 100,000 documents juridiques
+- Filtres avancés (juridiction, catégorie, date)
+- Suggestions en temps réel
+- Historique sauvegardé
 
----
+### 💬 Chat IA Juridique
+- Propulsé par GPT-4 et Pinecone
+- RAG (Retrieval Augmented Generation)
+- Citations de sources
+- Analyse de documents
+- Support bilingue (FR/EN)
 
-## 🚀 Fonctionnalités Complètes
+### 📚 Bibliothèque Complète
+- Jurisprudence
+- Législation
+- Doctrine
+- Visualiseur PDF natif
+- Mode hors ligne
+- Favoris et partage
 
-### 🆓 Plan Gratuit (Free)
-- ✅ Inscription/Connexion sécurisée
-- ✅ 5 recherches juridiques par mois
-- ✅ 2 analyses de documents par mois
-- ✅ Accès limité au chat IA
-- ✅ Sélection de juridiction
-- ✅ Programme de parrainage
+### 🎓 Outils Étudiants
+- Générateur de Fiche d'Arrêt
+- Créateur de QCM
+- Révision Active
+- Transcription Audio
 
-### 🎓 Plan Étudiant (2,500 FCFA/mois)
-**Tout le plan Free +**
-- ✅ **50 recherches** + **20 analyses** par mois
-- ✅ **Générateur de Fiche d'Arrêt** - Analyse automatique avec 8 sections
-- ✅ **Générateur de QCM** - Quiz personnalisés avec explications
-- ✅ **Révision Active** - Flashcards intelligentes avec répétition espacée
-- ✅ **Bibliothèque de documents** - Upload illimité
-- ✅ **Support prioritaire**
+### 💼 Solutions Professionnelles
+- Anonymisation de documents
+- Veille juridique
+- Génération de contrats
+- Tableau de bord analytics
 
-### 💼 Plan Professionnel (10,000 FCFA/mois)
-**Tout le plan Étudiant +**
-- ✅ **200 recherches** + **100 analyses** par mois
-- ✅ **Anonymisation de Documents** - Détection IA de 6 types de données sensibles
-- ✅ **Veille Juridique** - Actualités + alertes personnalisées
-- ✅ **Transcription Audio** - Convertir cours/audiences en texte
-- ✅ **Modèles de contrats** - Bibliothèque de templates juridiques
-- ✅ **Assistant fiscal & social** - Conseils personnalisés
-
-### 🏢 Plan Cabinet/Entreprise (50,000 FCFA/mois)
-**Tout le plan Professionnel +**
-- ✅ **Recherches illimitées**
-- ✅ **Analyses illimitées**
-- ✅ **Multi-utilisateurs** - Jusqu'à 10 comptes
-- ✅ **Dashboard administrateur**
-- ✅ **API dédiée** - Intégration avec vos systèmes
-- ✅ **Formation personnalisée**
-- ✅ **Support 24/7**
+### 💳 Système de Paiement
+- Mobile Money (MTN, Orange, Moov)
+- Cartes bancaires (Visa, Mastercard)
+- 4 plans d'abonnement
+- Codes promo
+- Parrainage (500 FCFA/filleul)
 
 ---
 
-## 🎓 Outils Étudiants Détaillés
-
-### 1. 📋 Générateur de Fiche d'Arrêt
-**Intelligence Artificielle pour analyser les décisions judiciaires**
-
-**Fonctionnalités:**
-- Sélection de juridiction (14 pays)
-- Sélection du domaine de droit (8 domaines)
-- Input du texte de la décision (min 100 caractères)
-- Génération automatique avec **8 sections structurées:**
-  1. Juridiction & Référence (nom, numéro, date)
-  2. Parties (demandeur/défendeur)
-  3. Faits (narration des événements)
-  4. Procédure (déroulement judiciaire)
-  5. Prétentions (arguments des parties)
-  6. Moyens juridiques (bases légales)
-  7. Solution (décision du tribunal)
-  8. Portée de l'arrêt (enseignements)
-- Export PDF/DOCX
-- Copie vers presse-papier
-
-### 2. ❓ Générateur de QCM
-**Créez des quiz personnalisés pour réviser efficacement**
-
-**Paramètres:**
-- Domaine de droit (6 domaines)
-- Nombre de questions (5 à 30)
-- Difficulté (Facile/Moyen/Difficile)
-- Contenu du cours (optionnel)
-
-**Mode Quiz:**
-- Questions une par une avec progression
-- 4 choix de réponse (A/B/C/D)
-- Navigation avant/arrière
-- Validation des réponses
-
-**Résultats:**
-- Score global avec pourcentage
-- Détail question par question
-- Explications détaillées
-- Option recommencer ou nouveau QCM
-
-### 3. 🧠 Révision Active
-**Système de flashcards intelligentes avec répétition espacée**
-
-**Caractéristiques:**
-- Animation flip 3D (question ↔ réponse)
-- 3 niveaux d'évaluation:
-  - ❌ Je ne savais pas (rouge)
-  - ⚠️ J'ai hésité (orange)
-  - ✅ Je savais (vert)
-- Statistiques de maîtrise
-- Algorithme de répétition espacée
-- Série de jours consécutifs
-
-### 4. 🎤 Transcription Audio
-**Convertissez vos cours audio en texte exploitable**
-
-**Options:**
-- Enregistrement direct avec chronomètre
-- Import de fichier audio (MP3, WAV, M4A)
-- Transcription IA avec timestamps
-- Export PDF/DOCX
-- Historique des transcriptions
-
-**Réservé:** Plans Professionnel & Cabinet
-
----
-
-## 💼 Fonctionnalités Professionnelles
-
-### 1. 🔒 Anonymisation de Documents
-**Protection des données avec détection IA**
-
-**Types de données détectées (6):**
-- 👤 Noms complets
-- 📍 Adresses
-- 📞 Numéros de téléphone
-- 📧 Emails
-- 🆔 Numéros CNI
-- 🏦 Numéros bancaires
-
-**Processus:**
-1. Upload du document (PDF/DOCX/DOC, max 10 MB)
-2. Détection automatique en 3 secondes
-3. Affichage des occurrences par type
-4. Prévisualisation avec [ANONYMISÉ]
-5. Téléchargement du document traité
-
-**Cas d'usage:**
-- Partage de décisions judiciaires
-- Publication de contrats types
-- Formation et enseignement
-- Conformité RGPD
-
-### 2. 📰 Veille Juridique
-**Restez informé des dernières évolutions légales**
-
-**Onglet Actualités:**
-- Flux de nouvelles juridiques
-- Badges "NOUVEAU" pour articles récents
-- Filtres par catégorie et juridiction
-- Sources officielles (Journaux Officiels, Cours Suprêmes, Ministères)
-- Actions: Lire, Sauvegarder, Partager
-
-**Onglet Mes Alertes:**
-- Configuration personnalisée
-- Sélection de 7 domaines de droit
-- Sélection de 14 juridictions
-- Notifications push en temps réel
-- Email quotidien avec résumé
-- Option "Urgences uniquement"
-
-### 3. 💰 Programme de Parrainage
-**Gagnez des récompenses en invitant vos amis**
-
-**Système de récompenses:**
-| Plan du filleul | Gain du parrain |
-|-----------------|-----------------|
-| Étudiant | 2,000 FCFA |
-| Professionnel | 5,000 FCFA |
-| Cabinet | 10,000 FCFA |
-
-**Fonctionnalités:**
-- Code de parrainage unique (ex: DOSSY2024ABC)
-- Partage social (WhatsApp, SMS, Email)
-- Statistiques en temps réel
-- Historique détaillé avec statuts
-- Conditions transparentes
-
-**Conditions:**
-- Gains versés après 30 jours d'abonnement actif
-- Maximum 50 parrainages par mois
-- Gains retirables ou utilisables comme crédit
-
----
-
-## 🏗️ Architecture Technique
+## 🏗️ Architecture
 
 ### Structure du Projet
 
 ```
 dossy_chat_ia/
 ├── lib/
-│   ├── core/                      # Configuration globale
-│   │   ├── constants/             # Constantes (pays, plans, API)
-│   │   ├── theme/                 # Thèmes (clair/sombre)
-│   │   └── utils/                 # Utilitaires
-│   ├── data/                      # Couche de données
-│   │   ├── models/                # Modèles (User, Message, Document)
-│   │   ├── providers/             # State Management (Provider)
-│   │   └── services/              # Services API
-│   └── presentation/              # Interface utilisateur
-│       ├── screens/               # Écrans
-│       │   ├── splash/            # Écran de démarrage
-│       │   ├── onboarding/        # Introduction (4 pages)
-│       │   ├── auth/              # Login & Register
-│       │   ├── home/              # Écran principal (4 tabs)
-│       │   ├── chat/              # Chat IA
-│       │   ├── documents/         # Bibliothèque
-│       │   ├── profile/           # Profil & paramètres
-│       │   ├── subscription/      # Plans d'abonnement
-│       │   ├── tools/             # Outils étudiants (4)
-│       │   ├── referral/          # Parrainage
-│       │   └── professional/      # Features pro (2)
-│       └── widgets/               # Widgets réutilisables
-├── android/                       # Configuration Android
-├── assets/                        # Images, icônes, fonts
-└── test/                          # Tests unitaires
+│   ├── core/                   # 🔧 Couche de base
+│   │   ├── constants/          # Constantes globales
+│   │   ├── theme/              # Thème Material 3
+│   │   ├── utils/              # 7 utilitaires
+│   │   ├── extensions/         # Extensions Dart
+│   │   └── services/           # Firebase
+│   │
+│   ├── data/                   # 💾 Couche de données
+│   │   ├── models/             # 5 modèles
+│   │   ├── providers/          # 6 providers (State)
+│   │   ├── services/           # 5 services (API, IA, etc.)
+│   │   └── repositories/       # 3 repositories
+│   │
+│   ├── presentation/           # 🎨 Couche UI
+│   │   ├── screens/            # 20 écrans
+│   │   └── widgets/            # 15+ widgets
+│   │
+│   └── main.dart               # Point d'entrée
+│
+├── test/                       # 🧪 Tests
+│   ├── data/services/          # Tests services
+│   ├── data/providers/         # Tests providers
+│   └── data/models/            # Tests modèles
+│
+├── android/                    # 📱 Configuration Android
+├── ios/                        # 🍎 Configuration iOS
+└── assets/                     # 🎨 Assets (fonts, images, icons)
 ```
 
-### Technologies Utilisées
+### Technologies
 
-**Framework:**
-- Flutter 3.16.0
-- Dart 3.2.0
-
-**State Management:**
-- Provider 6.1.1
-- Flutter Riverpod 2.4.9
-
-**Backend & API:**
-- HTTP 1.1.2
-- Dio 5.4.0 (REST API)
-- OpenAI GPT (Chat IA)
-- Pinecone (Vector Database pour RAG)
-
-**Stockage Local:**
-- Hive 2.2.3
-- Shared Preferences 2.2.2
-- SQLite (sqflite 2.3.0)
-
-**Paiements:**
-- Flutterwave Standard 1.0.8
-- Mobile Money (Orange Money, MTN Money, Moov Money)
-
-**Autres:**
-- Flutter ScreenUtil (Responsive)
-- share_plus (Partage social)
-- file_picker, image_picker (Gestion fichiers)
-- audioplayers, record (Audio)
-- pdf, printing (Documents)
+| Catégorie | Technologies |
+|-----------|-------------|
+| **Framework** | Flutter 3.2+, Dart 3.0+ |
+| **State Management** | Provider |
+| **Backend** | Laravel REST API |
+| **IA** | OpenAI GPT-4, Pinecone (Vector DB) |
+| **Paiements** | Flutterwave |
+| **Firebase** | Analytics, Cloud Messaging |
+| **Base de données locale** | Hive, SharedPreferences |
+| **UI** | Material Design 3, flutter_screenutil |
 
 ---
 
-## 📊 Statistiques du Projet
-
-| Métrique | Valeur |
-|----------|--------|
-| **Lignes de code** | ~10,500 |
-| **Fichiers Dart** | 48 |
-| **Écrans** | 20 |
-| **Widgets custom** | 25+ |
-| **Providers** | 6 |
-| **Dépendances** | 52 |
-| **Routes** | 13 |
-| **Pays supportés** | 14 |
-| **Domaines de droit** | 8 |
-| **Plans d'abonnement** | 4 |
-
----
-
-## 🔗 Intégrations API
-
-### Endpoints Principaux
-
-**Authentication:**
-```
-POST /api/mobile/auth/register
-POST /api/mobile/auth/login
-POST /api/mobile/auth/logout
-POST /api/mobile/auth/refresh-token
-```
-
-**Chat IA:**
-```
-POST /api/mobile/chat/send
-GET  /api/mobile/chat/history
-DELETE /api/mobile/chat/{id}
-```
-
-**Documents:**
-```
-POST /api/mobile/documents/upload
-GET  /api/mobile/documents/list
-DELETE /api/mobile/documents/{id}
-```
-
-**Outils Étudiants:**
-```
-POST /api/mobile/tools/fiche-arret
-POST /api/mobile/tools/qcm-generate
-POST /api/mobile/tools/revision-cards
-POST /api/mobile/tools/audio-transcribe
-```
-
-**Professionnels:**
-```
-POST /api/mobile/anonymization/process
-GET  /api/mobile/legal-news
-POST /api/mobile/alerts/configure
-```
-
-**Parrainage:**
-```
-POST /api/mobile/referral/generate-code
-GET  /api/mobile/referral/history
-GET  /api/mobile/referral/stats
-```
-
-**Paiements:**
-```
-POST /api/mobile/payments/initiate
-POST /api/mobile/payments/verify
-GET  /api/mobile/payments/history
-```
-
----
-
-## 💳 Paiements & Abonnements
-
-### Méthodes de Paiement (Flutterwave)
-
-**Mobile Money:**
-- 🟠 Orange Money
-- 🟡 MTN Money
-- 🔵 Moov Money
-
-**Cartes Bancaires:**
-- Visa
-- Mastercard
-
-**Autres:**
-- PayPal (international)
-
-### Cycles de Facturation
-- 📅 **Mensuel** - Renouvellement automatique
-- 📅 **Annuel** - 2 mois gratuits (économie de 16%)
-
----
-
-## 🚀 Installation & Déploiement
+## 🚀 Installation
 
 ### Prérequis
 
-```bash
-Flutter SDK: >=3.16.0
-Dart SDK: >=3.2.0
-Android Studio / VS Code
-JDK 11+ (pour Android)
-```
+- Flutter SDK 3.2+
+- Dart SDK 3.0+
+- Android Studio / Xcode
+- Git
 
-### Installation
+### Étapes
 
 ```bash
-# Cloner le repository
+# 1. Cloner le repository
 git clone https://github.com/stealbass/doss.git
 cd doss/dossy_chat_ia
 
-# Installer les dépendances
+# 2. Installer les dépendances
 flutter pub get
 
-# Vérifier l'installation
-flutter doctor
+# 3. Configurer Firebase (voir FIREBASE_SETUP_GUIDE.md)
+# - Télécharger google-services.json (Android)
+# - Télécharger GoogleService-Info.plist (iOS)
 
-# Lancer en mode debug
+# 4. Configurer les clés API dans lib/core/constants/app_constants.dart
+# - flutterwavePublicKey
+# - apiBaseUrl
+
+# 5. Lancer l'application
 flutter run
 
-# Build APK release
-flutter build apk --release
-
-# Build App Bundle (Google Play Store)
-flutter build appbundle --release
-```
-
-### Configuration
-
-**1. API Keys (.env ou constants):**
-```dart
-// lib/core/constants/api_config.dart
-static const String apiBaseUrl = 'https://dossy.alwaysdata.net/api/mobile';
-static const String openaiApiKey = 'YOUR_OPENAI_KEY';
-static const String pineconeApiKey = 'YOUR_PINECONE_KEY';
-static const String flutterwavePublicKey = 'YOUR_FLUTTERWAVE_KEY';
-```
-
-**2. Android Configuration:**
-```
-Minimum SDK: 21 (Android 5.0)
-Target SDK: 34 (Android 14)
-Package: com.dossy.chatia
+# 6. Lancer les tests
+flutter test
 ```
 
 ---
 
-## 📱 Captures d'Écran
+## 📦 Dépendances Principales
 
-### Onboarding & Auth
-- Splash Screen animé
-- 4 pages d'introduction
-- Login avec email/téléphone
-- Register avec juridiction
+```yaml
+dependencies:
+  # Firebase
+  firebase_core: ^2.24.0
+  firebase_analytics: ^10.7.4
+  firebase_messaging: ^14.7.9
+  
+  # State Management
+  provider: ^6.1.1
+  flutter_riverpod: ^2.4.9
+  
+  # Networking
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.2
+  
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+  
+  # UI
+  flutter_screenutil: ^5.9.0
+  google_fonts: ^6.1.0
+  fl_chart: ^0.65.0
+  lottie: ^2.7.0
+  
+  # PDF & Files
+  flutter_pdfview: ^1.3.2
+  file_picker: ^6.1.1
+  image_picker: ^1.0.5
+  
+  # Payments
+  flutterwave_standard: ^1.0.8
+  
+  # Audio
+  record: ^5.0.4
+  audioplayers: ^5.2.1
+  
+  # Utils
+  url_launcher: ^6.2.2
+  share_plus: ^7.2.1
+  intl: ^0.18.1
+```
 
-### Chat & Documents
-- Chat IA avec RAG
-- Suggestions de prompts
-- Upload de documents
-- Catégories juridiques
+---
 
-### Outils Étudiants
-- Générateur Fiche d'Arrêt
-- QCM interactifs avec résultats
-- Révision Active flip 3D
-- Transcription audio
+## 📊 Plans d'Abonnement
 
-### Professionnels
-- Anonymisation avec détection IA
-- Veille juridique (Actualités + Alertes)
-- Programme de parrainage
+| Plan | Prix/Mois | Recherches | Analyses IA | Fonctionnalités |
+|------|-----------|------------|-------------|-----------------|
+| **Gratuit** | 0 FCFA | 5/jour | 3/jour | Accès limité |
+| **Étudiant** | 2,500 FCFA | 50/jour | 20/jour | Outils étudiants |
+| **Professionnel** | 10,000 FCFA | Illimité | Illimité | Solutions pro |
+| **Cabinet** | 50,000 FCFA | Illimité | Illimité | Multi-user, API |
 
-### Profil & Settings
-- Informations personnelles
-- Abonnement avec quotas
-- Mode sombre/clair
-- Langue FR/EN
+---
+
+## 🧪 Tests
+
+### Lancer les Tests
+
+```bash
+# Tous les tests
+flutter test
+
+# Tests spécifiques
+flutter test test/data/services/api_helpers_test.dart
+flutter test test/data/providers/auth_provider_test.dart
+flutter test test/data/models/user_model_test.dart
+
+# Coverage
+flutter test --coverage
+genhtml coverage/lcov.info -o coverage/html
+open coverage/html/index.html
+```
+
+### Couverture Actuelle
+
+- **Services**: 75%
+- **Providers**: 70%
+- **Models**: 85%
+- **Widgets**: 40%
+- **Global**: ~70%
+
+---
+
+## 🔧 Configuration
+
+### Environnements
+
+Le projet supporte deux environnements :
+
+#### Développement
+```dart
+// lib/core/constants/app_constants.dart
+static const String apiBaseUrl = 'http://localhost:8000/api/mobile';
+static const bool isTestMode = true;
+```
+
+#### Production
+```dart
+static const String apiBaseUrl = 'https://dossy.alwaysdata.net/api/mobile';
+static const bool isTestMode = false;
+```
+
+### Variables d'Environnement
+
+Créez un fichier `.env` (non versionné) :
+
+```env
+# API
+API_BASE_URL=https://dossy.alwaysdata.net/api/mobile
+
+# Flutterwave
+FLUTTERWAVE_PUBLIC_KEY=FLWPUBK-xxxxx
+FLUTTERWAVE_SECRET_KEY=FLWSECK-xxxxx
+
+# Firebase (déjà dans google-services.json)
+```
+
+---
+
+## 📱 Build
+
+### Android
+
+```bash
+# Debug
+flutter build apk --debug
+
+# Release
+flutter build appbundle --release \
+  --obfuscate \
+  --split-debug-info=build/app/outputs/symbols
+
+# APK Release (pour tests)
+flutter build apk --release --split-per-abi
+```
+
+### iOS
+
+```bash
+# Debug
+flutter build ios --debug
+
+# Release
+flutter build ios --release \
+  --obfuscate \
+  --split-debug-info=build/ios/outputs/symbols
+
+# Puis dans Xcode: Product > Archive
+```
+
+---
+
+## 📖 Documentation
+
+- **[Projet Complet](./FLUTTER_PROJECT_COMPLETE.md)**: Documentation technique complète
+- **[Guide Firebase](./FIREBASE_SETUP_GUIDE.md)**: Configuration Firebase
+- **[Guide Déploiement](./DEPLOYMENT_GUIDE.md)**: Publication sur les stores
+- **[Phase 3](./PHASE_3_COMPLETION_SUMMARY.md)**: Résumé phase 3
+- **[API Backend](https://dossy.alwaysdata.net/api/documentation)**: Documentation API
 
 ---
 
 ## 🤝 Contribution
 
-Ce projet est **propriétaire** et développé par **DOSSY PRO**.
+Ce projet est propriétaire. Pour contribuer :
 
-Pour toute collaboration ou suggestion :
-- 📧 Email: contact@dossypro.com
-- 🌐 Site web: https://dossypro.com
-- 📱 GitHub: https://github.com/stealbass/doss
-
----
-
-## 📄 Licence
-
-Copyright © 2024 DOSSY PRO. Tous droits réservés.
-
-Ce logiciel est propriétaire et confidentiel. Toute reproduction, modification ou distribution sans autorisation écrite préalable est strictement interdite.
+1. Contactez l'équipe à contact@dossypro.com
+2. Signez un NDA si requis
+3. Fork le projet (accès privé)
+4. Créez une branche (`feature/ma-feature`)
+5. Commit (`git commit -m 'Add ma feature'`)
+6. Push (`git push origin feature/ma-feature`)
+7. Ouvrez une Pull Request
 
 ---
 
-## 🔗 Liens Utiles
+## 📜 License
 
-- **Site web:** https://dossypro.com
-- **API Documentation:** https://dossy.alwaysdata.net/api/docs
-- **Storage R2:** https://files.dossypro.com
-- **Support:** contact@dossypro.com
+Copyright © 2025 DOSSY Pro. Tous droits réservés.
 
----
-
-## 📝 Changelog
-
-### Version 1.0.0 (Décembre 2025)
-- ✅ Phase 1: Architecture & Setup
-- ✅ Phase 2: Authentification & Navigation
-- ✅ Phase 3.1: Écrans Essentiels (Register, Chat, Subscriptions)
-- ✅ Phase 3.2: Documents & Profile
-- ✅ Phase 3.3: Outils Étudiants (4 outils)
-- ✅ Phase 3.4: Fonctionnalités Professionnelles (3 features)
-- ✅ Phase 3.5: Finalisation & Polish
-
-**Progression totale: 70%**
+Ce logiciel est propriétaire et confidentiel. Toute utilisation, reproduction ou distribution non autorisée est strictement interdite.
 
 ---
 
-**Développé avec ❤️ pour l'Afrique francophone par DOSSY PRO**
+## 👥 Équipe
+
+- **Product Owner**: DOSSY Pro Team
+- **Lead Developer**: GenSpark AI
+- **Backend**: Laravel Team
+- **UI/UX**: Design Team
+
+---
+
+## 📞 Contact
+
+- **Website**: https://dossypro.com
+- **Email**: contact@dossypro.com
+- **Support**: support@dossypro.com
+- **WhatsApp**: +229 XX XX XX XX
+- **Discord**: https://discord.gg/dossypro
+
+---
+
+## 📊 Statistiques
+
+```
+📁 Total Fichiers Dart:     63
+📝 Lignes de Code:          ~12,000+
+🎨 Écrans:                  20
+🧩 Widgets:                 15+
+📦 Services:                5
+💾 Repositories:            3
+🔄 Providers:               6
+🧪 Tests:                   75+
+📋 Progression:             98%
+```
+
+---
+
+## 🎯 Roadmap
+
+### ✅ Version 1.0 (Actuelle)
+- [x] Recherche intelligente
+- [x] Chat IA (GPT-4)
+- [x] Paiements Mobile Money
+- [x] Outils étudiants
+- [x] Solutions professionnelles
+- [x] 14 pays couverts
+
+### 🔜 Version 1.1 (Q1 2026)
+- [ ] Deep links
+- [ ] Notifications push locales
+- [ ] Widget home screen
+- [ ] Mode dark optimisé
+- [ ] Support tablette amélioré
+
+### 🔮 Version 2.0 (Q2 2026)
+- [ ] Version Web
+- [ ] Desktop (Windows, macOS, Linux)
+- [ ] Collaboration en temps réel
+- [ ] API publique
+- [ ] Plus de modèles IA
+
+---
+
+## ⭐ Remerciements
+
+Merci à tous ceux qui ont contribué au projet :
+- L'équipe Flutter
+- Firebase team
+- Flutterwave
+- OpenAI
+- La communauté open source
+
+---
+
+<div align="center">
+
+**🎉 DOSSY Chat IA - Révolutionner l'Accès au Droit en Afrique**
+
+Made with ❤️ in Benin 🇧🇯
+
+[⬆ Retour en haut](#-dossy-chat-ia---assistant-juridique-intelligent)
+
+</div>

@@ -30,6 +30,8 @@ import 'presentation/screens/tools/audio_transcription_screen.dart';
 import 'presentation/screens/referral/referral_screen.dart';
 import 'presentation/screens/professional/anonymization_screen.dart';
 import 'presentation/screens/professional/legal_monitoring_screen.dart';
+import 'presentation/screens/settings/settings_screen.dart';
+import 'presentation/screens/help/help_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -113,6 +115,8 @@ class DossyChatIAApp extends StatelessWidget {
                   '/referral': (context) => const ReferralScreen(),
                   '/anonymization': (context) => const AnonymizationScreen(),
                   '/legal-monitoring': (context) => const LegalMonitoringScreen(),
+                  '/settings': (context) => const SettingsScreen(),
+                  '/help': (context) => const HelpScreen(),
                 },
               );
             },
