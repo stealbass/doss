@@ -23,6 +23,9 @@ class MobileLegalLibraryController extends Controller
 
         $stats = $this->getStatistics();
         
+        // Get supported countries from config
+        $countries = config('mobile_countries.supported_countries');
+        
         // Get categories with document counts
         $categories = LegalCategory::withCount(['documents' => function($query) {
             $query->where('is_mobile_visible', true);
@@ -41,6 +44,10 @@ class MobileLegalLibraryController extends Controller
             $query->where('category_id', $request->category_id);
         }
         
+        if ($request->filled('country')) {
+            $query->where('country', $request->country);
+        }
+        
         if ($request->filled('mobile_status')) {
             $query->where('is_mobile_visible', $request->mobile_status === 'visible');
         }
@@ -55,7 +62,7 @@ class MobileLegalLibraryController extends Controller
 
         $documents = $query->paginate(15);
 
-        return view('mobile-legal-library.index', compact('stats', 'categories', 'documents', 'recentSyncs'));
+        return view('mobile-legal-library.index', compact('stats', 'categories', 'documents', 'recentSyncs', 'countries'));
     }
 
     /**
@@ -76,6 +83,13 @@ class MobileLegalLibraryController extends Controller
         $totalSyncs = DB::table('mobile_legal_sync_logs')
             ->where('created_at', '>=', now()->subDays(30))
             ->count();
+        
+        // Get documents per country
+        $documentsPerCountry = LegalDocument::select('country', DB::raw('count(*) as total'))
+            ->whereNotNull('country')
+            ->groupBy('country')
+            ->pluck('total', 'country')
+            ->toArray();
 
         return [
             'total_documents' => $totalDocuments,
@@ -85,6 +99,8 @@ class MobileLegalLibraryController extends Controller
             'active_categories' => $activeCategories,
             'last_sync_date' => $lastSyncDate,
             'total_syncs_30days' => $totalSyncs,
+            'documents_per_country' => $documentsPerCountry,
+            'total_countries' => count($documentsPerCountry),
         ];
     }
 
@@ -349,5 +365,166 @@ class MobileLegalLibraryController extends Controller
             ->delete();
 
         return redirect()->back()->with('success', __(':count old log entries cleared.', ['count' => $deleted]));
+    }
+
+    /**
+     * Update document country
+     */
+    public function updateDocumentCountry(Request $request, $id)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return response()->json(['error' => __('Permission Denied.')], 403);
+        }
+
+        $request->validate([
+            'country' => 'required|string|size:2',
+        ]);
+
+        $document = LegalDocument::findOrFail($id);
+        $document->country = strtoupper($request->country);
+        $document->save();
+
+        // Log the action
+        $this->logSync('update_document_country', [
+            'document_id' => $document->id,
+            'document_title' => $document->title,
+            'country' => $document->country,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Document country updated successfully.')
+        ]);
+    }
+
+    /**
+     * Update category country
+     */
+    public function updateCategoryCountry(Request $request, $id)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return response()->json(['error' => __('Permission Denied.')], 403);
+        }
+
+        $request->validate([
+            'country' => 'required|string|size:2',
+            'update_documents' => 'boolean',
+        ]);
+
+        $category = LegalCategory::findOrFail($id);
+        $category->country = strtoupper($request->country);
+        $category->save();
+
+        // Optionally update all documents in this category
+        if ($request->update_documents) {
+            LegalDocument::where('category_id', $id)
+                ->update(['country' => $category->country]);
+        }
+
+        // Log the action
+        $this->logSync('update_category_country', [
+            'category_id' => $category->id,
+            'category_name' => $category->name,
+            'country' => $category->country,
+            'documents_updated' => $request->update_documents,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Category country updated successfully.')
+        ]);
+    }
+
+    /**
+     * Bulk update documents country
+     */
+    public function bulkUpdateCountry(Request $request)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $request->validate([
+            'document_ids' => 'required|array',
+            'document_ids.*' => 'exists:legal_documents,id',
+            'country' => 'required|string|size:2',
+        ]);
+
+        $updated = LegalDocument::whereIn('id', $request->document_ids)
+            ->update(['country' => strtoupper($request->country)]);
+
+        // Log the bulk action
+        $this->logSync('bulk_update_country', [
+            'count' => $updated,
+            'country' => $request->country,
+            'document_ids' => $request->document_ids,
+        ]);
+
+        return redirect()->back()->with('success', __(':count documents updated successfully.', ['count' => $updated]));
+    }
+
+    /**
+     * Get country statistics
+     */
+    public function countryStatistics($countryCode)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return response()->json(['error' => __('Permission Denied.')], 403);
+        }
+
+        $countryCode = strtoupper($countryCode);
+        $countries = config('mobile_countries.supported_countries');
+
+        if (!isset($countries[$countryCode])) {
+            return response()->json(['error' => __('Country not found.')], 404);
+        }
+
+        $country = $countries[$countryCode];
+        
+        $totalDocuments = LegalDocument::where('country', $countryCode)->count();
+        $mobileVisible = LegalDocument::where('country', $countryCode)
+            ->where('is_mobile_visible', true)
+            ->count();
+        
+        $categories = LegalCategory::where('country', $countryCode)
+            ->withCount(['documents' => function($query) use ($countryCode) {
+                $query->where('country', $countryCode);
+            }])
+            ->get();
+
+        return response()->json([
+            'country' => $country,
+            'statistics' => [
+                'total_documents' => $totalDocuments,
+                'mobile_visible' => $mobileVisible,
+                'mobile_hidden' => $totalDocuments - $mobileVisible,
+                'total_categories' => $categories->count(),
+            ],
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Get AI context for a country
+     */
+    public function getCountryAIContext($countryCode)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return response()->json(['error' => __('Permission Denied.')], 403);
+        }
+
+        $countryCode = strtoupper($countryCode);
+        $aiContextConfig = config('mobile_countries.ai_context');
+        
+        $context = $aiContextConfig['default'];
+        if (isset($aiContextConfig['country_specific'][$countryCode])) {
+            $context = $aiContextConfig['country_specific'][$countryCode];
+        }
+
+        return response()->json([
+            'country_code' => $countryCode,
+            'ai_context' => $context,
+            'legal_systems' => config("mobile_countries.supported_countries.{$countryCode}.legal_systems", []),
+        ]);
     }
 }

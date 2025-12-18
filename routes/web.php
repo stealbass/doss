@@ -410,6 +410,13 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('mobile-legal-library/export', [MobileLegalLibraryController::class, 'export'])->name('mobile-legal-library.export');
     Route::get('mobile-legal-library/logs', [MobileLegalLibraryController::class, 'syncLogs'])->name('mobile-legal-library.logs');
     Route::post('mobile-legal-library/clear-old-logs', [MobileLegalLibraryController::class, 'clearOldLogs'])->name('mobile-legal-library.clear-old-logs');
+    
+    // Country Management Routes for Legal Library
+    Route::post('mobile-legal-library/document/{id}/update-country', [MobileLegalLibraryController::class, 'updateDocumentCountry'])->name('mobile-legal-library.update-document-country');
+    Route::post('mobile-legal-library/category/{id}/update-country', [MobileLegalLibraryController::class, 'updateCategoryCountry'])->name('mobile-legal-library.update-category-country');
+    Route::post('mobile-legal-library/bulk-update-country', [MobileLegalLibraryController::class, 'bulkUpdateCountry'])->name('mobile-legal-library.bulk-update-country');
+    Route::get('mobile-legal-library/country/{country}/statistics', [MobileLegalLibraryController::class, 'countryStatistics'])->name('mobile-legal-library.country-statistics');
+    Route::get('mobile-legal-library/country/{country}/ai-context', [MobileLegalLibraryController::class, 'getCountryAIContext'])->name('mobile-legal-library.country-ai-context');
 
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
