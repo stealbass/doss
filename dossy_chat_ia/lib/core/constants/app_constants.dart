@@ -24,22 +24,30 @@ class AppConstants {
     'Cabinet/Entreprise',
   ];
   
-  // African Francophone Countries
+  // African Francophone Countries (14 countries supported)
+  // Organized by region for better UX
   static const List<Map<String, String>> countries = [
-    {'code': 'CM', 'name': 'Cameroun', 'flag': '🇨🇲'},
-    {'code': 'CI', 'name': 'Côte d\'Ivoire', 'flag': '🇨🇮'},
-    {'code': 'SN', 'name': 'Sénégal', 'flag': '🇸🇳'},
-    {'code': 'ML', 'name': 'Mali', 'flag': '🇲🇱'},
-    {'code': 'TG', 'name': 'Togo', 'flag': '🇹🇬'},
-    {'code': 'CD', 'name': 'République Démocratique du Congo', 'flag': '🇨🇩'},
-    {'code': 'CG', 'name': 'République du Congo', 'flag': '🇨🇬'},
-    {'code': 'BJ', 'name': 'Bénin', 'flag': '🇧🇯'},
-    {'code': 'BF', 'name': 'Burkina Faso', 'flag': '🇧🇫'},
-    {'code': 'NE', 'name': 'Niger', 'flag': '🇳🇪'},
-    {'code': 'TD', 'name': 'Tchad', 'flag': '🇹🇩'},
-    {'code': 'GA', 'name': 'Gabon', 'flag': '🇬🇦'},
-    {'code': 'GN', 'name': 'Guinée', 'flag': '🇬🇳'},
-    {'code': 'CF', 'name': 'République Centrafricaine', 'flag': '🇨🇫'},
+    // West Africa (UEMOA - 8 countries)
+    {'code': 'BJ', 'name': 'Bénin', 'flag': '🇧🇯', 'region': 'West Africa'},
+    {'code': 'BF', 'name': 'Burkina Faso', 'flag': '🇧🇫', 'region': 'West Africa'},
+    {'code': 'CI', 'name': 'Côte d\'Ivoire', 'flag': '🇨🇮', 'region': 'West Africa'},
+    {'code': 'GW', 'name': 'Guinée-Bissau', 'flag': '🇬🇼', 'region': 'West Africa'},
+    {'code': 'ML', 'name': 'Mali', 'flag': '🇲🇱', 'region': 'West Africa'},
+    {'code': 'NE', 'name': 'Niger', 'flag': '🇳🇪', 'region': 'West Africa'},
+    {'code': 'SN', 'name': 'Sénégal', 'flag': '🇸🇳', 'region': 'West Africa'},
+    {'code': 'TG', 'name': 'Togo', 'flag': '🇹🇬', 'region': 'West Africa'},
+    
+    // Central Africa (CEMAC - 3 countries)
+    {'code': 'CM', 'name': 'Cameroun', 'flag': '🇨🇲', 'region': 'Central Africa'},
+    {'code': 'CD', 'name': 'RD Congo', 'flag': '🇨🇩', 'region': 'Central Africa'},
+    {'code': 'GA', 'name': 'Gabon', 'flag': '🇬🇦', 'region': 'Central Africa'},
+    
+    // Indian Ocean (1 country)
+    {'code': 'MG', 'name': 'Madagascar', 'flag': '🇲🇬', 'region': 'Indian Ocean'},
+    
+    // North Africa (2 countries)
+    {'code': 'MA', 'name': 'Maroc', 'flag': '🇲🇦', 'region': 'North Africa'},
+    {'code': 'TN', 'name': 'Tunisie', 'flag': '🇹🇳', 'region': 'North Africa'},
   ];
   
   // Legal Categories
