@@ -2,11 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Utility;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Request;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,25 +13,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-
-        if(Request::route()->getName() != 'LaravelUpdater::database')
-        {
-            $this->call(UserSeeder::class);
-            $this->call(CountrySeeder::class);
-            $this->call(StateSeeder::class);
-            $this->call(CitySeeder::class);
-            $this->call(PlansTableSeeder::class);
-            $this->call(MotionSeeder::class);
-            $this->call(DocTypeSeeder::class);
-            $this->call(CustomFieldSeeder::class);
-            $this->call(AiTemplateSeeder::class);
-            $this->call(CaseTypesSeeder::class);
-            Artisan::call('module:migrate LandingPage');
-            Artisan::call('module:seed LandingPage');
-            
-        }else{
-            Utility::languagecreate();
-            $this->call(CaseTypesSeeder::class);
-        }
+        $this->call([
+            DocumentTemplateSeeder::class,
+            FiscalResourceSeeder::class,
+            CalculatorSeeder::class,
+        ]);
+        
+        $this->command->info('✅ All seeders completed successfully!');
+        $this->command->info('📊 Database populated with:');
+        $this->command->info('   - Document Templates: ~196 templates (14 per type × 14 countries)');
+        $this->command->info('   - Fiscal Resources: ~210 resources (15 per country)');
+        $this->command->info('   - Calculators: ~56 calculators (4 types × 14 countries)');
+        $this->command->info('   Total: ~462 records created');
     }
 }
