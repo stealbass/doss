@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TaskAssignedNotification;
+use App\Jobs\SendTaskCreatedNotification;
 
 class ToDoController extends Controller
 {
@@ -330,6 +331,9 @@ class ToDoController extends Controller
                 ]);
                 // Don't block task creation if email fails
             }
+
+            // Send task created notification
+            SendTaskCreatedNotification::dispatch($todo);
 
             return redirect()->route('to-do.index')->with('success', __('To-Do successfully created.'));
         } else {

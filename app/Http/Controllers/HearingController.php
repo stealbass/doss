@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Imports\ImportHearing;
+use App\Jobs\SendHearingCreatedNotification;
 class HearingController extends Controller
 {
     /**
@@ -101,6 +102,9 @@ class HearingController extends Controller
             $request1->end_date = $request->date;
             Utility::addCalendarData($request1, $type);
         }
+
+        // Send notification email about the new hearing
+        SendHearingCreatedNotification::dispatch($hearing);
 
         return redirect()->back()->with('success', __('Hearing successfully created.'));
     }

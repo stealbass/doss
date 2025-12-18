@@ -15,7 +15,36 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-      
+        // Send hearing reminders daily at 9:00 AM (2 days before the hearing)
+        $schedule->command('reminders:hearings --days=2')
+                 ->dailyAt('09:00')
+                 ->name('hearing-reminders-2-days')
+                 ->onSuccess(function () {
+                     \Log::info('Hearing reminders sent successfully');
+                 })
+                 ->onFailure(function () {
+                     \Log::error('Hearing reminders failed');
+                 });
+
+        // Send task reminders daily at 9:00 AM (2 days before due date)
+        $schedule->command('reminders:tasks --days=2')
+                 ->dailyAt('09:00')
+                 ->name('task-reminders-2-days')
+                 ->onSuccess(function () {
+                     \Log::info('Task reminders sent successfully');
+                 })
+                 ->onFailure(function () {
+                     \Log::error('Task reminders failed');
+                 });
+
+        // Optional: Send additional reminder 1 day before
+        $schedule->command('reminders:hearings --days=1')
+                 ->dailyAt('18:00')
+                 ->name('hearing-reminders-1-day');
+
+        $schedule->command('reminders:tasks --days=1')
+                 ->dailyAt('18:00')
+                 ->name('task-reminders-1-day');
     }
 
     /**
