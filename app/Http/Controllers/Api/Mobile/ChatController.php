@@ -219,15 +219,19 @@ class ChatController extends Controller
                 })
                 ->toArray();
 
-            // RAG context
+            // RAG context with country-specific filtering
             $context = '';
             $useRag = $request->use_rag ?? true;
             $ragType = $request->rag_type ?? 'both';
+            
+            // Get user country for AI context
+            $userCountry = $user->country ?? 'Sénégal';
+            $countryContext = $this->getCountryAIContext($userCountry);
 
             if ($useRag) {
-                // Simple RAG (Legal Library)
+                // Simple RAG (Legal Library - filtered by country)
                 if (in_array($ragType, ['simple', 'both'])) {
-                    $simpleContext = $this->simpleRag->getContext($request->message, 1000);
+                    $simpleContext = $this->simpleRag->getContextByCountry($request->message, $userCountry, 1000);
                     if (!empty($simpleContext)) {
                         $context .= $simpleContext . "\n\n";
                     }
@@ -241,6 +245,9 @@ class ChatController extends Controller
                     }
                 }
             }
+            
+            // Add country-specific AI instructions
+            $context .= "\n\n" . $countryContext;
 
             // Get AI model from subscription plan
             $aiModel = $subscription->plan->ai_model ?? 'gpt-3.5-turbo';
@@ -342,5 +349,36 @@ class ChatController extends Controller
             'success' => true,
             'message' => 'Conversation deleted successfully',
         ], 200);
+    }
+
+    /**
+     * Get country-specific AI context
+     * 
+     * @param string $country
+     * @return string
+     */
+    private function getCountryAIContext($country)
+    {
+        $countries = config('mobile_countries.countries', []);
+        
+        if (!isset($countries[$country])) {
+            // Default OHADA context
+            return "CONTEXTE JURIDIQUE : Vous êtes un assistant juridique spécialisé dans le droit OHADA (Organisation pour l'Harmonisation en Afrique du Droit des Affaires). Fournissez des réponses basées UNIQUEMENT sur les lois et réglementations du pays de l'utilisateur. Si une question concerne un domaine non harmonisé par l'OHADA, précisez que la réponse dépend de la législation nationale spécifique.";
+        }
+        
+        $countryData = $countries[$country];
+        $legalSystem = $countryData['legal_system'] ?? 'Civil Law';
+        $aiContext = $countryData['ai_context'] ?? '';
+        $region = $countryData['region'] ?? 'West Africa';
+        
+        $context = "CONTEXTE JURIDIQUE SPÉCIFIQUE - {$country} :\n";
+        $context .= "- Système juridique : {$legalSystem}\n";
+        $context .= "- Région : {$region}\n";
+        $context .= "- Instructions AI : {$aiContext}\n\n";
+        $context .= "IMPORTANT : Toutes vos réponses doivent être EXCLUSIVEMENT basées sur les lois, codes et réglementations applicables en {$country}. ";
+        $context .= "Ne donnez JAMAIS de conseils juridiques basés sur d'autres juridictions. ";
+        $context .= "Si vous n'avez pas d'information spécifique pour {$country}, indiquez-le clairement et suggérez de consulter un juriste local.";
+        
+        return $context;
     }
 }

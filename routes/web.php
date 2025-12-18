@@ -418,6 +418,43 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('mobile-legal-library/country/{country}/statistics', [MobileLegalLibraryController::class, 'countryStatistics'])->name('mobile-legal-library.country-statistics');
     Route::get('mobile-legal-library/country/{country}/ai-context', [MobileLegalLibraryController::class, 'getCountryAIContext'])->name('mobile-legal-library.country-ai-context');
 
+    // Document Templates Management
+    Route::get('document-templates', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+    Route::get('document-templates/create', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
+    Route::post('document-templates', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+    Route::get('document-templates/{id}/edit', [DocumentTemplateController::class, 'edit'])->name('document-templates.edit');
+    Route::put('document-templates/{id}', [DocumentTemplateController::class, 'update'])->name('document-templates.update');
+    Route::delete('document-templates/{id}', [DocumentTemplateController::class, 'destroy'])->name('document-templates.destroy');
+    Route::get('document-templates/{id}/download', [DocumentTemplateController::class, 'download'])->name('document-templates.download');
+    Route::post('document-templates/{id}/toggle-visibility', [DocumentTemplateController::class, 'toggleVisibility'])->name('document-templates.toggle-visibility');
+    Route::post('document-templates/bulk-delete', [DocumentTemplateController::class, 'bulkDelete'])->name('document-templates.bulk-delete');
+    Route::get('document-templates/export', [DocumentTemplateController::class, 'export'])->name('document-templates.export');
+
+    // Fiscal & Social Resources Management
+    Route::get('fiscal-resources', [FiscalSocialResourceController::class, 'index'])->name('fiscal-resources.index');
+    Route::post('fiscal-resources', [FiscalSocialResourceController::class, 'store'])->name('fiscal-resources.store');
+    Route::delete('fiscal-resources/{id}', [FiscalSocialResourceController::class, 'destroy'])->name('fiscal-resources.destroy');
+
+    // Calculators Management
+    Route::get('calculators', [CalculatorController::class, 'index'])->name('calculators.index');
+    Route::post('calculators', [CalculatorController::class, 'store'])->name('calculators.store');
+    Route::delete('calculators/{id}', [CalculatorController::class, 'destroy'])->name('calculators.destroy');
+
+    // Legal Alerts Management
+    Route::get('legal-alerts', [LegalAlertController::class, 'index'])->name('legal-alerts.index');
+    Route::post('legal-alerts', [LegalAlertController::class, 'store'])->name('legal-alerts.store');
+    Route::delete('legal-alerts/{id}', [LegalAlertController::class, 'destroy'])->name('legal-alerts.destroy');
+    Route::post('legal-alerts/{id}/publish', [LegalAlertController::class, 'publish'])->name('legal-alerts.publish');
+
+    // Mobile Subscription Plans Admin
+    Route::get('mobile-plans-admin', [MobilePlansAdminController::class, 'index'])->name('mobile-plans-admin.index');
+    Route::get('mobile-plans-admin/create', [MobilePlansAdminController::class, 'create'])->name('mobile-plans-admin.create');
+    Route::post('mobile-plans-admin', [MobilePlansAdminController::class, 'store'])->name('mobile-plans-admin.store');
+    Route::get('mobile-plans-admin/{id}/edit', [MobilePlansAdminController::class, 'edit'])->name('mobile-plans-admin.edit');
+    Route::put('mobile-plans-admin/{id}', [MobilePlansAdminController::class, 'update'])->name('mobile-plans-admin.update');
+    Route::delete('mobile-plans-admin/{id}', [MobilePlansAdminController::class, 'destroy'])->name('mobile-plans-admin.destroy');
+    Route::post('mobile-plans-admin/{id}/toggle-active', [MobilePlansAdminController::class, 'toggleActive'])->name('mobile-plans-admin.toggle-active');
+
     Route::get('generate/{template_name}', [AiTemplateController::class, 'create'])->name('generate');
     Route::post('generate/keywords/{id}', [AiTemplateController::class, 'getKeywords'])->name('generate.keywords');
     Route::post('generate/response', [AiTemplateController::class, 'AiGenerate'])->name('generate.response');
@@ -857,3 +894,74 @@ Route::any('payu/bill/pay/{id}', [PayUPaymentController::class, 'payBillWithPayU
 Route::any('payu/bill/response/{bill_id}', [PayUPaymentController::class, 'billResponse'])->name('payu.bill.response');
 Route::any('payu/bill/failure', [PayUPaymentController::class, 'billFailure'])->name('payu.bill.failure');
 Route::post('payu/settings', [PayUPaymentController::class, 'settingConfig'])->name('payu.settings.store');
+
+/*
+|--------------------------------------------------------------------------
+| DOSSY ENTERPRISE SYSTEM ROUTES - Admin Interface
+|--------------------------------------------------------------------------
+| Routes for managing Enterprise features: Templates, Fiscal Resources,
+| Calculators, Legal Alerts, Multi-Accounts, and Subscription Plans
+|
+*/
+
+Route::middleware(['auth', 'XSS'])->prefix('admin')->name('admin.')->group(function () {
+    
+    // Document Templates Management (Modèles d'Actes et Contrats)
+    Route::prefix('document-templates')->name('document-templates.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DocumentTemplateController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\DocumentTemplateController::class, 'store'])->name('store');
+        Route::get('/{id}/download', [App\Http\Controllers\DocumentTemplateController::class, 'download'])->name('download');
+        Route::post('/{id}/toggle-mobile', [App\Http\Controllers\DocumentTemplateController::class, 'toggleMobileVisibility'])->name('toggle-mobile');
+        Route::delete('/{id}', [App\Http\Controllers\DocumentTemplateController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [App\Http\Controllers\DocumentTemplateController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::get('/export', [App\Http\Controllers\DocumentTemplateController::class, 'export'])->name('export');
+    });
+
+    // Fiscal & Social Resources Management
+    Route::prefix('fiscal-resources')->name('fiscal-resources.')->group(function () {
+        Route::get('/', [App\Http\Controllers\FiscalSocialResourceController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\FiscalSocialResourceController::class, 'store'])->name('store');
+        Route::put('/{id}', [App\Http\Controllers\FiscalSocialResourceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\FiscalSocialResourceController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/toggle-mobile', [App\Http\Controllers\FiscalSocialResourceController::class, 'toggleMobileVisibility'])->name('toggle-mobile');
+        Route::get('/export', [App\Http\Controllers\FiscalSocialResourceController::class, 'export'])->name('export');
+        
+        // Salary Grids
+        Route::get('/salary-grids', [App\Http\Controllers\FiscalSocialResourceController::class, 'salaryGrids'])->name('salary-grids');
+        Route::post('/salary-grids', [App\Http\Controllers\FiscalSocialResourceController::class, 'storeSalaryGrid'])->name('salary-grids.store');
+        
+        // Tax Parameters
+        Route::get('/tax-parameters', [App\Http\Controllers\FiscalSocialResourceController::class, 'taxParameters'])->name('tax-parameters');
+        Route::post('/tax-parameters', [App\Http\Controllers\FiscalSocialResourceController::class, 'storeTaxParameter'])->name('tax-parameters.store');
+    });
+
+    // Calculators & Simulators Management
+    Route::prefix('calculators')->name('calculators.')->group(function () {
+        Route::get('/', [App\Http\Controllers\CalculatorController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\CalculatorController::class, 'store'])->name('store');
+        Route::put('/{id}', [App\Http\Controllers\CalculatorController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\CalculatorController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/toggle-active', [App\Http\Controllers\CalculatorController::class, 'toggleActive'])->name('toggle-active');
+        Route::get('/logs', [App\Http\Controllers\CalculatorController::class, 'logs'])->name('logs');
+    });
+
+    // Legal Alerts Management
+    Route::prefix('legal-alerts')->name('legal-alerts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\LegalAlertController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\LegalAlertController::class, 'store'])->name('store');
+        Route::put('/{id}', [App\Http\Controllers\LegalAlertController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\LegalAlertController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/send', [App\Http\Controllers\LegalAlertController::class, 'send'])->name('send');
+        Route::get('/recipients', [App\Http\Controllers\LegalAlertController::class, 'recipients'])->name('recipients');
+    });
+
+    // Mobile Subscription Plans Management (Enhanced with new prices)
+    Route::prefix('mobile-plans')->name('mobile-plans.')->group(function () {
+        Route::get('/', [App\Http\Controllers\MobilePlansAdminController::class, 'index'])->name('index');
+        Route::post('/', [App\Http\Controllers\MobilePlansAdminController::class, 'store'])->name('store');
+        Route::put('/{id}', [App\Http\Controllers\MobilePlansAdminController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\MobilePlansAdminController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/toggle-active', [App\Http\Controllers\MobilePlansAdminController::class, 'toggleActive'])->name('toggle-active');
+        Route::get('/export', [App\Http\Controllers\MobilePlansAdminController::class, 'export'])->name('export');
+    });
+});

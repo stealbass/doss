@@ -8,6 +8,12 @@ use App\Http\Controllers\Api\Mobile\ConfigController;
 use App\Http\Controllers\Api\Mobile\DocumentController;
 use App\Http\Controllers\Api\Mobile\SubscriptionController;
 use App\Http\Controllers\Api\Mobile\ReferralController;
+use App\Http\Controllers\Api\Mobile\TemplateApiController;
+use App\Http\Controllers\Api\Mobile\FiscalResourceApiController;
+use App\Http\Controllers\Api\Mobile\CalculatorApiController;
+use App\Http\Controllers\Api\Mobile\LegalAlertApiController;
+use App\Http\Controllers\Api\Mobile\SubscriptionApiController;
+use App\Http\Controllers\Api\Mobile\EnterpriseApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -94,4 +100,49 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     
     // User's plan limits
     Route::get('/limits', [ConfigController::class, 'getPlanLimits']);
+    
+    // ENTERPRISE FEATURES
+    
+    // Templates (Professional & Enterprise plans)
+    Route::prefix('templates')->group(function () {
+        Route::get('/', [TemplateApiController::class, 'index']);
+        Route::get('/{id}', [TemplateApiController::class, 'show']);
+        Route::get('/{id}/download', [TemplateApiController::class, 'download']);
+    });
+    
+    // Fiscal & Social Resources (Professional & Enterprise plans)
+    Route::prefix('fiscal-resources')->group(function () {
+        Route::get('/', [FiscalResourceApiController::class, 'index']);
+        Route::get('/salary-grids', [FiscalResourceApiController::class, 'salaryGrids']);
+        Route::get('/tax-parameters', [FiscalResourceApiController::class, 'taxParameters']);
+    });
+    
+    // Calculators (Professional & Enterprise plans)
+    Route::prefix('calculators')->group(function () {
+        Route::get('/', [CalculatorApiController::class, 'index']);
+        Route::post('/{id}/calculate', [CalculatorApiController::class, 'calculate']);
+        Route::get('/history', [CalculatorApiController::class, 'history']);
+    });
+    
+    // Legal Alerts (Professional & Enterprise plans)
+    Route::prefix('legal-alerts')->group(function () {
+        Route::get('/', [LegalAlertApiController::class, 'index']);
+        Route::post('/{id}/mark-read', [LegalAlertApiController::class, 'markRead']);
+    });
+    
+    // Subscription Plans (updated with new prices)
+    Route::prefix('subscription-plans')->group(function () {
+        Route::get('/', [SubscriptionApiController::class, 'plans']);
+        Route::get('/current', [SubscriptionApiController::class, 'currentPlan']);
+    });
+    
+    // Enterprise Multi-Accounts (Cabinet/Enterprise plan only)
+    Route::prefix('enterprise')->group(function () {
+        Route::get('/dashboard', [EnterpriseApiController::class, 'getDashboard']);
+        Route::get('/sub-accounts', [EnterpriseApiController::class, 'getSubAccounts']);
+        Route::post('/sub-accounts', [EnterpriseApiController::class, 'createSubAccount']);
+        Route::put('/sub-accounts/{id}', [EnterpriseApiController::class, 'updateSubAccount']);
+        Route::delete('/sub-accounts/{id}', [EnterpriseApiController::class, 'deleteSubAccount']);
+        Route::post('/sub-accounts/{id}/toggle', [EnterpriseApiController::class, 'toggleStatus']);
+    });
 });
