@@ -1,0 +1,180 @@
+╔═══════════════════════════════════════════════════════════════╗
+║           📝 INSTRUCTIONS : SCRIPT SQL MANUEL                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📅 19 Décembre 2024 | ⚡ Solution Complète
+
+═══════════════════════════════════════════════════════════════════
+
+🎯 CE QUE CE SCRIPT VA FAIRE
+═══════════════════════════════════════════════════════════════════
+
+✅ Créer la table `fcm_tokens` (notifications push)
+✅ Créer la table `mobile_subscription_plans` (plans d'abonnement)
+✅ Ajouter colonnes à `legal_categories` : country, is_mobile_visible, sort_order
+✅ Ajouter colonnes à `legal_documents` : country, is_mobile_visible, language, ai_context
+✅ Marquer les migrations comme exécutées
+✅ Vérifier que tout est correct
+
+═══════════════════════════════════════════════════════════════════
+
+📋 COMMENT UTILISER CE SCRIPT
+═══════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────┐
+│ MÉTHODE 1 : Via phpMyAdmin (RECOMMANDÉ)                      │
+└───────────────────────────────────────────────────────────────┘
+
+1. Ouvrez phpMyAdmin : https://dossypro.com/phpmyadmin
+2. Sélectionnez votre base de données
+3. Cliquez sur l'onglet "SQL"
+4. Ouvrez le fichier : SQL_MANUEL_COMPLET.sql
+5. Copiez TOUT le contenu du fichier
+6. Collez dans la zone de texte de phpMyAdmin
+7. Cliquez sur "Exécuter"
+8. Attendez que le script se termine (~30 secondes)
+
+
+┌───────────────────────────────────────────────────────────────┐
+│ MÉTHODE 2 : Via Terminal (Alternative)                       │
+└───────────────────────────────────────────────────────────────┘
+
+Sur votre serveur, exécutez :
+
+mysql -u votre_utilisateur -p votre_base_de_donnees < SQL_MANUEL_COMPLET.sql
+
+Ou si le fichier est sur GitHub :
+
+cd /home/user/webapp
+mysql -u votre_utilisateur -p votre_base_de_donnees < SQL_MANUEL_COMPLET.sql
+
+
+═══════════════════════════════════════════════════════════════════
+
+✅ VÉRIFICATIONS APRÈS EXÉCUTION
+═══════════════════════════════════════════════════════════════════
+
+Le script affiche automatiquement les vérifications à la fin :
+
+┌───────────────────────────────────────────────────────────────┐
+│ Vous devriez voir :                                           │
+└───────────────────────────────────────────────────────────────┘
+
+1. Tables créées : 2
+   → fcm_tokens et mobile_subscription_plans
+
+2. Colonnes legal_categories :
+   → Contient : country, is_mobile_visible, sort_order
+
+3. Colonnes legal_documents :
+   → Contient : country, is_mobile_visible, language, ai_context
+
+4. Migrations ajoutées : 3
+   → Les 3 migrations sont enregistrées
+
+
+═══════════════════════════════════════════════════════════════════
+
+🔍 VÉRIFICATION MANUELLE (OPTIONNEL)
+═══════════════════════════════════════════════════════════════════
+
+Dans phpMyAdmin → Onglet SQL, exécutez :
+
+-- Vérifier la table fcm_tokens
+SHOW CREATE TABLE fcm_tokens;
+
+-- Vérifier la table mobile_subscription_plans
+SHOW CREATE TABLE mobile_subscription_plans;
+
+-- Vérifier les colonnes de legal_categories
+SHOW COLUMNS FROM legal_categories;
+
+-- Vérifier les colonnes de legal_documents
+SHOW COLUMNS FROM legal_documents;
+
+-- Vérifier les migrations
+SELECT * FROM migrations ORDER BY id DESC LIMIT 10;
+
+
+═══════════════════════════════════════════════════════════════════
+
+🚨 EN CAS D'ERREUR
+═══════════════════════════════════════════════════════════════════
+
+Erreur : "Table 'fcm_tokens' already exists"
+└─ La table existe déjà, c'est OK ! Le script utilise "IF NOT EXISTS"
+
+Erreur : "Column 'country' already exists"
+└─ La colonne existe déjà, c'est OK ! Le script vérifie avant d'ajouter
+
+Erreur : "Duplicate entry"
+└─ La migration est déjà enregistrée, c'est OK !
+
+Erreur : "Foreign key constraint fails"
+└─ Vérifiez que la table 'users' existe
+└─ Exécutez : SHOW TABLES LIKE 'users';
+
+
+═══════════════════════════════════════════════════════════════════
+
+📂 FICHIER À UTILISER
+═══════════════════════════════════════════════════════════════════
+
+Nom du fichier : SQL_MANUEL_COMPLET.sql
+Emplacement     : /home/user/webapp/SQL_MANUEL_COMPLET.sql
+Taille          : ~12 KB
+GitHub          : branch genspark_ai_developer
+
+
+═══════════════════════════════════════════════════════════════════
+
+⚡ APRÈS L'EXÉCUTION
+═══════════════════════════════════════════════════════════════════
+
+1. Rafraîchissez votre page web
+2. L'erreur devrait avoir disparu !
+3. Si l'erreur persiste :
+   → Vérifiez les logs : tail -50 storage/logs/laravel.log
+   → Consultez : GUIDE_ERREURS_COMPLET.txt
+
+
+═══════════════════════════════════════════════════════════════════
+
+💡 CONSEIL
+═══════════════════════════════════════════════════════════════════
+
+Ce script est IDEMPOTENT :
+→ Vous pouvez l'exécuter plusieurs fois sans problème
+→ Il vérifie toujours avant d'ajouter
+→ Il ne supprime aucune donnée existante
+
+
+═══════════════════════════════════════════════════════════════════
+
+📚 DOCUMENTATION COMPLÈTE
+═══════════════════════════════════════════════════════════════════
+
+Sur GitHub (branch genspark_ai_developer) :
+
+📖 SQL_MANUEL_COMPLET.sql
+   → Le script SQL à exécuter
+
+📖 INSTRUCTIONS_SQL_MANUEL.txt (ce fichier)
+   → Instructions d'utilisation
+
+📖 SOLUTION_PHPMYADMIN.md
+   → Guide détaillé phpMyAdmin
+
+📖 PHPMYADMIN_SIMPLE.txt
+   → Guide simple étape par étape
+
+
+═══════════════════════════════════════════════════════════════════
+
+Date : 19/12/2024
+Status : Prêt à Exécuter
+Temps d'exécution : ~30 secondes
+
+╔═══════════════════════════════════════════════════════════════╗
+║       🚀 EXÉCUTEZ LE SCRIPT SQL_MANUEL_COMPLET.sql            ║
+╚═══════════════════════════════════════════════════════════════╝
