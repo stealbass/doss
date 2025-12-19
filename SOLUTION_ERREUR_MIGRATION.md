@@ -1,9 +1,19 @@
-# 🔧 SOLUTION : Erreur "Duplicate column name 'country'"
+# 🔧 SOLUTION : Erreurs de Migration Laravel 11
 
-## ❌ Problème
+## ❌ Problèmes Rencontrés
+
+### Erreur 1 : Duplicate column name
 ```
 SQLSTATE[23000]: Integrity constraint violation: 1060 Duplicate column name 'country'
 ```
+
+### Erreur 2 : Method does not exist (Laravel 11)
+```
+Illuminate\Database\MySqlConnection::getFluentGrammar()
+Method does not exist
+```
+
+**Cause** : La méthode `getDoctrineSchemaManager()` n'est plus supportée dans Laravel 11.
 
 ## ✅ Solution Immédiate (3 Options)
 
