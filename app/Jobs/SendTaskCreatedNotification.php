@@ -6,6 +6,7 @@ use App\Models\ToDo;
 use App\Models\Cases;
 use App\Models\User;
 use App\Mail\TaskCreatedMail;
+use App\Services\PushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -78,6 +79,22 @@ class SendTaskCreatedNotification implements ShouldQueue
                 if (!empty($user->email)) {
                     Mail::to($user->email)->send(new TaskCreatedMail($this->task, $user));
                     Log::info("Task created notification sent to: {$user->email}");
+                }
+            }
+
+            // Send push notifications
+            if ($usersToNotify->count() > 0) {
+                $pushService = new PushNotificationService();
+                $result = $pushService->sendTaskCreatedNotification(
+                    $this->task,
+                    $usersToNotify->toArray()
+                );
+                
+                if ($result['success']) {
+                    Log::info("Push notification sent for task created", [
+                        'task_id' => $this->task->id,
+                        'users_count' => $usersToNotify->count(),
+                    ]);
                 }
             }
 

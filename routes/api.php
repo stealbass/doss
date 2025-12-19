@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Mobile\CalculatorApiController;
 use App\Http\Controllers\Api\Mobile\LegalAlertApiController;
 use App\Http\Controllers\Api\Mobile\SubscriptionApiController;
 use App\Http\Controllers\Api\Mobile\EnterpriseApiController;
+use App\Http\Controllers\Api\FcmTokenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -145,4 +146,9 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
         Route::delete('/sub-accounts/{id}', [EnterpriseApiController::class, 'deleteSubAccount']);
         Route::post('/sub-accounts/{id}/toggle', [EnterpriseApiController::class, 'toggleStatus']);
     });
+    
+    // Firebase Cloud Messaging (FCM) Tokens - Push Notifications
+    Route::post('/fcm-token', [FcmTokenController::class, 'store']);
+    Route::delete('/fcm-token', [FcmTokenController::class, 'destroy']);
+    Route::get('/fcm-token', [FcmTokenController::class, 'show']);
 });

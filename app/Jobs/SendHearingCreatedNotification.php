@@ -6,6 +6,7 @@ use App\Models\Hearing;
 use App\Models\Cases;
 use App\Models\User;
 use App\Mail\HearingCreatedMail;
+use App\Services\PushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -80,6 +81,23 @@ class SendHearingCreatedNotification implements ShouldQueue
                 if (!empty($user->email)) {
                     Mail::to($user->email)->send(new HearingCreatedMail($this->hearing, $case, $user));
                     Log::info("Hearing created notification sent to: {$user->email}");
+                }
+            }
+
+            // Send push notifications
+            if ($usersToNotify->count() > 0) {
+                $pushService = new PushNotificationService();
+                $result = $pushService->sendHearingCreatedNotification(
+                    $this->hearing,
+                    $case,
+                    $usersToNotify->toArray()
+                );
+                
+                if ($result['success']) {
+                    Log::info("Push notification sent for hearing created", [
+                        'hearing_id' => $this->hearing->id,
+                        'users_count' => $usersToNotify->count(),
+                    ]);
                 }
             }
 
