@@ -431,4 +431,75 @@ class LegalLibraryController extends Controller
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
     }
+
+    /**
+     * Display categories grouped by country
+     */
+    public function categoriesByCountry()
+    {
+        if (Auth::user()->type == 'super admin') {
+            $countries = ['benin', 'burkina-faso', 'cote-divoire', 'mali', 'niger', 'senegal', 'togo', 'ghana', 'nigeria', 'cameroon'];
+            $categories = LegalCategory::select('id', 'name', 'slug', 'country', 'is_mobile_visible', 'sort_order')
+                ->whereIn('country', $countries)
+                ->orderBy('country')
+                ->orderBy('sort_order')
+                ->get()
+                ->groupBy('country');
+            
+            return view('legal-library.categories-by-country', compact('categories', 'countries'));
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+    }
+
+    /**
+     * Toggle category mobile visibility
+     */
+    public function toggleCategoryVisibility($id)
+    {
+        if (Auth::user()->type == 'super admin') {
+            $category = LegalCategory::find($id);
+            if ($category) {
+                $category->is_mobile_visible = !$category->is_mobile_visible;
+                $category->save();
+                return response()->json([
+                    'success' => true,
+                    'is_mobile_visible' => $category->is_mobile_visible
+                ]);
+            }
+            return response()->json(['success' => false], 404);
+        }
+        return response()->json(['success' => false, 'message' => 'Permission Denied'], 403);
+    }
+
+    /**
+     * Update category sort order
+     */
+    public function updateCategorySort($id, Request $request)
+    {
+        if (Auth::user()->type == 'super admin') {
+            $category = LegalCategory::find($id);
+            if ($category) {
+                $category->sort_order = $request->sort_order;
+                $category->save();
+                return response()->json(['success' => true]);
+            }
+            return response()->json(['success' => false], 404);
+        }
+        return response()->json(['success' => false, 'message' => 'Permission Denied'], 403);
+    }
+
+    /**
+     * Filter categories by country
+     */
+    public function filterByCountry($country)
+    {
+        if (Auth::user()->type == 'super admin') {
+            $categories = LegalCategory::where('country', $country)
+                ->orderBy('sort_order')
+                ->get();
+            return response()->json(['categories' => $categories]);
+        }
+        return response()->json(['success' => false, 'message' => 'Permission Denied'], 403);
+    }
 }

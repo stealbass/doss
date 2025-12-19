@@ -400,6 +400,12 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('push-notifications-preview-recipients', [PushNotificationsController::class, 'previewRecipients'])->name('push-notifications.preview-recipients');
     Route::get('push-notifications-statistics', [PushNotificationsController::class, 'statistics'])->name('push-notifications.statistics');
 
+    // Legal Categories by Country Management Routes
+    Route::get('legal-categories', [LegalLibraryController::class, 'categoriesByCountry'])->name('legal-categories.index');
+    Route::post('legal-categories/{id}/toggle-visibility', [LegalLibraryController::class, 'toggleCategoryVisibility'])->name('legal-categories.toggle-visibility');
+    Route::post('legal-categories/{id}/update-sort', [LegalLibraryController::class, 'updateCategorySort'])->name('legal-categories.update-sort');
+    Route::get('legal-categories/country/{country}', [LegalLibraryController::class, 'filterByCountry'])->name('legal-categories.filter-by-country');
+
     // Mobile Legal Library Management Routes
     Route::get('mobile-legal-library', [MobileLegalLibraryController::class, 'index'])->name('mobile-legal-library.index');
     Route::post('mobile-legal-library/{id}/toggle', [MobileLegalLibraryController::class, 'toggleVisibility'])->name('mobile-legal-library.toggle');

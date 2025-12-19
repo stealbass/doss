@@ -32,7 +32,13 @@ class HearingController extends Controller
     public function create($case_id)
     {
         $hearing_type = HearingType::where('created_by', Auth::user()->creatorId())->pluck('type', 'id');
-        return view('hearings.create', compact('hearing_type', 'case_id'));
+        
+        // Get users for assignment dropdown
+        $users = \App\Models\User::where('created_by', Auth::user()->creatorId())
+            ->where('type', '!=', 'client')
+            ->pluck('name', 'id');
+            
+        return view('hearings.create', compact('hearing_type', 'case_id', 'users'));
     }
 
     /**
@@ -58,6 +64,7 @@ class HearingController extends Controller
         $hearing = new Hearing();
         $hearing['case_id'] = $request->case_id;
         $hearing['date'] = $request->date;
+        $hearing['assigned_to'] = $request->assigned_to;
         $fileNameToStores = '';
         if (!$request->file == null) {
 

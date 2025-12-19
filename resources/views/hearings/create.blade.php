@@ -12,6 +12,10 @@
             {!! Form::date('date', null, ['class' => 'form-control', 'required' => 'required']) !!}
         </div>
         <div class="form-group col-md-12">
+            {{ Form::label('assigned_to', __('Assign To'), ['class' => 'form-label']) }}
+            {{ Form::select('assigned_to', $users, null, ['class' => 'form-control', 'placeholder' => __('Select User')]) }}
+        </div>
+        <div class="form-group col-md-12">
             {{ Form::label('remarks', __('Remarks'), ['class' => 'form-label']) }}
             {{ Form::textarea('remarks', null, ['class' => 'form-control', 'rows' => '3', 'maxlength' => '250']) }}
         </div>

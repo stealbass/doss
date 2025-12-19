@@ -410,11 +410,20 @@
                 @endif
 
                 @if (\Auth::user()->type == 'super admin')
-                    <li class="dash-item {{ request()->is('legal-library*') ? 'active' : '' }}">
-                        <a href="{{ route('legal-library.index') }}" class="dash-link">
+                    <li class="dash-item dash-hasmenu {{ request()->is('legal-library*') || request()->is('legal-categories*') ? 'active dash-trigger' : '' }}">
+                        <a href="#!" class="dash-link">
                             <span class="dash-micon"><i class="ti ti-book"></i></span>
                             <span class="dash-mtext">{{ __('Legal Library') }}</span>
+                            <span class="dash-arrow"><i data-feather="chevron-right"></i></span>
                         </a>
+                        <ul class="dash-submenu {{ request()->is('legal-library*') || request()->is('legal-categories*') ? 'show' : '' }}">
+                            <li class="dash-item {{ request()->is('legal-library') && !request()->is('legal-library/*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('legal-library.index') }}">{{ __('Documents') }}</a>
+                            </li>
+                            <li class="dash-item {{ request()->is('legal-categories*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('legal-categories.index') }}">{{ __('Categories by Country') }}</a>
+                            </li>
+                        </ul>
                     </li>
                     
                     <li class="dash-item {{ request()->is('plan_request*') ? 'active' : '' }}">
@@ -524,6 +533,27 @@
                                 <a class="dash-link" href="{{ route('push-notifications.index') }}">
                                     <span class="dash-micon"><i class="ti ti-bell"></i></span>
                                     <span class="dash-mtext">{{ __('Push Notifications') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('document-templates*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('document-templates.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-file-text"></i></span>
+                                    <span class="dash-mtext">{{ __('Document Templates') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('fiscal-resources*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('fiscal-resources.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-calculator"></i></span>
+                                    <span class="dash-mtext">{{ __('Fiscal Resources') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="dash-item {{ request()->is('calculators*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('calculators.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-math"></i></span>
+                                    <span class="dash-mtext">{{ __('Calculators') }}</span>
                                 </a>
                             </li>
 
