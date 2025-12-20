@@ -264,6 +264,10 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
         Route::put('/category/{id}', [LegalLibraryController::class, 'updateCategory'])->name('category.update');
         Route::delete('/category/{id}', [LegalLibraryController::class, 'destroyCategory'])->name('category.destroy');
         
+        // Bulk assign countries
+        Route::get('/bulk-assign-countries', [LegalLibraryController::class, 'bulkAssignCountries'])->name('bulk-assign-countries');
+        Route::post('/bulk-assign-countries', [LegalLibraryController::class, 'saveBulkAssignCountries'])->name('bulk-assign-countries');
+        
         // Document routes
         Route::get('/category/{categoryId}/documents', [LegalLibraryController::class, 'showDocuments'])->name('documents');
         Route::get('/category/{categoryId}/document/create', [LegalLibraryController::class, 'createDocument'])->name('document.create');

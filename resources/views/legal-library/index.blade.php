@@ -5,6 +5,9 @@
 @section('action-button')
     @if(\Auth::user()->type == 'super admin')
         <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
+            <a href="{{ route('legal-library.bulk-assign-countries') }}" class="btn btn-sm btn-info mx-1" title="{{ __('Assign countries to all categories') }}">
+                <i class="ti ti-world"></i> {{ __('Assign Countries') }}
+            </a>
             <a href="{{ route('legal-library.category.create') }}" class="btn btn-sm btn-primary mx-1">
                 <i class="ti ti-plus"></i> {{ __('Create Category') }}
             </a>

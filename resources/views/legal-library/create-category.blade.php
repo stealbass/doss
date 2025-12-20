@@ -35,9 +35,9 @@
                                 'niger' => __('Niger'),
                                 'senegal' => __('Sénégal'),
                                 'togo' => __('Togo'),
-                                'ghana' => __('Ghana'),
-                                'nigeria' => __('Nigeria'),
-                                'cameroon' => __('Cameroon'),
+                                'gabon' => __('Gabon'),
+                                'congo' => __('Congo'),
+                                'cameroun' => __('Cameroun'),
                             ], null, [
                                 'class' => 'form-control',
                                 'placeholder' => __('Select Country (Optional)'),

@@ -444,15 +444,21 @@ class LegalLibraryController extends Controller
     public function categoriesByCountry()
     {
         if (Auth::user()->type == 'super admin') {
-            $countries = ['benin', 'burkina-faso', 'cote-divoire', 'mali', 'niger', 'senegal', 'togo', 'ghana', 'nigeria', 'cameroon'];
-            $categories = LegalCategory::select('id', 'name', 'slug', 'country', 'is_mobile_visible', 'sort_order')
-                ->whereIn('country', $countries)
+            $countries = ['benin', 'burkina-faso', 'cote-divoire', 'mali', 'niger', 'senegal', 'togo', 'gabon', 'congo', 'cameroun'];
+            
+            // Get all categories (including those without country)
+            $allCategories = LegalCategory::select('id', 'name', 'slug', 'country', 'is_mobile_visible', 'sort_order')
                 ->orderBy('country')
                 ->orderBy('sort_order')
-                ->get()
-                ->groupBy('country');
+                ->get();
             
-            return view('legal-library.categories-by-country', compact('categories', 'countries'));
+            // Group categories by country
+            $categories = $allCategories->whereIn('country', $countries)->groupBy('country');
+            
+            // Get categories without country
+            $categoriesWithoutCountry = $allCategories->whereNull('country');
+            
+            return view('legal-library.categories-by-country', compact('categories', 'countries', 'categoriesWithoutCountry'));
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -507,5 +513,48 @@ class LegalLibraryController extends Controller
             return response()->json(['categories' => $categories]);
         }
         return response()->json(['success' => false, 'message' => 'Permission Denied'], 403);
+    }
+
+    /**
+     * Show bulk assign countries page
+     */
+    public function bulkAssignCountries()
+    {
+        if (Auth::user()->type == 'super admin') {
+            $categories = LegalCategory::withCount('documents')
+                ->orderBy('name')
+                ->get();
+            
+            return view('legal-library.bulk-assign-countries', compact('categories'));
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+    }
+
+    /**
+     * Save bulk country assignments
+     */
+    public function saveBulkAssignCountries(Request $request)
+    {
+        if (Auth::user()->type == 'super admin') {
+            $categories = $request->input('categories', []);
+            $updatedCount = 0;
+
+            foreach ($categories as $categoryId => $data) {
+                $category = LegalCategory::find($categoryId);
+                if ($category) {
+                    $category->update([
+                        'country' => $data['country'] ?? null,
+                        'is_mobile_visible' => isset($data['is_mobile_visible']) ? 1 : 0,
+                    ]);
+                    $updatedCount++;
+                }
+            }
+
+            return redirect()->route('legal-library.index')
+                ->with('success', __('Successfully updated') . ' ' . $updatedCount . ' ' . __('categories'));
+        } else {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
     }
 }

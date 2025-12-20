@@ -12,8 +12,17 @@
         <div class="col-xl-12">
             <div class="card shadow-none">
                 <div class="card-header">
-                    <h5>{{ __('Legal Library Categories by Country') }}</h5>
-                    <small class="text-muted">{{ __('Manage category visibility and display order for mobile app by country') }}</small>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">{{ __('Legal Library Categories by Country') }}</h5>
+                            <small class="text-muted">{{ __('Manage category visibility and display order for mobile app by country') }}</small>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{{ route('legal-library.bulk-assign-countries') }}" class="btn btn-sm btn-info">
+                                <i class="ti ti-world"></i> {{ __('Assign Countries to All') }}
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Country Filter Tabs -->
@@ -107,6 +116,46 @@
                             </div>
                         @endforeach
                     </div>
+
+                    @if(isset($categoriesWithoutCountry) && $categoriesWithoutCountry->count() > 0)
+                        <div class="mt-4">
+                            <div class="alert alert-warning">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <i class="ti ti-alert-triangle"></i>
+                                            {{ __('Categories Without Country Assignment') }}
+                                        </h5>
+                                        <small>
+                                            {{ $categoriesWithoutCountry->count() }} {{ __('categories need country assignment to appear in mobile app') }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="{{ route('legal-library.bulk-assign-countries') }}" class="btn btn-warning">
+                                            <i class="ti ti-world"></i> {{ __('Assign Countries Now') }}
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach($categoriesWithoutCountry->take(5) as $category)
+                                            <li class="mb-1">
+                                                <i class="ti ti-point-filled"></i>
+                                                <strong>{{ $category->name }}</strong>
+                                                <small class="text-muted">({{ $category->documents_count ?? 0 }} documents)</small>
+                                            </li>
+                                        @endforeach
+                                        @if($categoriesWithoutCountry->count() > 5)
+                                            <li class="mt-2">
+                                                <i class="ti ti-dots"></i>
+                                                <em>{{ __('and') }} {{ $categoriesWithoutCountry->count() - 5 }} {{ __('more categories') }}</em>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
