@@ -85,6 +85,9 @@ class LegalLibraryController extends Controller
             LegalCategory::create([
                 'name' => $request->name,
                 'description' => $request->description,
+                'country' => $request->country,
+                'is_mobile_visible' => $request->has('is_mobile_visible') ? 1 : 0,
+                'sort_order' => $request->sort_order ?? 0,
                 'created_by' => 0, // Super Admin level - no company association
             ]);
 
@@ -137,6 +140,9 @@ class LegalLibraryController extends Controller
             $category->update([
                 'name' => $request->name,
                 'description' => $request->description,
+                'country' => $request->country,
+                'is_mobile_visible' => $request->has('is_mobile_visible') ? 1 : 0,
+                'sort_order' => $request->sort_order ?? 0,
             ]);
 
             return redirect()->route('legal-library.index')->with('success', __('Category successfully updated.'));

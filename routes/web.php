@@ -16,8 +16,12 @@ use App\Http\Controllers\MobileAppSettingsController;
 use App\Http\Controllers\MobileUsersController;
 use App\Http\Controllers\MobileAppPlansController;
 use App\Http\Controllers\MobileAnalyticsController;
+use App\Http\Controllers\MobileDashboardController;
 use App\Http\Controllers\PushNotificationsController;
 use App\Http\Controllers\MobileLegalLibraryController;
+use App\Http\Controllers\DocumentTemplateController;
+use App\Http\Controllers\FiscalSocialResourceController;
+use App\Http\Controllers\CalculatorController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\GroupController;
@@ -343,9 +347,7 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('chatgptkey', [SettingController::class, 'chatgptkey'])->name('settings.chatgptkey');
 
     // Mobile App Dashboard
-    Route::get('mobile-dashboard', function() {
-        return view('mobile-dashboard');
-    })->name('mobile.dashboard');
+    Route::get('mobile-dashboard', [MobileDashboardController::class, 'index'])->name('mobile.dashboard');
 
     // Mobile App Settings Routes
     Route::get('mobile-app-settings', [MobileAppSettingsController::class, 'index'])->name('mobile-app-settings.index');

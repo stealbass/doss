@@ -25,6 +25,37 @@
                                 'required' => 'required',
                             ]) !!}
                         </div>
+                        <div class="form-group col-md-6">
+                            {!! Form::label('country', __('Country'), ['class' => 'form-label']) !!}
+                            {!! Form::select('country', [
+                                'benin' => __('Benin'),
+                                'burkina-faso' => __('Burkina Faso'),
+                                'cote-divoire' => __('Côte d\'Ivoire'),
+                                'mali' => __('Mali'),
+                                'niger' => __('Niger'),
+                                'senegal' => __('Sénégal'),
+                                'togo' => __('Togo'),
+                                'ghana' => __('Ghana'),
+                                'nigeria' => __('Nigeria'),
+                                'cameroon' => __('Cameroon'),
+                            ], null, [
+                                'class' => 'form-control',
+                                'placeholder' => __('Select Country (Optional)'),
+                            ]) !!}
+                        </div>
+                        <div class="form-group col-md-6">
+                            {!! Form::label('sort_order', __('Display Order'), ['class' => 'form-label']) !!}
+                            {!! Form::number('sort_order', 0, [
+                                'class' => 'form-control',
+                                'min' => 0,
+                            ]) !!}
+                        </div>
+                        <div class="form-group col-md-12">
+                            <div class="form-check">
+                                {!! Form::checkbox('is_mobile_visible', 1, true, ['class' => 'form-check-input', 'id' => 'is_mobile_visible']) !!}
+                                {!! Form::label('is_mobile_visible', __('Visible on Mobile App'), ['class' => 'form-check-label']) !!}
+                            </div>
+                        </div>
                         <div class="form-group col-md-12">
                             {!! Form::label('description', __('Description'), ['class' => 'form-label']) !!}
                             {!! Form::textarea('description', null, [

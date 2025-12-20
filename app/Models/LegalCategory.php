@@ -14,7 +14,15 @@ class LegalCategory extends Model
         'name',
         'description',
         'slug',
+        'country',
+        'is_mobile_visible',
+        'sort_order',
         'created_by',
+    ];
+
+    protected $casts = [
+        'is_mobile_visible' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     /**
