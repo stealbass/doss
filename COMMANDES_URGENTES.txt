@@ -1,0 +1,94 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    🚨 COMMANDES URGENTES À EXÉCUTER 🚨                       ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+IMPORTANT : Exécutez ces commandes SUR VOTRE SERVEUR (pas en local)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 1 : Se connecter au serveur
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Via SSH ou cPanel Terminal :
+
+ssh votre_utilisateur@dossypro.com
+
+OU utilisez le Terminal dans cPanel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 2 : Aller dans le répertoire du projet
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cd /home/dossypro/public_html
+
+OU (si différent) :
+
+cd /home/votre_utilisateur/public_html
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 3 : VIDER TOUS LES CACHES (OBLIGATOIRE !)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exécutez CES 4 COMMANDES une par une :
+
+php artisan cache:clear
+php artisan route:clear
+php artisan config:clear
+php artisan view:clear
+
+OU en une seule ligne :
+
+php artisan cache:clear && php artisan route:clear && php artisan config:clear && php artisan view:clear
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 4 : Vérifier que les routes sont chargées
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+php artisan route:list | grep mobile
+
+Vous devriez voir :
+✅ mobile-dashboard
+✅ mobile-analytics
+✅ mobile-app-plans
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 5 : Vérifier que les contrôleurs existent
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ls -la app/Http/Controllers/Mobile*
+
+Vous devriez voir :
+✅ MobileDashboardController.php
+✅ MobileAnalyticsController.php
+✅ MobileAppPlansController.php
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 6 : Vérifier les logs d'erreurs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+tail -50 storage/logs/laravel.log
+
+Regardez la dernière erreur pour voir le VRAI problème
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ÉTAPE 7 : Si les erreurs persistent
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Exécutez aussi :
+
+php artisan optimize:clear
+
+Puis rechargez la page dans votre navigateur avec CTRL+F5 (forcer le rechargement)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  IMPORTANT : Les erreurs 500 sont TOUJOURS dues aux caches Laravel !
+
+Les fichiers ont été modifiés sur GitHub mais Laravel utilise encore l'ancien code 
+en cache. C'est NORMAL et c'est RÉSOLU par les commandes ci-dessus.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si après avoir vidé les caches, vous avez ENCORE des erreurs 500, copiez-collez
+la dernière erreur du fichier storage/logs/laravel.log et envoyez-la moi.
