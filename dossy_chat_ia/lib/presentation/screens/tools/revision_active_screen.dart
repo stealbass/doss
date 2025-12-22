@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/auth_provider.dart';
 
 class RevisionActiveScreen extends StatefulWidget {
   const RevisionActiveScreen({Key? key}) : super(key: key);
-
   @override
   State<RevisionActiveScreen> createState() => _RevisionActiveScreenState();
 }
-
 class _RevisionActiveScreenState extends State<RevisionActiveScreen>
     with SingleTickerProviderStateMixin {
   bool _isSessionActive = false;
@@ -17,7 +16,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
   bool _showAnswer = false;
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
-
   // Mock flashcards data
   final List<Map<String, dynamic>> _flashcards = [
     {
@@ -45,9 +43,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       'tags': ['Actes de commerce', 'Droit commercial'],
     },
   ];
-
   Map<int, String> _cardRatings = {};
-
   @override
   void initState() {
     super.initState();
@@ -59,13 +55,11 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
     );
   }
-
   @override
   void dispose() {
     _flipController.dispose();
     super.dispose();
   }
-
   void _startSession() {
     setState(() {
       _isSessionActive = true;
@@ -74,7 +68,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       _cardRatings.clear();
     });
   }
-
   void _flipCard() {
     if (_showAnswer) {
       _flipController.reverse();
@@ -85,13 +78,11 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       _showAnswer = !_showAnswer;
     });
   }
-
   void _rateCard(String rating) {
     setState(() {
       _cardRatings[_currentCardIndex] = rating;
     });
   }
-
   void _nextCard() {
     if (_currentCardIndex < _flashcards.length - 1) {
       setState(() {
@@ -103,7 +94,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       _endSession();
     }
   }
-
   void _previousCard() {
     if (_currentCardIndex > 0) {
       setState(() {
@@ -113,13 +103,11 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       });
     }
   }
-
   void _endSession() {
     setState(() {
       _isSessionActive = false;
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -127,9 +115,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     final hasAccess = user?.plan != 'free';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Révision Active' : 'Active Revision'),
@@ -178,7 +164,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
           : _buildUpgradePrompt(context, isFr),
     );
   }
-
   Widget _buildStartScreen(BuildContext context, bool isFr, ColorScheme colorScheme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -222,9 +207,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           // Stats
           Row(
             children: [
@@ -256,16 +239,13 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
           // How it works
           Text(
             isFr ? 'Comment ça marche ?' : 'How it works?',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-
           _HowItWorksStep(
             number: '1',
             title: isFr ? 'Lisez la question' : 'Read the question',
@@ -294,9 +274,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
                 ? 'Indiquez si vous avez su, hésité, ou ne saviez pas'
                 : 'Indicate if you knew, hesitated, or didn\'t know',
           ),
-
           const SizedBox(height: 32),
-
           // Start button
           SizedBox(
             width: double.infinity,
@@ -327,11 +305,9 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       ),
     );
   }
-
   Widget _buildActiveSession(BuildContext context, bool isFr, ColorScheme colorScheme) {
     final currentCard = _flashcards[_currentCardIndex];
     final progress = (_currentCardIndex + 1) / _flashcards.length;
-
     return Column(
       children: [
         // Progress
@@ -341,7 +317,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
           color: Colors.purple,
           minHeight: 6,
         ),
-
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -357,7 +332,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-
                 // Tags
                 Wrap(
                   spacing: 8,
@@ -380,9 +354,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 // Flashcard
                 Expanded(
                   child: GestureDetector(
@@ -392,7 +364,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
                       builder: (context, child) {
                         final angle = _flipAnimation.value * 3.14159;
                         final isFront = angle < 1.5708;
-
                         return Transform(
                           alignment: Alignment.center,
                           transform: Matrix4.identity()
@@ -460,9 +431,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 // Rating buttons (only when showing answer)
                 if (_showAnswer) ...[
                   Text(
@@ -505,7 +474,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
                   ),
                   const SizedBox(height: 16),
                 ],
-
                 // Navigation
                 Row(
                   children: [
@@ -543,7 +511,6 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
       ],
     );
   }
-
   Widget _buildUpgradePrompt(BuildContext context, bool isFr) {
     return Center(
       child: Padding(
@@ -569,7 +536,7 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/subscription-plans'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
@@ -584,21 +551,18 @@ class _RevisionActiveScreenState extends State<RevisionActiveScreen>
     );
   }
 }
-
 // Stat Card Widget
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
   final Color color;
-
   const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -629,19 +593,16 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
 // How It Works Step Widget
 class _HowItWorksStep extends StatelessWidget {
   final String number;
   final String title;
   final String description;
-
   const _HowItWorksStep({
     required this.number,
     required this.title,
     required this.description,
   });
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -688,7 +649,6 @@ class _HowItWorksStep extends StatelessWidget {
     );
   }
 }
-
 // Rating Button Widget
 class _RatingButton extends StatelessWidget {
   final String label;
@@ -696,7 +656,6 @@ class _RatingButton extends StatelessWidget {
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
-
   const _RatingButton({
     required this.label,
     required this.icon,
@@ -704,7 +663,6 @@ class _RatingButton extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return Material(

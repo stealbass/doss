@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/services/search_service.dart';
-import '../../../data/models/document_model.dart';
+import '../../../data/models/document.dart';
+import '../../../data/providers/auth_provider.dart';
 import '../../widgets/search/search_filter_widget.dart';
 import '../../widgets/search/search_history_widget.dart';
 import '../../widgets/search/search_result_card.dart';
@@ -62,10 +63,18 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   /// Charger l'historique de recherche
   Future<void> _loadSearchHistory() async {
     try {
-      final history = await _searchService.getSearchHistory();
-      setState(() {
-        _searchHistory = history.map((h) => h.query).toList();
-      });
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      if (token == null) return;
+      
+      final result = await _searchService.getSearchHistory(token: token);
+      if (result['success'] == true) {
+        setState(() {
+          _searchHistory = (result['history'] as List)
+              .map((h) => h.query as String)
+              .toList();
+        });
+      }
     } catch (e) {
       debugPrint('Erreur chargement historique: $e');
     }
@@ -84,18 +93,21 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
     });
 
     try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final token = authProvider.token;
+      if (token == null) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Veuillez vous connecter')),
+        );
+        return;
+      }
+      
       final results = _useVectorSearch
-          ? await _searchService.vectorSearch(
-              query: _searchController.text,
-              jurisdiction: _selectedJurisdiction,
-              category: _selectedCategory,
-              startDate: _startDate,
-              endDate: _endDate,
-              page: _currentPage,
-              limit: 20,
-            )
+          ? [] // TODO: vectorSearch ne supporte pas ces paramètres pour l'instant
           : await _searchService.fullTextSearch(
               query: _searchController.text,
+              token: token,
               jurisdiction: _selectedJurisdiction,
               category: _selectedCategory,
               startDate: _startDate,
@@ -116,13 +128,8 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
 
       // Sauvegarder dans l'historique
       await _searchService.saveSearchHistory(
-        query: _searchController.text,
-        resultsCount: results.length,
-        filters: {
-          'jurisdiction': _selectedJurisdiction,
-          'category': _selectedCategory,
-          'useVectorSearch': _useVectorSearch,
-        },
+        _searchController.text,
+        token: token,
       );
     } catch (e) {
       setState(() {
@@ -393,8 +400,12 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
       },
       onClearHistory: () async {
         try {
-          await _searchService.clearSearchHistory();
-          _loadSearchHistory();
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final token = authProvider.token;
+          if (token != null) {
+            await _searchService.clearSearchHistory(token: token);
+            _loadSearchHistory();
+          }
         } catch (e) {
           _showErrorSnackbar('Erreur lors de la suppression de l\'historique');
         }

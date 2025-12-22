@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -6,15 +7,12 @@ import '../../../data/providers/auth_provider.dart';
 
 class QcmGeneratorScreen extends StatefulWidget {
   const QcmGeneratorScreen({Key? key}) : super(key: key);
-
   @override
   State<QcmGeneratorScreen> createState() => _QcmGeneratorScreenState();
 }
-
 class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _courseController = TextEditingController();
-  
   int _numberOfQuestions = 10;
   String _difficulty = 'Moyen';
   String? _selectedDomain;
@@ -23,7 +21,6 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
   int _currentQuestionIndex = 0;
   Map<int, String> _userAnswers = {};
   bool _showResults = false;
-
   final List<String> _domains = [
     'Droit Civil',
     'Droit Pénal',
@@ -32,28 +29,22 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
     'Droit du Travail',
     'Droit Constitutionnel',
   ];
-
   final List<String> _difficulties = ['Facile', 'Moyen', 'Difficile'];
-
   @override
   void dispose() {
     _courseController.dispose();
     super.dispose();
   }
-
   Future<void> _generateQcm() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isGenerating = true;
       _generatedQcm = null;
       _userAnswers.clear();
       _showResults = false;
     });
-
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
-
     // Mock generated QCM
     setState(() {
       _generatedQcm = List.generate(_numberOfQuestions, (index) {
@@ -73,13 +64,11 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
       _currentQuestionIndex = 0;
     });
   }
-
   void _submitAnswer(String answer) {
     setState(() {
       _userAnswers[_currentQuestionIndex] = answer;
     });
   }
-
   void _nextQuestion() {
     if (_currentQuestionIndex < _generatedQcm!.length - 1) {
       setState(() {
@@ -87,7 +76,6 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
       });
     }
   }
-
   void _previousQuestion() {
     if (_currentQuestionIndex > 0) {
       setState(() {
@@ -95,13 +83,11 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
       });
     }
   }
-
   void _finishQuiz() {
     setState(() {
       _showResults = true;
     });
   }
-
   int _calculateScore() {
     int correctAnswers = 0;
     for (int i = 0; i < _generatedQcm!.length; i++) {
@@ -111,7 +97,6 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
     }
     return correctAnswers;
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -119,9 +104,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     final hasAccess = user?.plan != 'free';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Générateur de QCM' : 'MCQ Generator'),
@@ -136,7 +119,6 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
           : _buildUpgradePrompt(context, isFr),
     );
   }
-
   Widget _buildGeneratorForm(BuildContext context, bool isFr, ColorScheme colorScheme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -187,9 +169,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           Form(
             key: _formKey,
             child: Column(
@@ -212,9 +192,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                   onChanged: (value) => setState(() => _selectedDomain = value),
                   validator: (value) => value == null ? (isFr ? 'Requis' : 'Required') : null,
                 ),
-
                 const SizedBox(height: 20),
-
                 // Number of questions
                 Text(
                   isFr ? 'Nombre de questions' : 'Number of questions',
@@ -230,7 +208,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                         max: 30,
                         divisions: 5,
                         label: _numberOfQuestions.toString(),
-                        activeColor: AppConstants.primaryGreen,
+                        activeColor: AppColors.primaryGreen,
                         onChanged: (value) {
                           setState(() => _numberOfQuestions = value.toInt());
                         },
@@ -239,7 +217,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppConstants.primaryGreen.withOpacity(0.1),
+                        color: AppColors.primaryGreen.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -247,15 +225,13 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppConstants.primaryGreen,
+                          color: AppColors.primaryGreen,
                         ),
                       ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 20),
-
                 // Difficulty
                 Text(
                   isFr ? 'Difficulté' : 'Difficulty',
@@ -271,9 +247,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                     setState(() => _difficulty = newSelection.first);
                   },
                 ),
-
                 const SizedBox(height: 20),
-
                 // Course content
                 Text(
                   isFr ? 'Contenu du cours (optionnel)' : 'Course content (optional)',
@@ -291,9 +265,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                     contentPadding: const EdgeInsets.all(16),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 // Generate button
                 SizedBox(
                   width: double.infinity,
@@ -338,21 +310,18 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
       ),
     );
   }
-
   Widget _buildQuizView(BuildContext context, bool isFr, ColorScheme colorScheme) {
     final currentQuestion = _generatedQcm![_currentQuestionIndex];
     final progress = (_currentQuestionIndex + 1) / _generatedQcm!.length;
-
     return Column(
       children: [
         // Progress bar
         LinearProgressIndicator(
           value: progress,
           backgroundColor: colorScheme.surfaceVariant,
-          color: AppConstants.primaryGreen,
+          color: AppColors.primaryGreen,
           minHeight: 6,
         ),
-
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -364,12 +333,11 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                   '${isFr ? 'Question' : 'Question'} ${_currentQuestionIndex + 1}/${_generatedQcm!.length}',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppConstants.primaryGreen,
+                    color: AppColors.primaryGreen,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 // Question
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -383,15 +351,12 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, height: 1.5),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 // Options
                 ...List.generate(currentQuestion['options'].length, (index) {
                   final option = currentQuestion['options'][index];
                   final optionLetter = option.substring(0, 1);
                   final isSelected = _userAnswers[_currentQuestionIndex] == optionLetter;
-
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Material(
@@ -403,12 +368,12 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppConstants.primaryGreen.withOpacity(0.1)
+                                ? AppColors.primaryGreen.withOpacity(0.1)
                                 : colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
-                                  ? AppConstants.primaryGreen
+                                  ? AppColors.primaryGreen
                                   : colorScheme.outline.withOpacity(0.2),
                               width: isSelected ? 2 : 1,
                             ),
@@ -420,12 +385,12 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                                 height: 28,
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? AppConstants.primaryGreen
+                                      ? AppColors.primaryGreen
                                       : Colors.transparent,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: isSelected
-                                        ? AppConstants.primaryGreen
+                                        ? AppColors.primaryGreen
                                         : colorScheme.outline.withOpacity(0.5),
                                   ),
                                 ),
@@ -454,7 +419,6 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
             ),
           ),
         ),
-
         // Navigation buttons
         Container(
           padding: const EdgeInsets.all(16),
@@ -487,7 +451,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                           : _nextQuestion)
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primaryGreen,
+                    backgroundColor: AppColors.primaryGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -505,11 +469,9 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
       ],
     );
   }
-
   Widget _buildResultsView(BuildContext context, bool isFr, ColorScheme colorScheme) {
     final score = _calculateScore();
     final percentage = (score / _generatedQcm!.length * 100).toInt();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -519,7 +481,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppConstants.primaryGreen, AppConstants.primaryGreen.withOpacity(0.7)],
+                colors: [AppColors.primaryGreen, AppColors.primaryGreen.withOpacity(0.7)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -545,22 +507,18 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           // Detailed answers
           Text(
             isFr ? 'Réponses détaillées' : 'Detailed answers',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-
           ...List.generate(_generatedQcm!.length, (index) {
             final question = _generatedQcm![index];
             final userAnswer = _userAnswers[index] ?? '';
             final correctAnswer = question['correctAnswer'];
             final isCorrect = userAnswer == correctAnswer;
-
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
@@ -620,9 +578,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
               ),
             );
           }),
-
           const SizedBox(height: 24),
-
           // Actions
           Row(
             children: [
@@ -649,7 +605,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppConstants.primaryGreen,
+                    backgroundColor: AppColors.primaryGreen,
                     foregroundColor: Colors.white,
                   ),
                   child: Text(isFr ? 'Recommencer' : 'Retry'),
@@ -661,7 +617,6 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
       ),
     );
   }
-
   Widget _buildUpgradePrompt(BuildContext context, bool isFr) {
     return Center(
       child: Padding(
@@ -687,7 +642,7 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/subscription-plans'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 
 /// Empty State Widgets pour différents scénarios
 /// Utilisés dans toute l'application pour afficher des états vides de manière cohérente
-
 /// Empty State générique
 class EmptyState extends StatelessWidget {
   final IconData icon;
@@ -12,7 +12,6 @@ class EmptyState extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final Color? iconColor;
-
   const EmptyState({
     Key? key,
     required this.icon,
@@ -22,11 +21,9 @@ class EmptyState extends StatelessWidget {
     this.onAction,
     this.iconColor,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -63,7 +60,7 @@ class EmptyState extends StatelessWidget {
               ElevatedButton(
                 onPressed: onAction,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppConstants.primaryGreen,
+                  backgroundColor: AppColors.primaryGreen,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
@@ -88,14 +85,12 @@ class EmptyState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Aucune donnée
 class EmptyDataState extends StatelessWidget {
   final String? title;
   final String? message;
   final String? actionLabel;
   final VoidCallback? onAction;
-
   const EmptyDataState({
     Key? key,
     this.title,
@@ -103,7 +98,6 @@ class EmptyDataState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -116,16 +110,13 @@ class EmptyDataState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Pas de connexion internet
 class NoConnectionState extends StatelessWidget {
   final VoidCallback? onRetry;
-
   const NoConnectionState({
     Key? key,
     this.onRetry,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -138,20 +129,17 @@ class NoConnectionState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Erreur générale
 class ErrorState extends StatelessWidget {
   final String? title;
   final String? message;
   final VoidCallback? onRetry;
-
   const ErrorState({
     Key? key,
     this.title,
     this.message,
     this.onRetry,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -164,18 +152,15 @@ class ErrorState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Aucun résultat de recherche
 class NoSearchResultsState extends StatelessWidget {
   final String? searchQuery;
   final VoidCallback? onClear;
-
   const NoSearchResultsState({
     Key? key,
     this.searchQuery,
     this.onClear,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -190,16 +175,13 @@ class NoSearchResultsState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Liste de messages vide
 class EmptyMessagesState extends StatelessWidget {
   final VoidCallback? onStartChat;
-
   const EmptyMessagesState({
     Key? key,
     this.onStartChat,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -208,20 +190,17 @@ class EmptyMessagesState extends StatelessWidget {
       message: 'Commencez une conversation avec l\'assistant juridique',
       actionLabel: 'Démarrer le chat',
       onAction: onStartChat,
-      iconColor: AppConstants.primaryGreen,
+      iconColor: AppColors.primaryGreen,
     );
   }
 }
-
 /// Empty State - Liste de documents vide
 class EmptyDocumentsState extends StatelessWidget {
   final VoidCallback? onUpload;
-
   const EmptyDocumentsState({
     Key? key,
     this.onUpload,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -234,16 +213,13 @@ class EmptyDocumentsState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Historique vide
 class EmptyHistoryState extends StatelessWidget {
   final String? type;
-
   const EmptyHistoryState({
     Key? key,
     this.type,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -256,11 +232,9 @@ class EmptyHistoryState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Notifications vides
 class EmptyNotificationsState extends StatelessWidget {
   const EmptyNotificationsState({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -271,11 +245,9 @@ class EmptyNotificationsState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Favoris vide
 class EmptyFavoritesState extends StatelessWidget {
   const EmptyFavoritesState({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -286,16 +258,13 @@ class EmptyFavoritesState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Quota dépassé
 class QuotaExceededState extends StatelessWidget {
   final VoidCallback? onUpgrade;
-
   const QuotaExceededState({
     Key? key,
     this.onUpgrade,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -308,18 +277,15 @@ class QuotaExceededState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Accès refusé (Premium)
 class PremiumRequiredState extends StatelessWidget {
   final String? featureName;
   final VoidCallback? onUpgrade;
-
   const PremiumRequiredState({
     Key? key,
     this.featureName,
     this.onUpgrade,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -334,16 +300,13 @@ class PremiumRequiredState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Chargement initial
 class LoadingState extends StatelessWidget {
   final String? message;
-
   const LoadingState({
     Key? key,
     this.message,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -351,7 +314,7 @@ class LoadingState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            color: AppConstants.primaryGreen,
+            color: AppColors.primaryGreen,
           ),
           if (message != null) ...[
             const SizedBox(height: 24),
@@ -368,11 +331,9 @@ class LoadingState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Maintenance
 class MaintenanceState extends StatelessWidget {
   const MaintenanceState({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -383,16 +344,13 @@ class MaintenanceState extends StatelessWidget {
     );
   }
 }
-
 /// Empty State - Version obsolète
 class UpdateRequiredState extends StatelessWidget {
   final VoidCallback? onUpdate;
-
   const UpdateRequiredState({
     Key? key,
     this.onUpdate,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return EmptyState(

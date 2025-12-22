@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/auth_provider.dart';
 
 class LegalMonitoringScreen extends StatefulWidget {
   const LegalMonitoringScreen({Key? key}) : super(key: key);
-
   @override
   State<LegalMonitoringScreen> createState() => _LegalMonitoringScreenState();
 }
-
 class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
   final List<String> _selectedTopics = ['Droit Civil', 'Droit Commercial'];
   final List<String> _selectedJurisdictions = ['Côte d\'Ivoire', 'Sénégal'];
-
   final List<String> _availableTopics = [
     'Droit Civil',
     'Droit Pénal',
@@ -26,7 +23,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
     'Droit Administratif',
     'Droit Constitutionnel',
   ];
-
   final List<Map<String, dynamic>> _newsItems = [
     {
       'title': 'Nouvelle réforme du Code du Travail en Côte d\'Ivoire',
@@ -65,19 +61,16 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
       'isNew': false,
     },
   ];
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
   }
-
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
-
   void _toggleTopic(String topic) {
     setState(() {
       if (_selectedTopics.contains(topic)) {
@@ -87,7 +80,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
       }
     });
   }
-
   void _toggleJurisdiction(String jurisdiction) {
     setState(() {
       if (_selectedJurisdictions.contains(jurisdiction)) {
@@ -97,7 +89,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
       }
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -105,9 +96,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     final hasAccess = user?.plan == 'professionnel' || user?.plan == 'cabinet';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Veille Juridique' : 'Legal Monitoring'),
@@ -133,7 +122,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
           : _buildUpgradePrompt(context, isFr),
     );
   }
-
   Widget _buildNewsTab(BuildContext context, bool isFr, ColorScheme colorScheme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -183,9 +171,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           // Quick filters
           Row(
             children: [
@@ -198,7 +184,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
             ],
           ),
           const SizedBox(height: 12),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -207,7 +192,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                 label: Text(isFr ? 'Nouveautés' : 'New'),
                 selected: true,
                 onSelected: (value) {},
-                selectedColor: AppConstants.primaryGreen.withOpacity(0.3),
+                selectedColor: AppColors.primaryGreen.withOpacity(0.3),
               ),
               FilterChip(
                 label: Text(isFr ? 'Cette semaine' : 'This week'),
@@ -221,9 +206,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
           // News List
           ..._newsItems.map((news) {
             return Container(
@@ -233,7 +216,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: news['isNew']
-                      ? AppConstants.primaryGreen.withOpacity(0.3)
+                      ? AppColors.primaryGreen.withOpacity(0.3)
                       : colorScheme.outline.withOpacity(0.2),
                 ),
               ),
@@ -255,7 +238,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppConstants.primaryGreen,
+                                  color: AppColors.primaryGreen,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -346,9 +329,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                       ],
                     ),
                   ),
-                  
                   Divider(height: 1),
-                  
                   // Content
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -361,7 +342,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                       ),
                     ),
                   ),
-
                   // Actions
                   Padding(
                     padding: const EdgeInsets.all(16).copyWith(top: 0),
@@ -400,7 +380,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
       ),
     );
   }
-
   Widget _buildAlertsTab(BuildContext context, bool isFr, ColorScheme colorScheme) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -433,16 +412,13 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           // Topic Selection
           Text(
             isFr ? 'Domaines de droit' : 'Legal domains',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -452,71 +428,62 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                 label: Text(topic),
                 selected: isSelected,
                 onSelected: (value) => _toggleTopic(topic),
-                selectedColor: AppConstants.primaryGreen.withOpacity(0.3),
-                checkmarkColor: AppConstants.primaryGreen,
+                selectedColor: AppColors.primaryGreen.withOpacity(0.3),
+                checkmarkColor: AppColors.primaryGreen,
               );
             }).toList(),
           ),
-
           const SizedBox(height: 24),
-
           // Jurisdiction Selection
           Text(
             isFr ? 'Juridictions' : 'Jurisdictions',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: AppConstants.countries.map((country) {
-              final isSelected = _selectedJurisdictions.contains(country['name']);
+              final countryName = country['name'] as String? ?? '';
+              final isSelected = _selectedJurisdictions.contains(countryName);
               return FilterChip(
-                label: Text('${country['flag']} ${country['name']}'),
+                label: Text('${country['flag']} $countryName'),
                 selected: isSelected,
-                onSelected: (value) => _toggleJurisdiction(country['name']),
-                selectedColor: AppConstants.primaryGreen.withOpacity(0.3),
-                checkmarkColor: AppConstants.primaryGreen,
+                onSelected: (value) => _toggleJurisdiction(countryName),
+                selectedColor: AppColors.primaryGreen.withOpacity(0.3),
+                checkmarkColor: AppColors.primaryGreen,
               );
             }).toList(),
           ),
-
           const SizedBox(height: 24),
-
           // Notification Settings
           Text(
             isFr ? 'Paramètres de notification' : 'Notification settings',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-
           SwitchListTile(
             title: Text(isFr ? 'Notifications push' : 'Push notifications'),
             subtitle: Text(isFr ? 'Recevoir des alertes en temps réel' : 'Receive real-time alerts'),
             value: true,
-            activeColor: AppConstants.primaryGreen,
+            activeColor: AppColors.primaryGreen,
             onChanged: (value) {},
           ),
-
           SwitchListTile(
             title: Text(isFr ? 'Email quotidien' : 'Daily email'),
             subtitle: Text(isFr ? 'Résumé quotidien des actualités' : 'Daily news summary'),
             value: true,
-            activeColor: AppConstants.primaryGreen,
+            activeColor: AppColors.primaryGreen,
             onChanged: (value) {},
           ),
-
           SwitchListTile(
             title: Text(isFr ? 'Alertes urgentes uniquement' : 'Urgent alerts only'),
             subtitle: Text(isFr ? 'Uniquement les changements majeurs' : 'Only major changes'),
             value: false,
-            activeColor: AppConstants.primaryGreen,
+            activeColor: AppColors.primaryGreen,
             onChanged: (value) {},
           ),
-
           const SizedBox(height: 24),
-
           // Save Button
           SizedBox(
             width: double.infinity,
@@ -525,12 +492,12 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(isFr ? 'Alertes configurées avec succès !' : 'Alerts configured successfully!'),
-                    backgroundColor: AppConstants.primaryGreen,
+                    backgroundColor: AppColors.primaryGreen,
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -547,7 +514,6 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
       ),
     );
   }
-
   Widget _buildUpgradePrompt(BuildContext context, bool isFr) {
     return Center(
       child: Padding(
@@ -573,7 +539,7 @@ class _LegalMonitoringScreenState extends State<LegalMonitoringScreen>
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/subscription-plans'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),

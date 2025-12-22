@@ -11,7 +11,6 @@ class AppConstants {
   
   // Couleur primaire verte (pour les écrans qui l'utilisent)
   static const int primaryGreenValue = 0xFF00A86B;
-  static int get primaryGreen => primaryGreenValue;
   
   // Storage Keys
   static const String tokenKey = 'auth_token';

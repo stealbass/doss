@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/auth_provider.dart';
 
 class ToolsHubScreen extends StatelessWidget {
   const ToolsHubScreen({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -13,7 +13,6 @@ class ToolsHubScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Outils Étudiants' : 'Student Tools'),
@@ -31,8 +30,8 @@ class ToolsHubScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppConstants.primaryGreen,
-                    AppConstants.primaryGreen.withOpacity(0.7),
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen.withOpacity(0.7),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -71,9 +70,7 @@ class ToolsHubScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             // Tools Grid
             Text(
               isFr ? 'Tous les outils' : 'All tools',
@@ -83,7 +80,6 @@ class ToolsHubScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
             // Fiche d'Arrêt Generator
             _ToolCard(
               icon: Icons.gavel,
@@ -97,9 +93,7 @@ class ToolsHubScreen extends StatelessWidget {
               },
               isPremium: user?.plan == 'free',
             ),
-
             const SizedBox(height: 12),
-
             // QCM Generator
             _ToolCard(
               icon: Icons.quiz,
@@ -113,9 +107,7 @@ class ToolsHubScreen extends StatelessWidget {
               },
               isPremium: user?.plan == 'free',
             ),
-
             const SizedBox(height: 12),
-
             // Active Revision Mode
             _ToolCard(
               icon: Icons.psychology,
@@ -129,9 +121,7 @@ class ToolsHubScreen extends StatelessWidget {
               },
               isPremium: user?.plan == 'free',
             ),
-
             const SizedBox(height: 12),
-
             // Audio Transcription
             _ToolCard(
               icon: Icons.mic,
@@ -145,9 +135,7 @@ class ToolsHubScreen extends StatelessWidget {
               },
               isPremium: user?.plan == 'free' || user?.plan == 'etudiant',
             ),
-
             const SizedBox(height: 24),
-
             // Usage Stats
             if (user?.plan != 'free')
               Container(
@@ -166,7 +154,7 @@ class ToolsHubScreen extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.analytics,
-                          color: AppConstants.primaryGreen,
+                          color: AppColors.primaryGreen,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -199,9 +187,7 @@ class ToolsHubScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
             const SizedBox(height: 16),
-
             // Upgrade CTA for Free Users
             if (user?.plan == 'free')
               Container(
@@ -277,7 +263,6 @@ class ToolsHubScreen extends StatelessWidget {
     );
   }
 }
-
 // Tool Card Widget
 class _ToolCard extends StatelessWidget {
   final IconData icon;
@@ -286,7 +271,6 @@ class _ToolCard extends StatelessWidget {
   final List<Color> gradient;
   final VoidCallback onTap;
   final bool isPremium;
-
   const _ToolCard({
     Key? key,
     required this.icon,
@@ -296,11 +280,9 @@ class _ToolCard extends StatelessWidget {
     required this.onTap,
     this.isPremium = false,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -408,20 +390,17 @@ class _ToolCard extends StatelessWidget {
     );
   }
 }
-
 // Usage Stat Widget
 class _UsageStat extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-
   const _UsageStat({
     Key? key,
     required this.label,
     required this.value,
     required this.icon,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -429,7 +408,7 @@ class _UsageStat extends StatelessWidget {
         Icon(
           icon,
           size: 20,
-          color: AppConstants.primaryGreen.withOpacity(0.7),
+          color: AppColors.primaryGreen.withOpacity(0.7),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -443,7 +422,7 @@ class _UsageStat extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppConstants.primaryGreen,
+            color: AppColors.primaryGreen,
           ),
         ),
       ],

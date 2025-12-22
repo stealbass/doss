@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
-import '../../../data/models/document_model.dart';
+import '../../../data/models/document.dart';
 import '../../../data/services/storage_service.dart';
 import '../../widgets/documents/document_action_buttons.dart';
 import '../../widgets/documents/document_info_sheet.dart';

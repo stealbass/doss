@@ -340,15 +340,25 @@ class SearchService {
   // Alias Methods (pour compatibilité)
   // =====================================================
   
-  /// Full text search (alias de searchDocuments)
+  /// Full text search (alias de searchDocuments avec tous les paramètres)
   Future<List<dynamic>> fullTextSearch({
     required String query,
     required String token,
     String? jurisdiction,
+    String? category,
+    DateTime? startDate,
+    DateTime? endDate,
+    int page = 1,
+    int limit = 20,
   }) async {
     final result = await searchDocuments(
       query: query,
       jurisdiction: jurisdiction ?? 'CI',
+      category: category,
+      dateFrom: startDate,
+      dateTo: endDate,
+      page: page,
+      limit: limit,
       token: token,
     );
     

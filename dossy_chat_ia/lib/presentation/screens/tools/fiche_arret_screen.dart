@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -6,20 +7,16 @@ import '../../../data/providers/auth_provider.dart';
 
 class FicheArretScreen extends StatefulWidget {
   const FicheArretScreen({Key? key}) : super(key: key);
-
   @override
   State<FicheArretScreen> createState() => _FicheArretScreenState();
 }
-
 class _FicheArretScreenState extends State<FicheArretScreen> {
   final _formKey = GlobalKey<FormState>();
   final _decisionController = TextEditingController();
-  
   String? _selectedJurisdiction;
   String? _selectedDomain;
   bool _isGenerating = false;
   Map<String, dynamic>? _generatedFiche;
-
   final List<String> _domains = [
     'Droit Civil',
     'Droit Pénal',
@@ -30,23 +27,18 @@ class _FicheArretScreenState extends State<FicheArretScreen> {
     'Droit International',
     'Autre',
   ];
-
   @override
   void dispose() {
     _decisionController.dispose();
     super.dispose();
   }
-
   Future<void> _generateFiche() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() {
       _isGenerating = true;
     });
-
     // Simulate API call
     await Future.delayed(const Duration(seconds: 3));
-
     // Mock generated fiche
     setState(() {
       _generatedFiche = {
@@ -73,61 +65,49 @@ class _FicheArretScreenState extends State<FicheArretScreen> {
       _isGenerating = false;
     });
   }
-
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Copié dans le presse-papier'),
-        backgroundColor: AppConstants.primaryGreen,
+        backgroundColor: AppColors.primaryGreen,
       ),
     );
   }
-
   String _formatFicheAsText() {
     if (_generatedFiche == null) return '';
-    
     return '''
 FICHE D'ARRÊT
 =============
-
 📍 JURIDICTION: ${_generatedFiche!['juridiction']}
 📋 RÉFÉRENCE: ${_generatedFiche!['numero']}
 📅 DATE: ${_generatedFiche!['date']}
-
 👥 PARTIES
 ----------
 • Demandeur: ${_generatedFiche!['parties']['demandeur']}
 • Défendeur: ${_generatedFiche!['parties']['defendeur']}
-
 📖 FAITS
 --------
 ${_generatedFiche!['faits']}
-
 ⚖️ PROCÉDURE
 ------------
 ${_generatedFiche!['procedure']}
-
 🎯 PRÉTENTIONS
 --------------
 Demandeur: ${_generatedFiche!['pretentions']['demandeur']}
 Défendeur: ${_generatedFiche!['pretentions']['defendeur']}
-
 📚 MOYENS
 ---------
 Demandeur: ${_generatedFiche!['moyens']['demandeur']}
 Défendeur: ${_generatedFiche!['moyens']['defendeur']}
-
 ✅ SOLUTION
 -----------
 ${_generatedFiche!['solution']}
-
 💡 PORTÉE
 ---------
 ${_generatedFiche!['portee']}
 ''';
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -135,10 +115,8 @@ ${_generatedFiche!['portee']}
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     // Check if user has access
     final hasAccess = user?.plan != 'free';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Générateur de Fiche d\'Arrêt' : 'Case Summary Generator'),
@@ -196,9 +174,7 @@ ${_generatedFiche!['portee']}
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   // Form
                   Form(
                     key: _formKey,
@@ -248,9 +224,7 @@ ${_generatedFiche!['portee']}
                             return null;
                           },
                         ),
-
                         const SizedBox(height: 20),
-
                         // Domain dropdown
                         Text(
                           isFr ? 'Domaine du droit' : 'Legal domain',
@@ -292,9 +266,7 @@ ${_generatedFiche!['portee']}
                             return null;
                           },
                         ),
-
                         const SizedBox(height: 20),
-
                         // Decision text input
                         Text(
                           isFr ? 'Texte de la décision' : 'Decision text',
@@ -330,9 +302,7 @@ ${_generatedFiche!['portee']}
                             return null;
                           },
                         ),
-
                         const SizedBox(height: 24),
-
                         // Generate button
                         SizedBox(
                           width: double.infinity,
@@ -384,7 +354,6 @@ ${_generatedFiche!['portee']}
                       ],
                     ),
                   ),
-
                   // Generated Fiche
                   if (_generatedFiche != null) ...[
                     const SizedBox(height: 32),
@@ -406,7 +375,6 @@ ${_generatedFiche!['portee']}
                       ],
                     ),
                     const SizedBox(height: 12),
-
                     _FicheSection(
                       title: isFr ? 'Juridiction & Référence' : 'Jurisdiction & Reference',
                       icon: Icons.account_balance,
@@ -416,7 +384,6 @@ ${_generatedFiche!['portee']}
                         _InfoRow('Date', _generatedFiche!['date']),
                       ],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Parties' : 'Parties',
                       icon: Icons.people,
@@ -425,19 +392,16 @@ ${_generatedFiche!['portee']}
                         _InfoRow('Défendeur', _generatedFiche!['parties']['defendeur']),
                       ],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Faits' : 'Facts',
                       icon: Icons.description,
                       content: _generatedFiche!['faits'],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Procédure' : 'Procedure',
                       icon: Icons.timeline,
                       content: _generatedFiche!['procedure'],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Prétentions' : 'Claims',
                       icon: Icons.gavel,
@@ -446,7 +410,6 @@ ${_generatedFiche!['portee']}
                         _InfoRow('Défendeur', _generatedFiche!['pretentions']['defendeur']),
                       ],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Moyens juridiques' : 'Legal grounds',
                       icon: Icons.book,
@@ -455,21 +418,17 @@ ${_generatedFiche!['portee']}
                         _InfoRow('Défendeur', _generatedFiche!['moyens']['defendeur']),
                       ],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Solution' : 'Decision',
                       icon: Icons.check_circle,
                       content: _generatedFiche!['solution'],
                     ),
-
                     _FicheSection(
                       title: isFr ? 'Portée de l\'arrêt' : 'Scope',
                       icon: Icons.lightbulb,
                       content: _generatedFiche!['portee'],
                     ),
-
                     const SizedBox(height: 24),
-
                     // Export buttons
                     Row(
                       children: [
@@ -513,7 +472,6 @@ ${_generatedFiche!['portee']}
           : _buildUpgradePrompt(context, isFr),
     );
   }
-
   Widget _buildUpgradePrompt(BuildContext context, bool isFr) {
     return Center(
       child: Padding(
@@ -551,7 +509,7 @@ ${_generatedFiche!['portee']}
                 Navigator.pushNamed(context, '/subscription-plans');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
@@ -569,14 +527,12 @@ ${_generatedFiche!['portee']}
     );
   }
 }
-
 // Fiche Section Widget
 class _FicheSection extends StatelessWidget {
   final String title;
   final IconData icon;
   final String? content;
   final List<Widget>? children;
-
   const _FicheSection({
     Key? key,
     required this.title,
@@ -584,11 +540,9 @@ class _FicheSection extends StatelessWidget {
     this.content,
     this.children,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -628,14 +582,11 @@ class _FicheSection extends StatelessWidget {
     );
   }
 }
-
 // Info Row Widget
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-
   const _InfoRow(this.label, this.value, {Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return Padding(

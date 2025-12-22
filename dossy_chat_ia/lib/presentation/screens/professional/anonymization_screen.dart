@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/auth_provider.dart';
 
 class AnonymizationScreen extends StatefulWidget {
   const AnonymizationScreen({Key? key}) : super(key: key);
-
   @override
   State<AnonymizationScreen> createState() => _AnonymizationScreenState();
 }
-
 class _AnonymizationScreenState extends State<AnonymizationScreen> {
   bool _isProcessing = false;
   String? _selectedFile;
   Map<String, dynamic>? _detectedData;
   bool _showPreview = false;
-
   final List<Map<String, String>> _anonymizationHistory = [
     {
       'filename': 'contrat_location_2024.pdf',
@@ -28,7 +26,6 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
       'itemsFound': '8',
     },
   ];
-
   Future<void> _pickDocument() async {
     // Simulate file picker
     await Future.delayed(const Duration(milliseconds: 500));
@@ -38,15 +35,12 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
       _showPreview = false;
     });
   }
-
   Future<void> _processDocument() async {
     setState(() {
       _isProcessing = true;
     });
-
     // Simulate AI processing
     await Future.delayed(const Duration(seconds: 3));
-
     setState(() {
       _detectedData = {
         'sensitiveItems': [
@@ -93,16 +87,14 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
       _showPreview = true;
     });
   }
-
   void _downloadAnonymizedDocument() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Document anonymisé téléchargé avec succès !'),
-        backgroundColor: AppConstants.primaryGreen,
+        backgroundColor: AppColors.primaryGreen,
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -110,9 +102,7 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     final hasAccess = user?.plan == 'professionnel' || user?.plan == 'cabinet';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Anonymisation de Documents' : 'Document Anonymization'),
@@ -167,16 +157,13 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   // Upload Section
                   Text(
                     isFr ? 'Charger un document' : 'Upload document',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-
                   GestureDetector(
                     onTap: _pickDocument,
                     child: Container(
@@ -185,7 +172,7 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                         color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppConstants.primaryGreen.withOpacity(0.3),
+                          color: AppColors.primaryGreen.withOpacity(0.3),
                           width: 2,
                           style: BorderStyle.solid,
                         ),
@@ -195,7 +182,7 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                           Icon(
                             Icons.cloud_upload,
                             size: 60,
-                            color: AppConstants.primaryGreen,
+                            color: AppColors.primaryGreen,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -217,7 +204,6 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                       ),
                     ),
                   ),
-
                   if (_selectedFile != null) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -302,7 +288,6 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                       ),
                     ),
                   ],
-
                   // Detected Data
                   if (_detectedData != null) ...[
                     const SizedBox(height: 32),
@@ -331,7 +316,6 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     ..._detectedData!['sensitiveItems'].map<Widget>((item) {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -402,9 +386,7 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                         ),
                       );
                     }).toList(),
-
                     const SizedBox(height: 24),
-
                     // Preview Toggle
                     SwitchListTile(
                       title: Text(
@@ -417,14 +399,13 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                             : 'See the result before downloading',
                       ),
                       value: _showPreview,
-                      activeColor: AppConstants.primaryGreen,
+                      activeColor: AppColors.primaryGreen,
                       onChanged: (value) {
                         setState(() {
                           _showPreview = value;
                         });
                       },
                     ),
-
                     if (_showPreview) ...[
                       const SizedBox(height: 16),
                       Container(
@@ -466,16 +447,14 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                         ),
                       ),
                     ],
-
                     const SizedBox(height: 24),
-
                     // Download Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _downloadAnonymizedDocument,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppConstants.primaryGreen,
+                          backgroundColor: AppColors.primaryGreen,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -496,16 +475,13 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                       ),
                     ),
                   ],
-
                   const SizedBox(height: 32),
-
                   // History
                   Text(
                     isFr ? 'Historique des anonymisations' : 'Anonymization history',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-
                   ..._anonymizationHistory.map((item) {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -541,7 +517,7 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.download, color: AppConstants.primaryGreen),
+                            icon: Icon(Icons.download, color: AppColors.primaryGreen),
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(isFr ? 'Téléchargement...' : 'Downloading...')),
@@ -558,7 +534,6 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
           : _buildUpgradePrompt(context, isFr),
     );
   }
-
   Widget _buildUpgradePrompt(BuildContext context, bool isFr) {
     return Center(
       child: Padding(
@@ -584,7 +559,7 @@ class _AnonymizationScreenState extends State<AnonymizationScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/subscription-plans'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),

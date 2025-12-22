@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -7,17 +8,14 @@ import '../../../data/providers/auth_provider.dart';
 
 class ReferralScreen extends StatefulWidget {
   const ReferralScreen({Key? key}) : super(key: key);
-
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
 }
-
 class _ReferralScreenState extends State<ReferralScreen> {
   String _referralCode = 'DOSSY2024ABC';
   int _totalReferrals = 12;
   int _activeReferrals = 8;
   double _totalEarnings = 24000; // FCFA
-
   final List<Map<String, dynamic>> _referralHistory = [
     {
       'name': 'Jean Kouadio',
@@ -41,35 +39,27 @@ class _ReferralScreenState extends State<ReferralScreen> {
       'earnings': 0,
     },
   ];
-
   void _copyReferralCode() {
     Clipboard.setData(ClipboardData(text: _referralCode));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Code de parrainage copié !'),
-        backgroundColor: AppConstants.primaryGreen,
+        backgroundColor: AppColors.primaryGreen,
       ),
     );
   }
-
   void _shareReferralCode() {
     final message = '''
 🎓 Rejoignez DOSSY CHAT IA - Votre Assistant Juridique IA !
-
 Utilisez mon code de parrainage : $_referralCode
-
 ✅ Analyse juridique intelligente
 ✅ Outils pour étudiants & professionnels
 ✅ 14 pays africains francophones
-
 Téléchargez l'app : https://dossypro.com
-
 #DossyChatIA #DroitAfricain
 ''';
-
     Share.share(message, subject: 'Invitation DOSSY CHAT IA');
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -77,7 +67,6 @@ Téléchargez l'app : https://dossypro.com
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Programme de Parrainage' : 'Referral Program'),
@@ -94,8 +83,8 @@ Téléchargez l'app : https://dossypro.com
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppConstants.primaryGreen,
-                    AppConstants.primaryGreen.withOpacity(0.7),
+                    AppColors.primaryGreen,
+                    AppColors.primaryGreen.withOpacity(0.7),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -161,12 +150,12 @@ Téléchargez l'app : https://dossypro.com
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
-                                color: AppConstants.primaryGreen,
+                                color: AppColors.primaryGreen,
                                 letterSpacing: 2,
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.copy, color: AppConstants.primaryGreen),
+                              icon: Icon(Icons.copy, color: AppColors.primaryGreen),
                               onPressed: _copyReferralCode,
                             ),
                           ],
@@ -184,7 +173,7 @@ Téléchargez l'app : https://dossypro.com
                           label: Text(isFr ? 'Partager' : 'Share'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: AppConstants.primaryGreen,
+                            foregroundColor: AppColors.primaryGreen,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -197,9 +186,7 @@ Téléchargez l'app : https://dossypro.com
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             // Stats Cards
             Row(
               children: [
@@ -231,16 +218,13 @@ Téléchargez l'app : https://dossypro.com
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-
             // How it works
             Text(
               isFr ? 'Comment ça marche ?' : 'How it works?',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
             _HowItWorksCard(
               number: '1',
               title: isFr ? 'Partagez votre code' : 'Share your code',
@@ -249,7 +233,6 @@ Téléchargez l'app : https://dossypro.com
                   : 'Invite your friends via WhatsApp, SMS or email',
               icon: Icons.share,
             ),
-
             _HowItWorksCard(
               number: '2',
               title: isFr ? 'Votre ami s\'inscrit' : 'Your friend signs up',
@@ -258,7 +241,6 @@ Téléchargez l'app : https://dossypro.com
                   : 'They use your code during signup',
               icon: Icons.person_add,
             ),
-
             _HowItWorksCard(
               number: '3',
               title: isFr ? 'Vous recevez vos gains' : 'You earn rewards',
@@ -267,9 +249,7 @@ Téléchargez l'app : https://dossypro.com
                   : '2,000 FCFA per Student, 5,000 FCFA per Professional',
               icon: Icons.emoji_events,
             ),
-
             const SizedBox(height: 24),
-
             // Referral History
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -287,7 +267,6 @@ Téléchargez l'app : https://dossypro.com
               ],
             ),
             const SizedBox(height: 12),
-
             ..._referralHistory.map((referral) {
               final isActive = referral['status'] == 'Actif';
               return Container(
@@ -298,7 +277,7 @@ Téléchargez l'app : https://dossypro.com
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isActive
-                        ? AppConstants.primaryGreen.withOpacity(0.3)
+                        ? AppColors.primaryGreen.withOpacity(0.3)
                         : colorScheme.outline.withOpacity(0.2),
                   ),
                 ),
@@ -306,11 +285,11 @@ Téléchargez l'app : https://dossypro.com
                   children: [
                     CircleAvatar(
                       backgroundColor: isActive
-                          ? AppConstants.primaryGreen.withOpacity(0.1)
+                          ? AppColors.primaryGreen.withOpacity(0.1)
                           : Colors.grey.shade200,
                       child: Icon(
                         Icons.person,
-                        color: isActive ? AppConstants.primaryGreen : Colors.grey,
+                        color: isActive ? AppColors.primaryGreen : Colors.grey,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -383,7 +362,7 @@ Téléchargez l'app : https://dossypro.com
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isActive ? AppConstants.primaryGreen : Colors.grey,
+                            color: isActive ? AppColors.primaryGreen : Colors.grey,
                           ),
                         ),
                       ],
@@ -392,9 +371,7 @@ Téléchargez l'app : https://dossypro.com
                 ),
               );
             }).toList(),
-
             const SizedBox(height: 24),
-
             // Terms & Conditions
             Container(
               padding: const EdgeInsets.all(16),
@@ -445,21 +422,18 @@ Téléchargez l'app : https://dossypro.com
     );
   }
 }
-
 // Stat Card Widget
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
   final Color color;
-
   const _StatCard({
     required this.icon,
     required this.value,
     required this.label,
     required this.color,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -493,21 +467,18 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
 // How It Works Card
 class _HowItWorksCard extends StatelessWidget {
   final String number;
   final String title;
   final String description;
   final IconData icon;
-
   const _HowItWorksCard({
     required this.number,
     required this.title,
     required this.description,
     required this.icon,
   });
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -526,11 +497,11 @@ class _HowItWorksCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppConstants.primaryGreen.withOpacity(0.1),
+              color: AppColors.primaryGreen.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Icon(icon, color: AppConstants.primaryGreen, size: 24),
+              child: Icon(icon, color: AppColors.primaryGreen, size: 24),
             ),
           ),
           const SizedBox(width: 16),
@@ -544,7 +515,7 @@ class _HowItWorksCard extends StatelessWidget {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: AppConstants.primaryGreen,
+                        color: AppColors.primaryGreen,
                         shape: BoxShape.circle,
                       ),
                       child: Center(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../data/models/document_model.dart';
+import '../../../data/models/document.dart';
 import '../../screens/documents/document_viewer_screen.dart';
 
 /// Carte de résultat de recherche

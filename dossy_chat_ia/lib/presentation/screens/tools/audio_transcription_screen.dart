@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
@@ -6,18 +7,15 @@ import '../../../data/providers/auth_provider.dart';
 
 class AudioTranscriptionScreen extends StatefulWidget {
   const AudioTranscriptionScreen({Key? key}) : super(key: key);
-
   @override
   State<AudioTranscriptionScreen> createState() => _AudioTranscriptionScreenState();
 }
-
 class _AudioTranscriptionScreenState extends State<AudioTranscriptionScreen> {
   bool _isRecording = false;
   bool _isTranscribing = false;
   String? _selectedAudioFile;
   String? _transcribedText;
   double _recordingDuration = 0;
-
   final List<Map<String, dynamic>> _transcriptionHistory = [
     {
       'title': 'Cours Droit Civil - 15 Jan 2024',
@@ -32,7 +30,6 @@ class _AudioTranscriptionScreenState extends State<AudioTranscriptionScreen> {
       'date': '2024-01-12',
     },
   ];
-
   Future<void> _pickAudioFile() async {
     // Simulate file picker
     await Future.delayed(const Duration(milliseconds: 500));
@@ -40,13 +37,11 @@ class _AudioTranscriptionScreenState extends State<AudioTranscriptionScreen> {
       _selectedAudioFile = 'cours_droit_civil_20240115.mp3';
     });
   }
-
   Future<void> _startRecording() async {
     setState(() {
       _isRecording = true;
       _recordingDuration = 0;
     });
-
     // Simulate recording
     while (_isRecording && _recordingDuration < 3600) {
       await Future.delayed(const Duration(seconds: 1));
@@ -57,64 +52,48 @@ class _AudioTranscriptionScreenState extends State<AudioTranscriptionScreen> {
       }
     }
   }
-
   void _stopRecording() {
     setState(() {
       _isRecording = false;
     });
   }
-
   Future<void> _transcribeAudio() async {
     setState(() {
       _isTranscribing = true;
       _transcribedText = null;
     });
-
     // Simulate transcription
     await Future.delayed(const Duration(seconds: 3));
-
     setState(() {
       _transcribedText = '''
 Bonjour à tous, aujourd'hui nous allons étudier la notion de prescription acquisitive en droit civil.
-
 La prescription acquisitive, également appelée usucapion, est un mode d'acquisition de la propriété ou d'un droit réel par l'effet d'une possession prolongée pendant le délai fixé par la loi.
-
 Pour qu'il y ait prescription acquisitive, plusieurs conditions doivent être réunies :
-
 Premièrement, la possession doit être continue et non interrompue. Cela signifie que le possesseur doit avoir exercé de manière constante les attributs du droit de propriété pendant toute la durée requise.
-
 Deuxièmement, la possession doit être paisible. Elle ne doit pas avoir été obtenue par violence ou par des moyens illégaux.
-
 Troisièmement, la possession doit être publique et non équivoque. Le possesseur doit se comporter comme le véritable propriétaire aux yeux de tous.
-
 Quatrièmement, la possession doit être exercée à titre de propriétaire, c'est-à-dire "animo domini". Le possesseur doit avoir l'intention de se comporter comme le propriétaire du bien.
-
 Enfin, la possession doit durer pendant le délai prévu par la loi, qui est généralement de 30 ans, mais peut être réduit à 10 ans entre personnes de bonne foi avec juste titre.
-
 Il est important de noter que la prescription acquisitive peut être invoquée pour tous les biens, qu'ils soient meubles ou immeubles, sous réserve de certaines exceptions prévues par la loi.
-
 Y a-t-il des questions sur ce point ?
 ''';
       _isTranscribing = false;
     });
   }
-
   String _formatDuration(double seconds) {
     final minutes = (seconds / 60).floor();
     final secs = (seconds % 60).floor();
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
-
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Copié dans le presse-papier'),
-        backgroundColor: AppConstants.primaryGreen,
+        backgroundColor: AppColors.primaryGreen,
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -122,9 +101,7 @@ Y a-t-il des questions sur ce point ?
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
-
     final hasAccess = user?.plan == 'professionnel' || user?.plan == 'cabinet';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isFr ? 'Transcription Audio' : 'Audio Transcription'),
@@ -173,16 +150,13 @@ Y a-t-il des questions sur ce point ?
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
                   // Record or Upload Section
                   Text(
                     isFr ? 'Enregistrer ou importer' : 'Record or import',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-
                   // Recording Card
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -261,7 +235,6 @@ Y a-t-il des questions sur ce point ?
                       ],
                     ),
                   ),
-
                   if (_selectedAudioFile != null) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -344,7 +317,6 @@ Y a-t-il des questions sur ce point ?
                       ),
                     ),
                   ],
-
                   // Transcription Result
                   if (_transcribedText != null) ...[
                     const SizedBox(height: 32),
@@ -417,16 +389,13 @@ Y a-t-il des questions sur ce point ?
                       ],
                     ),
                   ],
-
                   const SizedBox(height: 32),
-
                   // Transcription History
                   Text(
                     isFr ? 'Historique des transcriptions' : 'Transcription history',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-
                   ..._transcriptionHistory.map((item) {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -474,7 +443,6 @@ Y a-t-il des questions sur ce point ?
           : _buildUpgradePrompt(context, isFr),
     );
   }
-
   Widget _buildUpgradePrompt(BuildContext context, bool isFr) {
     return Center(
       child: Padding(
@@ -500,7 +468,7 @@ Y a-t-il des questions sur ce point ?
             ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/subscription-plans'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppConstants.primaryGreen,
+                backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),

@@ -9,6 +9,12 @@ class DocumentModel {
   final DateTime uploadedAt;
   final bool isProcessed;
   final String? processingStatus;
+  
+  // Propriétés supplémentaires pour search/legal documents
+  final String? jurisdiction;
+  final String? summary;
+  final DateTime? publishedAt;
+  final DateTime? createdAt;
 
   DocumentModel({
     required this.id,
@@ -21,12 +27,20 @@ class DocumentModel {
     required this.uploadedAt,
     this.isProcessed = false,
     this.processingStatus,
+    this.jurisdiction,
+    this.summary,
+    this.publishedAt,
+    this.createdAt,
   });
+  
+  // Alias pour compatibilité avec search widgets
+  String get title => name;
+  String get type => fileType;
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
     return DocumentModel(
       id: json['id'] ?? 0,
-      name: json['name'] ?? json['file_name'] ?? '',
+      name: json['name'] ?? json['file_name'] ?? json['title'] ?? '',
       description: json['description'],
       category: json['category'],
       fileUrl: json['file_url'] ?? json['url'] ?? '',
@@ -39,6 +53,14 @@ class DocumentModel {
               : DateTime.now(),
       isProcessed: json['is_processed'] ?? false,
       processingStatus: json['processing_status'],
+      jurisdiction: json['jurisdiction'],
+      summary: json['summary'] ?? json['excerpt'],
+      publishedAt: json['published_at'] != null
+          ? DateTime.parse(json['published_at'])
+          : null,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
     );
   }
 
@@ -54,6 +76,10 @@ class DocumentModel {
       'uploaded_at': uploadedAt.toIso8601String(),
       'is_processed': isProcessed,
       'processing_status': processingStatus,
+      'jurisdiction': jurisdiction,
+      'summary': summary,
+      'published_at': publishedAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
     };
   }
 
@@ -82,6 +108,10 @@ class DocumentModel {
     DateTime? uploadedAt,
     bool? isProcessed,
     String? processingStatus,
+    String? jurisdiction,
+    String? summary,
+    DateTime? publishedAt,
+    DateTime? createdAt,
   }) {
     return DocumentModel(
       id: id ?? this.id,
@@ -94,6 +124,10 @@ class DocumentModel {
       uploadedAt: uploadedAt ?? this.uploadedAt,
       isProcessed: isProcessed ?? this.isProcessed,
       processingStatus: processingStatus ?? this.processingStatus,
+      jurisdiction: jurisdiction ?? this.jurisdiction,
+      summary: summary ?? this.summary,
+      publishedAt: publishedAt ?? this.publishedAt,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
