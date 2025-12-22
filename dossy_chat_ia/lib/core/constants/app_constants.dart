@@ -67,21 +67,21 @@ class AppConstants {
   ];
   
   // Jurisdictions (pour search_filter_widget)
-  static const List<String> jurisdictions = [
-    'Bénin',
-    'Burkina Faso',
-    'Côte d\'Ivoire',
-    'Guinée-Bissau',
-    'Mali',
-    'Niger',
-    'Sénégal',
-    'Togo',
-    'Cameroun',
-    'RD Congo',
-    'Gabon',
-    'Madagascar',
-    'Maroc',
-    'Tunisie',
+  static const List<Map<String, dynamic>> jurisdictions = [
+    {'code': 'BJ', 'name': 'Bénin'},
+    {'code': 'BF', 'name': 'Burkina Faso'},
+    {'code': 'CI', 'name': 'Côte d\'Ivoire'},
+    {'code': 'GW', 'name': 'Guinée-Bissau'},
+    {'code': 'ML', 'name': 'Mali'},
+    {'code': 'NE', 'name': 'Niger'},
+    {'code': 'SN', 'name': 'Sénégal'},
+    {'code': 'TG', 'name': 'Togo'},
+    {'code': 'CM', 'name': 'Cameroun'},
+    {'code': 'CD', 'name': 'RD Congo'},
+    {'code': 'GA', 'name': 'Gabon'},
+    {'code': 'MG', 'name': 'Madagascar'},
+    {'code': 'MA', 'name': 'Maroc'},
+    {'code': 'TN', 'name': 'Tunisie'},
   ];
   
   // Student Tools
