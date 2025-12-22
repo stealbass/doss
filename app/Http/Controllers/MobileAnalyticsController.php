@@ -91,9 +91,33 @@ class MobileAnalyticsController extends Controller
 
         // Top users data (placeholder)
         $topUsers = collect([
-            ['name' => 'User 1', 'activity' => 100, 'role' => 'Professional'],
-            ['name' => 'User 2', 'activity' => 85, 'role' => 'Student'],
-            ['name' => 'User 3', 'activity' => 70, 'role' => 'Cabinet'],
+            [
+                'name' => 'User 1',
+                'email' => 'user1@example.com',
+                'role' => 'lawyer',
+                'activity' => 100,
+                'conversations' => 45,
+                'documents' => 120,
+                'subscriptions' => 3
+            ],
+            [
+                'name' => 'User 2',
+                'email' => 'user2@example.com',
+                'role' => 'student',
+                'activity' => 85,
+                'conversations' => 32,
+                'documents' => 85,
+                'subscriptions' => 2
+            ],
+            [
+                'name' => 'User 3',
+                'email' => 'user3@example.com',
+                'role' => 'professional',
+                'activity' => 70,
+                'conversations' => 28,
+                'documents' => 65,
+                'subscriptions' => 1
+            ],
         ]);
 
         return view('mobile-analytics.index', compact('stats', 'userGrowth', 'kpis', 'topUsers'));

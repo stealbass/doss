@@ -7,6 +7,7 @@ use App\Models\TemplateCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
@@ -46,14 +47,17 @@ class DocumentTemplateController extends Controller
 
         $templates = $query->latest()->paginate(20);
         
-        // Safe category loading with fallback
+        // Safe category loading with multiple fallbacks
+        $categories = collect();
         try {
-            $categories = TemplateCategory::active()->get();
+            if (Schema::hasTable('template_categories')) {
+                $categories = TemplateCategory::active()->get();
+                if (!$categories) {
+                    $categories = collect();
+                }
+            }
         } catch (\Exception $e) {
-            $categories = collect();
-        }
-        
-        if (!$categories) {
+            Log::warning('Failed to load template categories: ' . $e->getMessage());
             $categories = collect();
         }
         
