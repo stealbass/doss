@@ -9,10 +9,33 @@
 -- ============================================================================
 -- Erreur: SQLSTATE[42S22]: Column not found: 1054 Unknown column 
 -- 'mobile_app_subscriptions.plan_id' in 'ON'
+-- 
+-- ATTENTION: Le modèle utilise 'mobile_app_plan_id' mais le controller fait un JOIN 
+-- sur 'plan_id'. Nous devons ajouter plan_id ET le synchroniser avec mobile_app_plan_id
 
-ALTER TABLE `mobile_app_subscriptions` 
-ADD COLUMN `plan_id` BIGINT UNSIGNED NULL AFTER `id`,
-ADD INDEX `idx_plan_id` (`plan_id`);
+-- Étape 1: Ajouter la colonne plan_id (si elle n'existe pas déjà)
+SET @dbname = DATABASE();
+SET @tablename = 'mobile_app_subscriptions';
+SET @columnname = 'plan_id';
+SET @preparedStatement = (SELECT IF(
+  (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE
+      (table_name = @tablename)
+      AND (table_schema = @dbname)
+      AND (column_name = @columnname)
+  ) > 0,
+  "SELECT 1",
+  "ALTER TABLE mobile_app_subscriptions ADD COLUMN plan_id BIGINT UNSIGNED NULL AFTER id, ADD INDEX idx_plan_id (plan_id);"
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- Étape 2: Synchroniser plan_id avec mobile_app_plan_id (copier les valeurs existantes)
+UPDATE `mobile_app_subscriptions` 
+SET `plan_id` = `mobile_app_plan_id` 
+WHERE `plan_id` IS NULL AND `mobile_app_plan_id` IS NOT NULL;
 
 -- ============================================================================
 -- 2. CORRECTION: calculators (colonne created_at manquante)

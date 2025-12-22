@@ -9,6 +9,9 @@ class CalculatorLog extends Model
 {
     use HasFactory;
 
+    // Activer explicitement les timestamps Laravel
+    public $timestamps = true;
+
     protected $fillable = [
         'calculator_config_id',
         'user_id',

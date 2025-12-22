@@ -12,6 +12,7 @@ class MobileAppSubscription extends Model
 
     protected $fillable = [
         'user_id',
+        'plan_id',  // CORRECTION: Utiliser plan_id pour la cohérence
         'mobile_app_plan_id',
         'billing_cycle',
         'status',
