@@ -54,9 +54,9 @@ class SearchFilterWidget extends StatelessWidget {
               ),
             ),
             items: AppConstants.jurisdictions.map((j) {
-              return DropdownMenuItem(
-                value: j['code'],
-                child: Text(j['name']!),
+              return DropdownMenuItem<String>(
+                value: j['code'] as String,
+                child: Text(j['name']! as String),
               );
             }).toList(),
             onChanged: onJurisdictionChanged,

@@ -50,7 +50,7 @@ class SearchResultCard extends StatelessWidget {
                     ),
                   const Spacer(),
                   Text(
-                    _formatDate(document.publishedAt ?? document.createdAt),
+                    _formatDate(document.publishedAt ?? document.createdAt ?? DateTime.now()),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: Colors.grey,

@@ -52,7 +52,7 @@ dependencies:
   open_file: ^3.3.2
   
   # Audio Recording & Transcription
-  record: ^5.1.2
+  record: ^5.1.1
   audioplayers: ^5.2.1
   permission_handler: ^11.1.0
   

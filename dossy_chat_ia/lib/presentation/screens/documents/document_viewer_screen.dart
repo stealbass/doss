@@ -99,9 +99,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     try {
       final favorites = await _storageService.getFavorites();
       if (_isFavorite) {
-        favorites.remove(widget.document.id);
+        favorites.remove(widget.document.id.toString());
       } else {
-        favorites.add(widget.document.id);
+        favorites.add(widget.document.id.toString());
       }
       await _storageService.saveFavorites(favorites);
       

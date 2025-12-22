@@ -104,7 +104,7 @@ class DocumentInfoSheet extends StatelessWidget {
                       ),
                     _InfoItem(
                       label: 'Date de création',
-                      value: _formatDate(document.createdAt),
+                      value: _formatDate(document.createdAt ?? document.uploadedAt),
                     ),
                     if (document.fileSize != null)
                       _InfoItem(

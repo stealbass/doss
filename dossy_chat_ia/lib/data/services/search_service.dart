@@ -341,7 +341,7 @@ class SearchService {
   // =====================================================
   
   /// Full text search (alias de searchDocuments avec tous les paramètres)
-  Future<List<dynamic>> fullTextSearch({
+  Future<List<DocumentModel>> fullTextSearch({
     required String query,
     required String token,
     String? jurisdiction,
@@ -363,7 +363,8 @@ class SearchService {
     );
     
     if (result['success'] == true) {
-      return result['results'] as List<dynamic>;
+      final results = result['results'] as List<dynamic>;
+      return results.map((json) => DocumentModel.fromJson(json)).toList();
     }
     return [];
   }

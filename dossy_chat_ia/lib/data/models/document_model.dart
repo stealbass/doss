@@ -15,6 +15,7 @@ class DocumentModel {
   final String? summary;
   final DateTime? publishedAt;
   final DateTime? createdAt;
+  final String? language;
 
   DocumentModel({
     required this.id,
@@ -31,6 +32,7 @@ class DocumentModel {
     this.summary,
     this.publishedAt,
     this.createdAt,
+    this.language,
   });
   
   // Alias pour compatibilité avec search widgets
@@ -61,6 +63,7 @@ class DocumentModel {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : null,
+      language: json['language'] ?? json['lang'],
     );
   }
 
@@ -80,6 +83,7 @@ class DocumentModel {
       'summary': summary,
       'published_at': publishedAt?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
+      'language': language,
     };
   }
 
@@ -112,6 +116,7 @@ class DocumentModel {
     String? summary,
     DateTime? publishedAt,
     DateTime? createdAt,
+    String? language,
   }) {
     return DocumentModel(
       id: id ?? this.id,
@@ -128,6 +133,7 @@ class DocumentModel {
       summary: summary ?? this.summary,
       publishedAt: publishedAt ?? this.publishedAt,
       createdAt: createdAt ?? this.createdAt,
+      language: language ?? this.language,
     );
   }
 }
