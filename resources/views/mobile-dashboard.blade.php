@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('page-title')
     {{ __('Mobile App Dashboard') }}

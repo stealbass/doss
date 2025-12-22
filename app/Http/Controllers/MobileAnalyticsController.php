@@ -45,8 +45,48 @@ class MobileAnalyticsController extends Controller
 
         // Initialize KPIs
         $kpis = [
-            'exports' => 0,
-            'revenue' => 0,
+            'total_users' => [
+                'label' => 'Total Users',
+                'value' => $stats['total_users'],
+                'growth' => 0,
+                'color' => 'primary',
+                'icon' => 'users'
+            ],
+            'active_users' => [
+                'label' => 'Active Users',
+                'value' => $stats['active_users'],
+                'growth' => 0,
+                'color' => 'success',
+                'icon' => 'user-check'
+            ],
+            'monthly_revenue' => [
+                'label' => 'Monthly Revenue',
+                'value' => 0,
+                'growth' => 0,
+                'color' => 'info',
+                'icon' => 'cash'
+            ],
+            'conversion_rate' => [
+                'label' => 'Conversion Rate',
+                'value' => 0,
+                'growth' => 0,
+                'color' => 'warning',
+                'icon' => 'percentage'
+            ],
+            'churn_rate' => [
+                'label' => 'Churn Rate',
+                'value' => 0,
+                'growth' => 0,
+                'color' => 'danger',
+                'icon' => 'user-minus'
+            ],
+            'avg_session_duration' => [
+                'label' => 'Avg Session Duration',
+                'value' => 0,
+                'growth' => 0,
+                'color' => 'secondary',
+                'icon' => 'clock'
+            ],
         ];
 
         return view('mobile-analytics.index', compact('stats', 'userGrowth', 'kpis'));

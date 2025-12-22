@@ -44,6 +44,21 @@ class FiscalSocialResourceController extends Controller
     }
 
     /**
+     * Show create form
+     */
+    public function create()
+    {
+        if (auth()->user()->type !== 'super admin') {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $countries = config('mobile_countries.supported_countries', []);
+        $years = range(date('Y') + 1, 2020);
+        
+        return view('fiscal-resources.create', compact('countries', 'years'));
+    }
+
+    /**
      * Store a new fiscal/social resource
      */
     public function store(Request $request)

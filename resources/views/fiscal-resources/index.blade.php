@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('content')
 <div class="container-fluid">
@@ -8,7 +8,7 @@
                 <h1 class="h3 mb-0 text-gray-800">
                     <i class="fas fa-file-invoice-dollar"></i> Ressources Fiscales & Sociales
                 </h1>
-                <a href="{{ route('admin.fiscal-resources.create') }}" class="btn btn-primary">
+                <a href="{{ route('fiscal-resources.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Nouvelle Ressource
                 </a>
             </div>
