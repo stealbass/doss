@@ -45,8 +45,8 @@ class DocumentTemplateController extends Controller
         }
 
         $templates = $query->latest()->paginate(20);
-        $categories = TemplateCategory::active()->get();
-        $countries = config('mobile_countries.supported_countries');
+        $categories = TemplateCategory::active()->get() ?? collect();
+        $countries = config('mobile_countries.supported_countries', []);
 
         $stats = [
             'total_templates' => DocumentTemplate::count(),

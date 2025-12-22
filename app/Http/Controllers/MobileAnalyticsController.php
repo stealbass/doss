@@ -43,7 +43,13 @@ class MobileAnalyticsController extends Controller
             ];
         }
 
-        return view('mobile-analytics.index', compact('stats', 'userGrowth'));
+        // Initialize KPIs
+        $kpis = [
+            'exports' => 0,
+            'revenue' => 0,
+        ];
+
+        return view('mobile-analytics.index', compact('stats', 'userGrowth', 'kpis'));
     }
 
     /**
