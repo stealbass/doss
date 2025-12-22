@@ -6,7 +6,12 @@ class AppConstants {
   
   // API Configuration
   static const String baseUrl = 'https://dossy.alwaysdata.net/api/mobile';
+  static const String apiBaseUrl = 'https://dossypro.com/api'; // Pour search_service
   static const String filesBaseUrl = 'https://files.dossypro.com';
+  
+  // Couleur primaire verte (pour les écrans qui l'utilisent)
+  static const int primaryGreenValue = 0xFF00A86B;
+  static int get primaryGreen => primaryGreenValue;
   
   // Storage Keys
   static const String tokenKey = 'auth_token';
@@ -60,6 +65,24 @@ class AppConstants {
     'Droit administratif',
     'Droit social',
     'Droit commercial',
+  ];
+  
+  // Jurisdictions (pour search_filter_widget)
+  static const List<String> jurisdictions = [
+    'Bénin',
+    'Burkina Faso',
+    'Côte d\'Ivoire',
+    'Guinée-Bissau',
+    'Mali',
+    'Niger',
+    'Sénégal',
+    'Togo',
+    'Cameroun',
+    'RD Congo',
+    'Gabon',
+    'Madagascar',
+    'Maroc',
+    'Tunisie',
   ];
   
   // Student Tools

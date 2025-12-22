@@ -19,9 +19,8 @@ class NetworkUtils {
     _isOnline = await checkConnection();
 
     // Écouter les changements
-    _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      final isConnected = results.isNotEmpty && 
-          results.any((result) => result != ConnectivityResult.none);
+    _connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      final isConnected = result != ConnectivityResult.none;
       
       if (_isOnline != isConnected) {
         _isOnline = isConnected;
@@ -34,9 +33,8 @@ class NetworkUtils {
   /// Vérifier la connexion
   Future<bool> checkConnection() async {
     try {
-      final results = await _connectivity.checkConnectivity();
-      final hasConnection = results.isNotEmpty && 
-          results.any((result) => result != ConnectivityResult.none);
+      final result = await _connectivity.checkConnectivity();
+      final hasConnection = result != ConnectivityResult.none;
       
       _isOnline = hasConnection;
       debugPrint('🌐 Statut connexion: ${_isOnline ? "En ligne" : "Hors ligne"}');
@@ -50,10 +48,7 @@ class NetworkUtils {
   /// Obtenir le type de connexion
   Future<String> getConnectionType() async {
     try {
-      final results = await _connectivity.checkConnectivity();
-      if (results.isEmpty) return 'none';
-      
-      final result = results.first;
+      final result = await _connectivity.checkConnectivity();
       
       switch (result) {
         case ConnectivityResult.wifi:
@@ -80,13 +75,13 @@ class NetworkUtils {
 
   /// Vérifier si on est en WiFi
   Future<bool> isWifi() async {
-    final results = await _connectivity.checkConnectivity();
-    return results.contains(ConnectivityResult.wifi);
+    final result = await _connectivity.checkConnectivity();
+    return result == ConnectivityResult.wifi;
   }
 
   /// Vérifier si on est en mobile data
   Future<bool> isMobileData() async {
-    final results = await _connectivity.checkConnectivity();
-    return results.contains(ConnectivityResult.mobile);
+    final result = await _connectivity.checkConnectivity();
+    return result == ConnectivityResult.mobile;
   }
 }

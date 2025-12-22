@@ -336,6 +336,51 @@ class SearchService {
     }
   }
 
+  // =====================================================
+  // Alias Methods (pour compatibilité)
+  // =====================================================
+  
+  /// Full text search (alias de searchDocuments)
+  Future<List<dynamic>> fullTextSearch({
+    required String query,
+    required String token,
+    String? jurisdiction,
+  }) async {
+    final result = await searchDocuments(
+      query: query,
+      jurisdiction: jurisdiction ?? 'CI',
+      token: token,
+    );
+    
+    if (result['success'] == true) {
+      return result['results'] as List<dynamic>;
+    }
+    return [];
+  }
+  
+  /// Save search history (appelé automatiquement par l'API)
+  Future<void> saveSearchHistory(String query, {required String token}) async {
+    // L'historique est automatiquement sauvegardé côté serveur lors d'une recherche
+    // Cette méthode est un no-op pour compatibilité
+    return;
+  }
+  
+  /// Get search suggestions (alias de getSuggestions)
+  Future<List<String>> getSearchSuggestions(String query, {String? token}) async {
+    if (token == null) return [];
+    
+    final result = await getSuggestions(
+      partial: query,
+      jurisdiction: 'CI',
+      token: token,
+    );
+    
+    if (result['success'] == true) {
+      return (result['suggestions'] as List).cast<String>();
+    }
+    return [];
+  }
+
   /// Dispose resources
   void dispose() {
     client.close();

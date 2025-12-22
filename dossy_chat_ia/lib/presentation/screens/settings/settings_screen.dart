@@ -184,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
               onChanged: (value) {
                 if (value != null) {
-                  localeProvider.setLocale(Locale(value));
+                  localeProvider.setLocale(value);
                 }
               },
             ),

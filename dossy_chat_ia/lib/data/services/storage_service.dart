@@ -317,6 +317,73 @@ class StorageService {
   }
 
   // =====================================================
+  // App Settings (Extended)
+  // =====================================================
+  
+  /// Get app settings
+  Future<Map<String, dynamic>> getAppSettings() async {
+    final settings = _prefs.getString('app_settings');
+    if (settings != null) {
+      return jsonDecode(settings) as Map<String, dynamic>;
+    }
+    return {};
+  }
+  
+  /// Save app settings
+  Future<void> saveAppSettings(Map<String, dynamic> settings) async {
+    await _prefs.setString('app_settings', jsonEncode(settings));
+  }
+  
+  // =====================================================
+  // Favorites Management
+  // =====================================================
+  
+  /// Get favorites list
+  Future<List<String>> getFavorites() async {
+    return _prefs.getStringList('favorites') ?? [];
+  }
+  
+  /// Save favorites list
+  Future<void> saveFavorites(List<String> favorites) async {
+    await _prefs.setStringList('favorites', favorites);
+  }
+  
+  /// Add to favorites
+  Future<void> addFavorite(String id) async {
+    final favorites = await getFavorites();
+    if (!favorites.contains(id)) {
+      favorites.add(id);
+      await saveFavorites(favorites);
+    }
+  }
+  
+  /// Remove from favorites
+  Future<void> removeFavorite(String id) async {
+    final favorites = await getFavorites();
+    favorites.remove(id);
+    await saveFavorites(favorites);
+  }
+  
+  // =====================================================
+  // Generic Cache Data
+  // =====================================================
+  
+  /// Get cached data by key
+  Future<String?> getCachedData(String key) async {
+    return _prefs.getString('cache_$key');
+  }
+  
+  /// Set cached data by key
+  Future<void> setCachedData(String key, String data) async {
+    await _prefs.setString('cache_$key', data);
+  }
+  
+  /// Remove cached data by key
+  Future<void> removeCachedData(String key) async {
+    await _prefs.remove('cache_$key');
+  }
+
+  // =====================================================
   // Utility Methods
   // =====================================================
 
