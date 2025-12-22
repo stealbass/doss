@@ -92,30 +92,36 @@ class MobileAnalyticsController extends Controller
         // Top users data (placeholder)
         $topUsers = collect([
             [
+                'id' => 1,
                 'name' => 'User 1',
                 'email' => 'user1@example.com',
                 'role' => 'lawyer',
                 'activity' => 100,
                 'conversations' => 45,
                 'documents' => 120,
+                'downloads' => 89,
                 'subscriptions' => 3
             ],
             [
+                'id' => 2,
                 'name' => 'User 2',
                 'email' => 'user2@example.com',
                 'role' => 'student',
                 'activity' => 85,
                 'conversations' => 32,
                 'documents' => 85,
+                'downloads' => 67,
                 'subscriptions' => 2
             ],
             [
+                'id' => 3,
                 'name' => 'User 3',
                 'email' => 'user3@example.com',
                 'role' => 'professional',
                 'activity' => 70,
                 'conversations' => 28,
                 'documents' => 65,
+                'downloads' => 54,
                 'subscriptions' => 1
             ],
         ]);

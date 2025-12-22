@@ -99,7 +99,7 @@
                     <div class="col-md-3">
                         <select name="country" class="form-select">
                             <option value="">Tous les pays</option>
-                            @foreach(config('mobile_countries.countries') as $code => $country)
+                            @foreach($countries ?? [] as $code => $country)
                                 <option value="{{ $code }}" {{ request('country') == $code ? 'selected' : '' }}>
                                     {{ $country['flag'] }} {{ $code }}
                                 </option>
