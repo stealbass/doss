@@ -89,7 +89,14 @@ class MobileAnalyticsController extends Controller
             ],
         ];
 
-        return view('mobile-analytics.index', compact('stats', 'userGrowth', 'kpis'));
+        // Top users data (placeholder)
+        $topUsers = collect([
+            ['name' => 'User 1', 'activity' => 100, 'role' => 'Professional'],
+            ['name' => 'User 2', 'activity' => 85, 'role' => 'Student'],
+            ['name' => 'User 3', 'activity' => 70, 'role' => 'Cabinet'],
+        ]);
+
+        return view('mobile-analytics.index', compact('stats', 'userGrowth', 'kpis', 'topUsers'));
     }
 
     /**

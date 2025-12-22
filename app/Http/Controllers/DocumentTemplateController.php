@@ -45,7 +45,18 @@ class DocumentTemplateController extends Controller
         }
 
         $templates = $query->latest()->paginate(20);
-        $categories = TemplateCategory::active()->get() ?? collect();
+        
+        // Safe category loading with fallback
+        try {
+            $categories = TemplateCategory::active()->get();
+        } catch (\Exception $e) {
+            $categories = collect();
+        }
+        
+        if (!$categories) {
+            $categories = collect();
+        }
+        
         $countries = config('mobile_countries.supported_countries', []);
 
         $stats = [

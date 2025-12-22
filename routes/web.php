@@ -932,6 +932,7 @@ Route::middleware(['auth', 'XSS'])->prefix('admin')->name('admin.')->group(funct
     // Fiscal & Social Resources Management
     Route::prefix('fiscal-resources')->name('fiscal-resources.')->group(function () {
         Route::get('/', [App\Http\Controllers\FiscalSocialResourceController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\FiscalSocialResourceController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\FiscalSocialResourceController::class, 'store'])->name('store');
         Route::put('/{id}', [App\Http\Controllers\FiscalSocialResourceController::class, 'update'])->name('update');
         Route::delete('/{id}', [App\Http\Controllers\FiscalSocialResourceController::class, 'destroy'])->name('destroy');
