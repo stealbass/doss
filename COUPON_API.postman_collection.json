@@ -1,0 +1,152 @@
+{
+  "info": {
+    "name": "Dossy Pro - Coupon System API",
+    "description": "API endpoints pour le système de coupons (codes promo) dans l'application mobile Flutter",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Coupons",
+      "item": [
+        {
+          "name": "1. Validate Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coupon_code\": \"PROMO2024\",\n  \"plan_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/mobile/coupons/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mobile",
+                "coupons",
+                "validate"
+              ]
+            },
+            "description": "Valider un code coupon et calculer la réduction pour un plan d'abonnement spécifique.\n\n**Validations:**\n- Coupon existe et est actif\n- Limite d'utilisation pas atteinte\n- Utilisateur ne l'a pas déjà utilisé\n- Plan existe\n\n**Response:**\n- Prix original, montant réduction, prix final\n- Informations du coupon\n- Statistiques d'utilisation"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Mark Coupon as Used",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coupon_code\": \"PROMO2024\",\n  \"order_id\": \"FLW-1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/mobile/coupons/mark-used",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mobile",
+                "coupons",
+                "mark-used"
+              ]
+            },
+            "description": "Marquer un coupon comme utilisé après un paiement réussi.\n\n**Quand l'appeler:**\n- Après confirmation du paiement Flutterwave\n- Avant d'activer l'abonnement\n\n**Important:**\n- Empêche l'utilisateur de réutiliser le même coupon\n- Incrémente le compteur d'utilisation\n- Lie le coupon à un order_id spécifique"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get My Coupon History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mobile/coupons/my-history",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mobile",
+                "coupons",
+                "my-history"
+              ]
+            },
+            "description": "Récupérer l'historique de tous les coupons utilisés par l'utilisateur connecté.\n\n**Informations retournées:**\n- Code du coupon\n- Nom du coupon\n- Pourcentage de réduction\n- Order ID lié\n- Date d'utilisation\n- Format human-readable (\"il y a 2 jours\")\n\n**Utilité:**\n- Afficher dans le profil utilisateur\n- Page \"Mes codes promos utilisés\"\n- Historique des transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Available Coupons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/mobile/coupons/available",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "mobile",
+                "coupons",
+                "available"
+              ]
+            },
+            "description": "Récupérer tous les coupons actifs et encore disponibles (pas encore épuisés).\n\n**Filtres appliqués:**\n- is_active = 1 (coupons actifs uniquement)\n- used_count < limit (coupons non épuisés)\n\n**Informations retournées:**\n- Code, nom, description\n- Pourcentage de réduction\n- Statistiques d'utilisation (utilisé/limite/restant)\n\n**Utilité:**\n- Page \"Codes promos disponibles\"\n- Suggestions lors du paiement\n- Marketing in-app"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dossypro.com",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

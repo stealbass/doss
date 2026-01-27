@@ -1,0 +1,200 @@
+═══════════════════════════════════════════════════════════════════
+  🚨 ACTION IMMÉDIATE REQUISE - Endpoint R2 Incorrect
+═══════════════════════════════════════════════════════════════════
+
+PROBLÈME IDENTIFIÉ
+------------------
+Votre endpoint R2 dans la base de données est MALFORMÉ:
+
+❌ ACTUEL (INCORRECT):
+https://7f65e0eba4a7304ea7//7baf0bafc7/aecf3f2.r2.cloudflarestorage.com
+                        ↑↑
+                    Double slash!
+
+ERREUR RÉSULTANTE:
+AWS HTTP error: cURL error 6: Could not resolve host
+→ Impossible de se connecter à R2
+→ Uploads échouent
+→ Downloads échouent
+
+
+═══════════════════════════════════════════════════════════════════
+  ✅ SOLUTION EN 3 ÉTAPES (5 minutes)
+═══════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : Trouver le Bon Endpoint sur Cloudflare
+-------------------------------------------------
+1. Allez sur: https://dash.cloudflare.com
+2. Menu gauche → R2 Object Storage
+3. Cliquez sur bucket: "dossy-pro-documents"
+4. Onglet "Settings"
+5. Section "S3 API"
+6. COPIEZ l'URL sous "Endpoint for S3 Clients"
+
+   Exemple de ce que vous devez voir:
+   ┌────────────────────────────────────────────────────┐
+   │ Endpoint for S3 Clients                            │
+   │ https://a1b2c3d4e5f6.r2.cloudflarestorage.com     │
+   │                                                    │
+   │ ← COPIEZ CETTE URL COMPLÈTE                        │
+   └────────────────────────────────────────────────────┘
+
+
+ÉTAPE 2 : Corriger dans Dossy Pro
+----------------------------------
+OPTION A - Via Interface (Recommandé):
+
+1. Connectez-vous en Super Admin sur dossypro.com
+2. Settings → Storage Settings
+3. Sélectionnez "Cloudflare R2"
+4. Champ "R2 Endpoint":
+   - SUPPRIMEZ l'ancienne valeur
+   - COLLEZ la nouvelle depuis Cloudflare
+5. Save Changes
+
+
+OPTION B - Via SQL (Si l'interface ne marche pas):
+
+1. Connectez-vous à phpMyAdmin
+2. Base de données: dossypro
+3. Exécutez cette requête (REMPLACEZ <ENDPOINT_COPIÉ>):
+
+UPDATE settings 
+SET value = '<COLLEZ_ICI_L_ENDPOINT_COPIÉ_DE_CLOUDFLARE>' 
+WHERE `key` = 'r2_endpoint';
+
+Exemple:
+UPDATE settings 
+SET value = 'https://a1b2c3d4e5f6.r2.cloudflarestorage.com' 
+WHERE `key` = 'r2_endpoint';
+
+
+ÉTAPE 3 : Vider le Cache et Tester
+-----------------------------------
+ssh dossypro@ssh-dossypro.alwaysdata.net
+cd ~/public_html
+
+# Vider le cache
+php artisan cache:clear
+php artisan config:clear
+
+# Tester
+php test_r2_upload_config.php
+
+
+═══════════════════════════════════════════════════════════════════
+  🧪 RÉSULTAT ATTENDU APRÈS CORRECTION
+═══════════════════════════════════════════════════════════════════
+
+Quand vous exécutez: php test_r2_upload_config.php
+
+AVANT (Broken):
+❌ Error executing "ListObjectsV2"
+❌ AWS HTTP error: cURL error 6: Could not resolve host
+
+APRÈS (Fixed):
+✅ storage_setting = 'r2'
+✅ r2_endpoint : https://xxxxxxx.r2.cloudflarestorage.com
+✅ Disk R2 configuré dynamiquement
+✅ Connexion R2 réussie!
+✅ Fichiers dans legal_documents/ : X
+
+
+═══════════════════════════════════════════════════════════════════
+  📋 FORMAT ENDPOINT - AIDE VISUELLE
+═══════════════════════════════════════════════════════════════════
+
+✅ CORRECT:
+https://a1b2c3d4e5f6g7h8.r2.cloudflarestorage.com
+└─────┬──────────────┘ └────────┬────────────────┘
+   Account ID          Domaine Cloudflare R2
+   (hexadecimal)
+
+❌ INCORRECT (Votre cas actuel):
+https://7f65e0eba4a7304ea7//7baf0bafc7/aecf3f2.r2.cloudflarestorage.com
+                        ↑↑
+                    Double slash = ERREUR
+
+
+═══════════════════════════════════════════════════════════════════
+  ⚠️  NE PAS CONFONDRE CES 3 URLS
+═══════════════════════════════════════════════════════════════════
+
+1. ENDPOINT (pour API S3) → À mettre dans r2_endpoint
+   https://xxxxxxx.r2.cloudflarestorage.com
+   Utilisé pour: Upload, delete, list files
+
+2. PUBLIC URL R2 (URL par défaut)
+   https://pub-xxxxxx.r2.dev
+   Utilisé pour: Affichage public (si pas de custom domain)
+
+3. CUSTOM DOMAIN (votre domaine) → À mettre dans r2_url
+   https://files.dossypro.com
+   Utilisé pour: Affichage public des fichiers
+
+
+POUR DOSSY PRO:
+r2_endpoint = https://xxxxxxx.r2.cloudflarestorage.com  ← COPIÉ DE CLOUDFLARE
+r2_url      = https://files.dossypro.com                ← Votre custom domain
+
+
+═══════════════════════════════════════════════════════════════════
+  🎯 TEST FINAL APRÈS CORRECTION
+═══════════════════════════════════════════════════════════════════
+
+1. Upload Test:
+   - Super Admin → Legal Library → Catégorie
+   - Add Document
+   - Uploadez un PDF (test_endpoint_fixe.pdf)
+   - Save
+
+2. Vérification R2:
+   - Cloudflare Dashboard → R2 → dossy-pro-documents
+   - Dossier: legal_documents/
+   - ✅ Le fichier DOIT apparaître
+
+3. Download Test:
+   - Connectez-vous en utilisateur
+   - Bibliothèque Juridique
+   - Télécharger le document
+   - ✅ Le PDF doit s'afficher depuis:
+     https://files.dossypro.com/legal_documents/xxxxxx_test_endpoint_fixe.pdf
+
+
+═══════════════════════════════════════════════════════════════════
+  📞 BESOIN D'AIDE ?
+═══════════════════════════════════════════════════════════════════
+
+Si vous ne trouvez pas l'endpoint sur Cloudflare:
+
+1. Prenez un screenshot de:
+   Cloudflare Dashboard → R2 → dossy-pro-documents → Settings
+
+2. Envoyez-moi le screenshot
+
+3. Ou envoyez-moi la sortie de:
+   ssh dossypro@ssh-dossypro.alwaysdata.net
+   cd ~/public_html
+   php check_r2_endpoint.php
+
+
+═══════════════════════════════════════════════════════════════════
+  ✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+□ Endpoint copié depuis Cloudflare Dashboard
+□ Endpoint mis à jour dans Dossy Pro (Settings ou SQL)
+□ Cache Laravel vidé (cache:clear + config:clear)
+□ php test_r2_upload_config.php → Connexion réussie ✅
+□ Upload document test → Apparaît dans R2 ✅
+□ Download test → Fonctionne ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+Priorité: URGENTE
+Impact: BLOQUE tous les uploads/downloads R2
+Temps: 5 minutes de correction
+Scripts: check_r2_endpoint.php, test_r2_upload_config.php
+
+═══════════════════════════════════════════════════════════════════

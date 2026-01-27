@@ -1,0 +1,221 @@
+═══════════════════════════════════════════════════════════════════════════
+  🚨 ACTION IMMÉDIATE - FIX CLOUDFLARE DNS + R2
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLÈME ACTUEL:
+  ❌ Site accessible uniquement sur WiFi bureau
+  ❌ Inaccessible sur réseau mobile
+  ❌ Images et documents bibliothèque ne s'affichent pas
+
+CAUSE:
+  ❌ CNAME "files" mal configuré (pointe vers dossy-pro-documents)
+  ❌ Custom domain R2 non configuré
+
+═══════════════════════════════════════════════════════════════════════════
+  ✅ SOLUTION EN 3 ÉTAPES (10 MINUTES)
+═══════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 1 : Configurer Custom Domain R2 (RECOMMANDÉ)                     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+1. Aller sur Cloudflare Dashboard
+   → https://dash.cloudflare.com/
+
+2. Sélectionner votre compte
+   → Cliquer sur "R2" dans le menu gauche
+
+3. Cliquer sur votre bucket "dossy-pro-documents"
+
+4. Onglet "Settings" → Section "Custom Domains"
+
+5. Cliquer sur "Connect Domain"
+
+6. Entrer: files.dossypro.com
+
+7. Cliquer sur "Continue"
+
+8. Cloudflare va AUTOMATIQUEMENT:
+   ✅ Créer le CNAME correct dans votre DNS
+   ✅ Configurer l'endpoint R2
+   ✅ Activer le domaine custom
+
+9. Attendre 2-3 minutes pour la validation
+
+10. Vérifier que le statut est "Active"
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 2 : Vérifier Public Access R2                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+1. Toujours dans Settings du bucket "dossy-pro-documents"
+
+2. Section "Public access"
+
+3. S'assurer que "Allow Access" est activé (toggle ON)
+
+4. Si désactivé, activer et confirmer
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 3 : Configurer CORS (Important)                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+1. Toujours dans Settings du bucket
+
+2. Section "CORS Policy"
+
+3. Cliquer sur "Edit CORS policy"
+
+4. Copier-coller cette configuration:
+
+[
+  {
+    "AllowedOrigins": [
+      "https://dossypro.com",
+      "https://www.dossypro.com",
+      "https://dossy.alwaysdata.net"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "*"
+    ],
+    "ExposeHeaders": [],
+    "MaxAgeSeconds": 3600
+  }
+]
+
+5. Sauvegarder
+
+═══════════════════════════════════════════════════════════════════════════
+  🧪 TESTS IMMÉDIAT (2 MINUTES)
+═══════════════════════════════════════════════════════════════════════════
+
+Test 1: DNS Resolution
+──────────────────────
+Ouvrir terminal et exécuter:
+
+  nslookup files.dossypro.com
+
+Résultat attendu: Doit retourner une adresse IP (pas d'erreur)
+
+Test 2: URL R2 Directe
+──────────────────────
+Ouvrir navigateur (mode navigation privée):
+
+  https://files.dossypro.com/
+
+Résultat attendu: Page blanche OU liste fichiers (PAS d'erreur 404)
+
+Test 3: Tester depuis Mobile
+─────────────────────────────
+1. Ouvrir navigateur sur téléphone (réseau 4G/5G, PAS WiFi)
+2. Aller sur: https://dossypro.com
+3. Vérifier que:
+   ✅ Site s'ouvre
+   ✅ Images s'affichent
+   ✅ Documents bibliothèque s'affichent
+
+═══════════════════════════════════════════════════════════════════════════
+  🔍 VÉRIFICATION DNS CLOUDFLARE
+═══════════════════════════════════════════════════════════════════════════
+
+Aller sur: Cloudflare Dashboard → dossypro.com → DNS → Records
+
+Vérifier que vous avez:
+
+Type    Name    Target                              Proxy Status
+────────────────────────────────────────────────────────────────────
+A       @       185.31.40.25                        🟠 Proxied
+A       www     185.31.40.25                        🟠 Proxied
+CNAME   files   <AUTO_GENERATED_BY_R2>.r2...        ⛅ DNS only
+MX      @       mx1.alwaysdata.com (10)             DNS only
+MX      @       mx2.alwaysdata.com (20)             DNS only
+
+⚠️ IMPORTANT:
+  - "files" DOIT être en mode "DNS only" (nuage gris ⛅)
+  - PAS en mode "Proxied" (nuage orange 🟠)
+
+═══════════════════════════════════════════════════════════════════════════
+  🐛 SI PROBLÈME PERSISTE
+═══════════════════════════════════════════════════════════════════════════
+
+Option A: Attendre Propagation DNS
+───────────────────────────────────
+Parfois il faut 5-10 minutes pour que DNS se propage.
+
+1. Attendre 10 minutes
+2. Vider cache DNS:
+   
+   Windows:     ipconfig /flushdns
+   Mac:         sudo dscacheutil -flushcache
+   Linux:       sudo systemd-resolve --flush-caches
+
+3. Re-tester
+
+Option B: Vérifier Endpoint R2 dans DB
+───────────────────────────────────────
+1. SSH sur AlwaysData:
+   
+   ssh utilisateur@ssh-utilisateur.alwaysdata.net
+   cd ~/www/
+
+2. Vérifier configuration:
+   
+   php artisan tinker
+
+3. Exécuter:
+   
+   Setting::where('key', 'r2_url')->first()->value;
+
+4. Doit retourner: "https://files.dossypro.com"
+
+5. Si différent, corriger:
+   
+   Setting::where('key', 'r2_url')->update(['value' => 'https://files.dossypro.com']);
+   exit
+
+6. Vider cache:
+   
+   php artisan cache:clear
+   php artisan config:clear
+
+Option C: Recréer Custom Domain
+────────────────────────────────
+Si custom domain ne fonctionne toujours pas:
+
+1. R2 Dashboard → dossy-pro-documents → Settings
+2. Custom Domains → Supprimer "files.dossypro.com"
+3. Attendre 2 minutes
+4. Recréer custom domain "files.dossypro.com"
+
+═══════════════════════════════════════════════════════════════════════════
+  ✅ RÉSULTAT ATTENDU
+═══════════════════════════════════════════════════════════════════════════
+
+Après avoir suivi ces étapes:
+
+✅ https://dossypro.com                          → S'ouvre (mobile + bureau)
+✅ https://www.dossypro.com                      → S'ouvre (mobile + bureau)
+✅ https://files.dossypro.com                    → Accessible
+✅ Images site                                   → S'affichent partout
+✅ Documents bibliothèque juridique              → S'affichent partout
+✅ Téléchargements PDF                           → Fonctionnent
+
+═══════════════════════════════════════════════════════════════════════════
+  📞 SUPPORT
+═══════════════════════════════════════════════════════════════════════════
+
+Documentation complète: FIX_CLOUDFLARE_DNS_R2.md
+Cloudflare Dashboard: https://dash.cloudflare.com/
+AlwaysData Support: https://admin.alwaysdata.com/support/
+
+═══════════════════════════════════════════════════════════════════════════
+
+Date: 2025-11-27
+Temps estimé: 10 minutes
+Difficulté: ⭐⭐ (Facile)
+
+═══════════════════════════════════════════════════════════════════════════

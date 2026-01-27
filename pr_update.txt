@@ -1,0 +1,47 @@
+## 🔄 Mise à jour - Fonctionnalité Bibliothèque Juridique
+
+### ✅ Modifications ajoutées
+
+**Fichiers Build Frontend**
+- Ajout des assets compilés pour l'interface utilisateur
+- `public/build/assets/app-*.js` - JavaScript compilé
+- `public/build/manifest.json` - Manifeste des assets
+
+### 📋 État de la Fonctionnalité
+
+**Navigation déjà intégrée** ✅
+- Lien utilisateur dans le sidebar principal (ligne 155-162)
+- Lien administrateur dans le menu Settings (ligne 374-377)
+
+**Installation Base de Données** ✅
+- Tables créées manuellement via phpMyAdmin
+- Permissions configurées
+
+**Fichiers de Stockage** ✅
+- Dossier `storage/app/public/legal_documents/` créé
+- Lien symbolique configuré
+
+### 🔗 Accès à la Bibliothèque
+
+**Pour les utilisateurs** :
+- Menu : "Legal Library" (icône livre 📖)
+- Route : `/library`
+- Permission requise : `view legal library`
+
+**Pour les administrateurs** :
+- Menu : Settings → "Legal Library (Admin)"
+- Route : `/legal-library`
+- Permission requise : `manage legal library`
+
+### 📊 Résumé des Commits
+
+1. ✅ Feature initiale avec contrôleurs et vues
+2. ✅ Documentation complète (FR/EN)
+3. ✅ Scripts d'installation automatisés
+4. ✅ Installation manuelle SQL (solution PHP 8.2)
+5. ✅ Intégration des liens de navigation
+6. ✅ Assets frontend compilés
+
+### 🎯 Prêt pour Fusion
+
+La fonctionnalité est complète et opérationnelle. Tous les composants sont en place pour une utilisation immédiate après fusion dans `main`.

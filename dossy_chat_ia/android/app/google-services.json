@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "429892429692",
+    "project_id": "dossy-chat-ia",
+    "storage_bucket": "dossy-chat-ia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429892429692:android:ebd41817fb3a529884a6f9",
+        "android_client_info": {
+          "package_name": "com.dossy.chatia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLQVMLh5YoBh-sfgGbHsdPQQ_3TaVNHTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429892429692:android:1aff19790f7f3aed84a6f9",
+        "android_client_info": {
+          "package_name": "com.dossypro.dossy_chat_ia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLQVMLh5YoBh-sfgGbHsdPQQ_3TaVNHTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

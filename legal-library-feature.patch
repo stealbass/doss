@@ -1,0 +1,1902 @@
+From e936e8448b41e24ee4fbd86ec1ecb680cdfc0770 Mon Sep 17 00:00:00 2001
+From: stealbass <genspark_dev@genspark.ai>
+Date: Sat, 15 Nov 2025 10:13:04 +0000
+Subject: [PATCH] feat: Add Legal Library feature with category and document
+ management
+
+This commit adds a comprehensive Legal Library feature to Dossy Pro:
+
+Features:
+- Admin can create/edit/delete categories for legal documents
+- Admin can upload/edit/delete PDF documents (max 20MB)
+- Users can search legal documents by title or description
+- Users can browse documents by category
+- Users can view PDF preview in browser
+- Users can download documents
+- Download counter for statistics
+
+Technical Details:
+- Added LegalCategory and LegalDocument models
+- Added LegalLibraryController for admin operations
+- Added UserLegalLibraryController for user access
+- Created migrations for categories and documents tables
+- Added permissions: 'manage legal library' and 'view legal library'
+- Files stored in storage/app/public/legal_documents/
+- Full CRUD operations with proper authorization
+- Responsive UI following existing design patterns
+
+Documentation:
+- Complete feature documentation in LEGAL_LIBRARY_FEATURE.md
+- Installation and usage instructions included
+---
+ LEGAL_LIBRARY_FEATURE.md                      | 230 +++++++++++++
+ .../Controllers/LegalLibraryController.php    | 316 ++++++++++++++++++
+ .../UserLegalLibraryController.php            | 113 +++++++
+ app/Models/LegalCategory.php                  |  63 ++++
+ app/Models/LegalDocument.php                  |  89 +++++
+ ...5_000001_create_legal_categories_table.php |  31 ++
+ ...15_000002_create_legal_documents_table.php |  35 ++
+ ...5_000003_add_legal_library_permissions.php |  65 ++++
+ .../legal-library/create-category.blade.php   |  46 +++
+ .../legal-library/create-document.blade.php   |  52 +++
+ .../views/legal-library/documents.blade.php   | 104 ++++++
+ .../legal-library/edit-category.blade.php     |  46 +++
+ .../legal-library/edit-document.blade.php     |  58 ++++
+ resources/views/legal-library/index.blade.php |  90 +++++
+ .../user-legal-library/category.blade.php     |  85 +++++
+ .../views/user-legal-library/index.blade.php  | 159 +++++++++
+ .../views/user-legal-library/view.blade.php   |  96 ++++++
+ routes/web.php                                |  31 +-
+ 18 files changed, 1708 insertions(+), 1 deletion(-)
+ create mode 100644 LEGAL_LIBRARY_FEATURE.md
+ create mode 100644 app/Http/Controllers/LegalLibraryController.php
+ create mode 100644 app/Http/Controllers/UserLegalLibraryController.php
+ create mode 100644 app/Models/LegalCategory.php
+ create mode 100644 app/Models/LegalDocument.php
+ create mode 100644 database/migrations/2024_11_15_000001_create_legal_categories_table.php
+ create mode 100644 database/migrations/2024_11_15_000002_create_legal_documents_table.php
+ create mode 100644 database/migrations/2024_11_15_000003_add_legal_library_permissions.php
+ create mode 100644 resources/views/legal-library/create-category.blade.php
+ create mode 100644 resources/views/legal-library/create-document.blade.php
+ create mode 100644 resources/views/legal-library/documents.blade.php
+ create mode 100644 resources/views/legal-library/edit-category.blade.php
+ create mode 100644 resources/views/legal-library/edit-document.blade.php
+ create mode 100644 resources/views/legal-library/index.blade.php
+ create mode 100644 resources/views/user-legal-library/category.blade.php
+ create mode 100644 resources/views/user-legal-library/index.blade.php
+ create mode 100644 resources/views/user-legal-library/view.blade.php
+
+diff --git a/LEGAL_LIBRARY_FEATURE.md b/LEGAL_LIBRARY_FEATURE.md
+new file mode 100644
+index 00000000..00d22665
+--- /dev/null
++++ b/LEGAL_LIBRARY_FEATURE.md
+@@ -0,0 +1,230 @@
++# 📚 Bibliothèque Juridique - Documentation
++
++## Vue d'ensemble
++
++Cette fonctionnalité ajoute une bibliothèque juridique complète à l'application Dossy Pro, permettant aux administrateurs de gérer des documents PDF juridiques organisés par catégories, et aux utilisateurs de les consulter et télécharger.
++
++## 🎯 Fonctionnalités
++
++### Pour les Administrateurs (`manage legal library`)
++
++1. **Gestion des Catégories**
++   - Créer des catégories de documents juridiques
++   - Modifier les catégories existantes
++   - Supprimer des catégories (supprime également tous les documents associés)
++   - Voir le nombre de documents par catégorie
++
++2. **Gestion des Documents**
++   - Uploader des fichiers PDF (max 20MB)
++   - Ajouter titre et description aux documents
++   - Modifier les informations des documents
++   - Remplacer les fichiers PDF
++   - Supprimer des documents
++   - Voir les statistiques de téléchargement
++
++### Pour les Utilisateurs (`view legal library`)
++
++1. **Recherche de Documents**
++   - Recherche par titre ou description
++   - Résultats affichés avec toutes les informations pertinentes
++
++2. **Navigation par Catégorie**
++   - Vue en grille des catégories disponibles
++   - Nombre de documents par catégorie
++   - Accès aux documents d'une catégorie
++
++3. **Consultation de Documents**
++   - Prévisualisation PDF intégrée dans le navigateur
++   - Téléchargement de fichiers
++   - Statistiques de téléchargement
++
++## 📁 Structure des Fichiers
++
++### Migrations
++- `database/migrations/2024_11_15_000001_create_legal_categories_table.php`
++- `database/migrations/2024_11_15_000002_create_legal_documents_table.php`
++- `database/migrations/2024_11_15_000003_add_legal_library_permissions.php`
++
++### Modèles
++- `app/Models/LegalCategory.php` - Gestion des catégories
++- `app/Models/LegalDocument.php` - Gestion des documents
++
++### Contrôleurs
++- `app/Http/Controllers/LegalLibraryController.php` - Administration
++- `app/Http/Controllers/UserLegalLibraryController.php` - Accès utilisateur
++
++### Vues Administration
++- `resources/views/legal-library/index.blade.php` - Liste des catégories
++- `resources/views/legal-library/create-category.blade.php` - Créer catégorie
++- `resources/views/legal-library/edit-category.blade.php` - Modifier catégorie
++- `resources/views/legal-library/documents.blade.php` - Liste des documents
++- `resources/views/legal-library/create-document.blade.php` - Upload document
++- `resources/views/legal-library/edit-document.blade.php` - Modifier document
++
++### Vues Utilisateur
++- `resources/views/user-legal-library/index.blade.php` - Page d'accueil avec recherche
++- `resources/views/user-legal-library/category.blade.php` - Documents d'une catégorie
++- `resources/views/user-legal-library/view.blade.php` - Prévisualisation PDF
++
++## 🔗 Routes
++
++### Routes Administration
++```
++GET     /legal-library                                    - Liste des catégories
++GET     /legal-library/category/create                    - Formulaire création catégorie
++POST    /legal-library/category/store                     - Enregistrer catégorie
++GET     /legal-library/category/{id}/edit                 - Formulaire édition catégorie
++PUT     /legal-library/category/{id}                      - Mettre à jour catégorie
++DELETE  /legal-library/category/{id}                      - Supprimer catégorie
++GET     /legal-library/category/{categoryId}/documents    - Liste des documents
++GET     /legal-library/category/{categoryId}/document/create - Formulaire upload
++POST    /legal-library/category/{categoryId}/document/store - Upload document
++GET     /legal-library/document/{id}/edit                 - Formulaire édition document
++PUT     /legal-library/document/{id}                      - Mettre à jour document
++DELETE  /legal-library/document/{id}                      - Supprimer document
++GET     /legal-library/document/{id}/download             - Télécharger document
++```
++
++### Routes Utilisateur
++```
++GET     /library                            - Page d'accueil et recherche
++GET     /library/category/{categoryId}      - Documents d'une catégorie
++GET     /library/document/{id}/view         - Prévisualiser document
++GET     /library/document/{id}/download     - Télécharger document
++```
++
++## 🔐 Permissions
++
++### `manage legal library`
++- Accordée aux administrateurs (role: `company`)
++- Permet la gestion complète des catégories et documents
++
++### `view legal library`
++- Accordée aux utilisateurs (roles: `advocate`, `client`, `co advocate`, `team leader`)
++- Permet de consulter et télécharger les documents
++
++## 💾 Base de Données
++
++### Table `legal_categories`
++| Colonne      | Type    | Description                    |
++|--------------|---------|--------------------------------|
++| id           | bigint  | Clé primaire                   |
++| name         | string  | Nom de la catégorie            |
++| description  | text    | Description (nullable)         |
++| slug         | string  | Slug unique (auto-généré)      |
++| created_by   | int     | ID du créateur                 |
++| created_at   | timestamp | Date de création             |
++| updated_at   | timestamp | Date de mise à jour          |
++
++### Table `legal_documents`
++| Colonne          | Type    | Description                    |
++|------------------|---------|--------------------------------|
++| id               | bigint  | Clé primaire                   |
++| category_id      | bigint  | FK vers legal_categories       |
++| title            | string  | Titre du document              |
++| description      | text    | Description (nullable)         |
++| file_path        | string  | Chemin du fichier              |
++| file_name        | string  | Nom original du fichier        |
++| file_size        | bigint  | Taille en bytes                |
++| downloads_count  | int     | Nombre de téléchargements      |
++| created_by       | int     | ID du créateur                 |
++| created_at       | timestamp | Date de création             |
++| updated_at       | timestamp | Date de mise à jour          |
++
++## 📦 Stockage
++
++Les fichiers PDF sont stockés dans :
++```
++storage/app/public/legal_documents/
++```
++
++Assurez-vous que le lien symbolique est créé :
++```bash
++php artisan storage:link
++```
++
++## 🚀 Installation
++
++### 1. Exécuter les migrations
++```bash
++php artisan migrate
++```
++
++### 2. Créer le lien symbolique (si ce n'est pas déjà fait)
++```bash
++php artisan storage:link
++```
++
++### 3. Configurer les permissions
++Les permissions sont automatiquement créées lors de la migration. Vous pouvez les ajuster manuellement depuis l'interface d'administration des rôles et permissions.
++
++## 📝 Utilisation
++
++### Pour l'administrateur
++
++1. **Accéder à la bibliothèque**
++   - Cliquer sur "Legal Library" dans le menu principal
++
++2. **Créer une catégorie**
++   - Cliquer sur "Create Category"
++   - Remplir le nom et la description
++   - Enregistrer
++
++3. **Ajouter des documents**
++   - Cliquer sur une catégorie
++   - Cliquer sur "Upload Document"
++   - Remplir les informations et sélectionner le PDF
++   - Upload
++
++### Pour l'utilisateur
++
++1. **Rechercher un document**
++   - Accéder à "Library" dans le menu
++   - Utiliser la barre de recherche
++   - Cliquer sur "View" ou "Download"
++
++2. **Parcourir par catégorie**
++   - Accéder à "Library"
++   - Cliquer sur une catégorie
++   - Consulter les documents disponibles
++
++## ⚠️ Limitations
++
++- Taille maximale des fichiers : **20MB**
++- Format accepté : **PDF uniquement**
++- La suppression d'une catégorie supprime tous ses documents
++
++## 🔧 Personnalisation
++
++### Modifier la taille maximale des fichiers
++
++Dans `app/Http/Controllers/LegalLibraryController.php`, ligne 185 :
++```php
++'file' => 'required|file|mimes:pdf|max:20480', // 20MB max
++```
++
++### Ajouter d'autres formats de fichiers
++
++Modifier la validation dans le même fichier :
++```php
++'file' => 'required|file|mimes:pdf,doc,docx|max:20480',
++```
++
++## 🐛 Dépannage
++
++### Les fichiers ne s'affichent pas
++- Vérifier que `php artisan storage:link` a été exécuté
++- Vérifier les permissions du dossier `storage/app/public/`
++
++### Erreur d'upload
++- Vérifier la taille maximale dans `php.ini` :
++  - `upload_max_filesize`
++  - `post_max_size`
++
++### Permissions manquantes
++- Vérifier que les migrations ont été exécutées
++- Assigner manuellement les permissions aux rôles
++
++## 📞 Support
++
++Pour toute question ou problème, veuillez créer une issue dans le repository GitHub.
+diff --git a/app/Http/Controllers/LegalLibraryController.php b/app/Http/Controllers/LegalLibraryController.php
+new file mode 100644
+index 00000000..fcf8b7c5
+--- /dev/null
++++ b/app/Http/Controllers/LegalLibraryController.php
+@@ -0,0 +1,316 @@
++<?php
++
++namespace App\Http\Controllers;
++
++use App\Models\LegalCategory;
++use App\Models\LegalDocument;
++use Illuminate\Http\Request;
++use Illuminate\Support\Facades\Auth;
++use Illuminate\Support\Facades\Storage;
++use Illuminate\Support\Facades\Validator as FacadesValidator;
++
++class LegalLibraryController extends Controller
++{
++    /**
++     * Display a listing of categories
++     */
++    public function index()
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $categories = LegalCategory::where('created_by', Auth::user()->creatorId())
++                ->withCount('documents')
++                ->get();
++            return view('legal-library.index', compact('categories'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Show the form for creating a new category
++     */
++    public function createCategory()
++    {
++        if (Auth::user()->can('manage legal library')) {
++            return view('legal-library.create-category');
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Store a newly created category
++     */
++    public function storeCategory(Request $request)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $validator = FacadesValidator::make(
++                $request->all(),
++                [
++                    'name' => 'required|max:255',
++                    'description' => 'nullable',
++                ]
++            );
++
++            if ($validator->fails()) {
++                $messages = $validator->getMessageBag();
++                return redirect()->back()->with('error', $messages->first());
++            }
++
++            LegalCategory::create([
++                'name' => $request->name,
++                'description' => $request->description,
++                'created_by' => Auth::user()->creatorId(),
++            ]);
++
++            return redirect()->route('legal-library.index')->with('success', __('Category successfully created.'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Show the form for editing a category
++     */
++    public function editCategory($id)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $category = LegalCategory::find($id);
++            if (!$category) {
++                return redirect()->back()->with('error', __('Category not found.'));
++            }
++            return view('legal-library.edit-category', compact('category'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Update a category
++     */
++    public function updateCategory(Request $request, $id)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $category = LegalCategory::find($id);
++            if (!$category) {
++                return redirect()->back()->with('error', __('Category not found.'));
++            }
++
++            $validator = FacadesValidator::make(
++                $request->all(),
++                [
++                    'name' => 'required|max:255',
++                    'description' => 'nullable',
++                ]
++            );
++
++            if ($validator->fails()) {
++                $messages = $validator->getMessageBag();
++                return redirect()->back()->with('error', $messages->first());
++            }
++
++            $category->update([
++                'name' => $request->name,
++                'description' => $request->description,
++            ]);
++
++            return redirect()->route('legal-library.index')->with('success', __('Category successfully updated.'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Delete a category
++     */
++    public function destroyCategory($id)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $category = LegalCategory::find($id);
++            if ($category) {
++                $category->delete();
++                return redirect()->route('legal-library.index')->with('success', __('Category successfully deleted.'));
++            }
++            return redirect()->back()->with('error', __('Category not found.'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Display documents for a category
++     */
++    public function showDocuments($categoryId)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $category = LegalCategory::find($categoryId);
++            if (!$category) {
++                return redirect()->back()->with('error', __('Category not found.'));
++            }
++
++            $documents = LegalDocument::where('category_id', $categoryId)
++                ->where('created_by', Auth::user()->creatorId())
++                ->get();
++
++            return view('legal-library.documents', compact('category', 'documents'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Show the form for creating a new document
++     */
++    public function createDocument($categoryId)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $category = LegalCategory::find($categoryId);
++            if (!$category) {
++                return redirect()->back()->with('error', __('Category not found.'));
++            }
++            return view('legal-library.create-document', compact('category'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Store a newly created document
++     */
++    public function storeDocument(Request $request, $categoryId)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $category = LegalCategory::find($categoryId);
++            if (!$category) {
++                return redirect()->back()->with('error', __('Category not found.'));
++            }
++
++            $validator = FacadesValidator::make(
++                $request->all(),
++                [
++                    'title' => 'required|max:255',
++                    'description' => 'nullable',
++                    'file' => 'required|file|mimes:pdf|max:20480', // 20MB max
++                ]
++            );
++
++            if ($validator->fails()) {
++                $messages = $validator->getMessageBag();
++                return redirect()->back()->with('error', $messages->first());
++            }
++
++            if ($request->hasFile('file')) {
++                $file = $request->file('file');
++                $fileName = time() . '_' . $file->getClientOriginalName();
++                $filePath = $file->storeAs('legal_documents', $fileName, 'public');
++
++                LegalDocument::create([
++                    'category_id' => $categoryId,
++                    'title' => $request->title,
++                    'description' => $request->description,
++                    'file_path' => $filePath,
++                    'file_name' => $file->getClientOriginalName(),
++                    'file_size' => $file->getSize(),
++                    'created_by' => Auth::user()->creatorId(),
++                ]);
++
++                return redirect()->route('legal-library.documents', $categoryId)
++                    ->with('success', __('Document successfully uploaded.'));
++            }
++
++            return redirect()->back()->with('error', __('File upload failed.'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Show the form for editing a document
++     */
++    public function editDocument($id)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $document = LegalDocument::with('category')->find($id);
++            if (!$document) {
++                return redirect()->back()->with('error', __('Document not found.'));
++            }
++            return view('legal-library.edit-document', compact('document'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Update a document
++     */
++    public function updateDocument(Request $request, $id)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $document = LegalDocument::find($id);
++            if (!$document) {
++                return redirect()->back()->with('error', __('Document not found.'));
++            }
++
++            $validator = FacadesValidator::make(
++                $request->all(),
++                [
++                    'title' => 'required|max:255',
++                    'description' => 'nullable',
++                    'file' => 'nullable|file|mimes:pdf|max:20480',
++                ]
++            );
++
++            if ($validator->fails()) {
++                $messages = $validator->getMessageBag();
++                return redirect()->back()->with('error', $messages->first());
++            }
++
++            $updateData = [
++                'title' => $request->title,
++                'description' => $request->description,
++            ];
++
++            // If a new file is uploaded
++            if ($request->hasFile('file')) {
++                // Delete old file
++                if (Storage::disk('public')->exists($document->file_path)) {
++                    Storage::disk('public')->delete($document->file_path);
++                }
++
++                $file = $request->file('file');
++                $fileName = time() . '_' . $file->getClientOriginalName();
++                $filePath = $file->storeAs('legal_documents', $fileName, 'public');
++
++                $updateData['file_path'] = $filePath;
++                $updateData['file_name'] = $file->getClientOriginalName();
++                $updateData['file_size'] = $file->getSize();
++            }
++
++            $document->update($updateData);
++
++            return redirect()->route('legal-library.documents', $document->category_id)
++                ->with('success', __('Document successfully updated.'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Delete a document
++     */
++    public function destroyDocument($id)
++    {
++        if (Auth::user()->can('manage legal library')) {
++            $document = LegalDocument::find($id);
++            if ($document) {
++                $categoryId = $document->category_id;
++                $document->delete();
++                return redirect()->route('legal-library.documents', $categoryId)
++                    ->with('success', __('Document successfully deleted.'));
++            }
++            return redirect()->back()->with('error', __('Document not found.'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++}
+diff --git a/app/Http/Controllers/UserLegalLibraryController.php b/app/Http/Controllers/UserLegalLibraryController.php
+new file mode 100644
+index 00000000..1478b581
+--- /dev/null
++++ b/app/Http/Controllers/UserLegalLibraryController.php
+@@ -0,0 +1,113 @@
++<?php
++
++namespace App\Http\Controllers;
++
++use App\Models\LegalCategory;
++use App\Models\LegalDocument;
++use Illuminate\Http\Request;
++use Illuminate\Support\Facades\Auth;
++use Illuminate\Support\Facades\Storage;
++
++class UserLegalLibraryController extends Controller
++{
++    /**
++     * Display the legal library for users
++     */
++    public function index(Request $request)
++    {
++        if (Auth::user()->can('view legal library')) {
++            $search = $request->get('search');
++            
++            // Get all categories with document count
++            $categories = LegalCategory::where('created_by', Auth::user()->creatorId())
++                ->withCount('documents')
++                ->get();
++
++            // If there's a search query, get matching documents
++            $documents = null;
++            if ($search) {
++                $documents = LegalDocument::where('created_by', Auth::user()->creatorId())
++                    ->where(function($query) use ($search) {
++                        $query->where('title', 'like', '%' . $search . '%')
++                              ->orWhere('description', 'like', '%' . $search . '%');
++                    })
++                    ->with('category')
++                    ->get();
++            }
++
++            return view('user-legal-library.index', compact('categories', 'documents', 'search'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Display documents in a specific category
++     */
++    public function showCategory($categoryId)
++    {
++        if (Auth::user()->can('view legal library')) {
++            $category = LegalCategory::find($categoryId);
++            
++            if (!$category) {
++                return redirect()->back()->with('error', __('Category not found.'));
++            }
++
++            $documents = LegalDocument::where('category_id', $categoryId)
++                ->where('created_by', Auth::user()->creatorId())
++                ->get();
++
++            return view('user-legal-library.category', compact('category', 'documents'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * View a document (preview)
++     */
++    public function viewDocument($id)
++    {
++        if (Auth::user()->can('view legal library')) {
++            $document = LegalDocument::with('category')->find($id);
++            
++            if (!$document) {
++                return redirect()->back()->with('error', __('Document not found.'));
++            }
++
++            // Increment view/download count
++            $document->incrementDownloads();
++
++            return view('user-legal-library.view', compact('document'));
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++
++    /**
++     * Download a document
++     */
++    public function downloadDocument($id)
++    {
++        if (Auth::user()->can('view legal library')) {
++            $document = LegalDocument::find($id);
++            
++            if (!$document) {
++                return redirect()->back()->with('error', __('Document not found.'));
++            }
++
++            $filePath = storage_path('app/public/' . $document->file_path);
++            
++            if (!file_exists($filePath)) {
++                return redirect()->back()->with('error', __('File not found.'));
++            }
++
++            // Increment download count
++            $document->incrementDownloads();
++
++            return response()->download($filePath, $document->file_name);
++        } else {
++            return redirect()->back()->with('error', __('Permission Denied.'));
++        }
++    }
++}
+diff --git a/app/Models/LegalCategory.php b/app/Models/LegalCategory.php
+new file mode 100644
+index 00000000..42b14060
+--- /dev/null
++++ b/app/Models/LegalCategory.php
+@@ -0,0 +1,63 @@
++<?php
++
++namespace App\Models;
++
++use Illuminate\Database\Eloquent\Factories\HasFactory;
++use Illuminate\Database\Eloquent\Model;
++use Illuminate\Support\Str;
++
++class LegalCategory extends Model
++{
++    use HasFactory;
++
++    protected $fillable = [
++        'name',
++        'description',
++        'slug',
++        'created_by',
++    ];
++
++    /**
++     * Automatically generate slug from name
++     */
++    protected static function boot()
++    {
++        parent::boot();
++
++        static::creating(function ($category) {
++            if (empty($category->slug)) {
++                $category->slug = Str::slug($category->name);
++            }
++        });
++
++        static::updating(function ($category) {
++            if ($category->isDirty('name')) {
++                $category->slug = Str::slug($category->name);
++            }
++        });
++    }
++
++    /**
++     * Get all documents for this category
++     */
++    public function documents()
++    {
++        return $this->hasMany(LegalDocument::class, 'category_id');
++    }
++
++    /**
++     * Get the creator of this category
++     */
++    public function creator()
++    {
++        return $this->belongsTo(User::class, 'created_by');
++    }
++
++    /**
++     * Get document count for this category
++     */
++    public function getDocumentCountAttribute()
++    {
++        return $this->documents()->count();
++    }
++}
+diff --git a/app/Models/LegalDocument.php b/app/Models/LegalDocument.php
+new file mode 100644
+index 00000000..44d3b7d2
+--- /dev/null
++++ b/app/Models/LegalDocument.php
+@@ -0,0 +1,89 @@
++<?php
++
++namespace App\Models;
++
++use Illuminate\Database\Eloquent\Factories\HasFactory;
++use Illuminate\Database\Eloquent\Model;
++use Illuminate\Support\Facades\Storage;
++
++class LegalDocument extends Model
++{
++    use HasFactory;
++
++    protected $fillable = [
++        'category_id',
++        'title',
++        'description',
++        'file_path',
++        'file_name',
++        'file_size',
++        'downloads_count',
++        'created_by',
++    ];
++
++    protected $casts = [
++        'file_size' => 'integer',
++        'downloads_count' => 'integer',
++    ];
++
++    /**
++     * Get the category this document belongs to
++     */
++    public function category()
++    {
++        return $this->belongsTo(LegalCategory::class, 'category_id');
++    }
++
++    /**
++     * Get the creator of this document
++     */
++    public function creator()
++    {
++        return $this->belongsTo(User::class, 'created_by');
++    }
++
++    /**
++     * Get formatted file size
++     */
++    public function getFormattedFileSizeAttribute()
++    {
++        $bytes = $this->file_size;
++        $units = ['B', 'KB', 'MB', 'GB'];
++        
++        for ($i = 0; $bytes > 1024; $i++) {
++            $bytes /= 1024;
++        }
++        
++        return round($bytes, 2) . ' ' . $units[$i];
++    }
++
++    /**
++     * Increment download count
++     */
++    public function incrementDownloads()
++    {
++        $this->increment('downloads_count');
++    }
++
++    /**
++     * Get full file URL
++     */
++    public function getFileUrlAttribute()
++    {
++        return Storage::url($this->file_path);
++    }
++
++    /**
++     * Delete file when document is deleted
++     */
++    protected static function boot()
++    {
++        parent::boot();
++
++        static::deleting(function ($document) {
++            if (Storage::exists($document->file_path)) {
++                Storage::delete($document->file_path);
++            }
++        });
++    }
++}
+diff --git a/database/migrations/2024_11_15_000001_create_legal_categories_table.php b/database/migrations/2024_11_15_000001_create_legal_categories_table.php
+new file mode 100644
+index 00000000..35afdd5b
+--- /dev/null
++++ b/database/migrations/2024_11_15_000001_create_legal_categories_table.php
+@@ -0,0 +1,31 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    /**
++     * Run the migrations.
++     */
++    public function up(): void
++    {
++        Schema::create('legal_categories', function (Blueprint $table) {
++            $table->id();
++            $table->string('name');
++            $table->text('description')->nullable();
++            $table->string('slug')->unique();
++            $table->integer('created_by')->default(0);
++            $table->timestamps();
++        });
++    }
++
++    /**
++     * Reverse the migrations.
++     */
++    public function down(): void
++    {
++        Schema::dropIfExists('legal_categories');
++    }
++};
+diff --git a/database/migrations/2024_11_15_000002_create_legal_documents_table.php b/database/migrations/2024_11_15_000002_create_legal_documents_table.php
+new file mode 100644
+index 00000000..ead90bba
+--- /dev/null
++++ b/database/migrations/2024_11_15_000002_create_legal_documents_table.php
+@@ -0,0 +1,35 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    /**
++     * Run the migrations.
++     */
++    public function up(): void
++    {
++        Schema::create('legal_documents', function (Blueprint $table) {
++            $table->id();
++            $table->foreignId('category_id')->constrained('legal_categories')->onDelete('cascade');
++            $table->string('title');
++            $table->text('description')->nullable();
++            $table->string('file_path');
++            $table->string('file_name');
++            $table->bigInteger('file_size')->default(0); // en bytes
++            $table->integer('downloads_count')->default(0);
++            $table->integer('created_by')->default(0);
++            $table->timestamps();
++        });
++    }
++
++    /**
++     * Reverse the migrations.
++     */
++    public function down(): void
++    {
++        Schema::dropIfExists('legal_documents');
++    }
++};
+diff --git a/database/migrations/2024_11_15_000003_add_legal_library_permissions.php b/database/migrations/2024_11_15_000003_add_legal_library_permissions.php
+new file mode 100644
+index 00000000..dcda8753
+--- /dev/null
++++ b/database/migrations/2024_11_15_000003_add_legal_library_permissions.php
+@@ -0,0 +1,65 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++use Spatie\Permission\Models\Permission;
++use Spatie\Permission\Models\Role;
++
++return new class extends Migration
++{
++    /**
++     * Run the migrations.
++     */
++    public function up(): void
++    {
++        // Create permissions for legal library
++        $permissions = [
++            'manage legal library',
++            'view legal library',
++        ];
++
++        foreach ($permissions as $permission) {
++            Permission::create(['name' => $permission]);
++        }
++
++        // Assign permissions to roles if they exist
++        try {
++            // Admin should have all permissions
++            $adminRole = Role::where('name', 'company')->first();
++            if ($adminRole) {
++                $adminRole->givePermissionTo($permissions);
++            }
++
++            // Users/Clients should only view
++            $userRoles = ['advocate', 'client', 'co advocate', 'team leader'];
++            foreach ($userRoles as $roleName) {
++                $role = Role::where('name', $roleName)->first();
++                if ($role) {
++                    $role->givePermissionTo('view legal library');
++                }
++            }
++        } catch (\Exception $e) {
++            // Roles might not exist yet, skip
++        }
++    }
++
++    /**
++     * Reverse the migrations.
++     */
++    public function down(): void
++    {
++        // Remove permissions
++        $permissions = [
++            'manage legal library',
++            'view legal library',
++        ];
++
++        foreach ($permissions as $permission) {
++            $perm = Permission::where('name', $permission)->first();
++            if ($perm) {
++                $perm->delete();
++            }
++        }
++    }
++};
+diff --git a/resources/views/legal-library/create-category.blade.php b/resources/views/legal-library/create-category.blade.php
+new file mode 100644
+index 00000000..08a9b4ae
+--- /dev/null
++++ b/resources/views/legal-library/create-category.blade.php
+@@ -0,0 +1,46 @@
++@extends('layouts.app')
++
++@section('page-title', __('Create Legal Category'))
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item">{{ __('Create Category') }}</li>
++@endsection
++
++@section('content')
++    <div class="row">
++        <div class="col-md-12">
++            <div class="card">
++                <div class="card-header">
++                    <h5>{{ __('Create New Category') }}</h5>
++                </div>
++                {{ Form::open(['route' => 'legal-library.category.store', 'method' => 'post', 'class' => 'needs-validation', 'novalidate']) }}
++                <div class="card-body">
++                    <div class="row">
++                        <div class="form-group col-md-12">
++                            {!! Form::label('name', __('Category Name'), ['class' => 'form-label']) !!}<span class="text-danger">*</span>
++                            {!! Form::text('name', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Category Name'),
++                                'required' => 'required',
++                            ]) !!}
++                        </div>
++                        <div class="form-group col-md-12">
++                            {!! Form::label('description', __('Description'), ['class' => 'form-label']) !!}
++                            {!! Form::textarea('description', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Description'),
++                                'rows' => '4',
++                            ]) !!}
++                        </div>
++                    </div>
++                </div>
++                <div class="card-footer">
++                    <a href="{{ route('legal-library.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
++                    <button type="submit" class="btn btn-primary">{{ __('Create Category') }}</button>
++                </div>
++                {{ Form::close() }}
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/legal-library/create-document.blade.php b/resources/views/legal-library/create-document.blade.php
+new file mode 100644
+index 00000000..12324aa1
+--- /dev/null
++++ b/resources/views/legal-library/create-document.blade.php
+@@ -0,0 +1,52 @@
++@extends('layouts.app')
++
++@section('page-title', __('Upload Legal Document'))
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.documents', $category->id) }}">{{ $category->name }}</a></li>
++    <li class="breadcrumb-item">{{ __('Upload Document') }}</li>
++@endsection
++
++@section('content')
++    <div class="row">
++        <div class="col-md-12">
++            <div class="card">
++                <div class="card-header">
++                    <h5>{{ __('Upload New Document to') }}: {{ $category->name }}</h5>
++                </div>
++                {{ Form::open(['route' => ['legal-library.document.store', $category->id], 'method' => 'post', 'enctype' => 'multipart/form-data', 'class' => 'needs-validation', 'novalidate']) }}
++                <div class="card-body">
++                    <div class="row">
++                        <div class="form-group col-md-12">
++                            {!! Form::label('title', __('Document Title'), ['class' => 'form-label']) !!}<span class="text-danger">*</span>
++                            {!! Form::text('title', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Document Title'),
++                                'required' => 'required',
++                            ]) !!}
++                        </div>
++                        <div class="form-group col-md-12">
++                            {!! Form::label('description', __('Description'), ['class' => 'form-label']) !!}
++                            {!! Form::textarea('description', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Document Description'),
++                                'rows' => '4',
++                            ]) !!}
++                        </div>
++                        <div class="form-group col-md-12">
++                            {!! Form::label('file', __('PDF File'), ['class' => 'form-label']) !!}<span class="text-danger">*</span>
++                            <input type="file" name="file" class="form-control" accept=".pdf" required>
++                            <small class="form-text text-muted">{{ __('Maximum file size: 20MB. Only PDF files are allowed.') }}</small>
++                        </div>
++                    </div>
++                </div>
++                <div class="card-footer">
++                    <a href="{{ route('legal-library.documents', $category->id) }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
++                    <button type="submit" class="btn btn-primary">{{ __('Upload Document') }}</button>
++                </div>
++                {{ Form::close() }}
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/legal-library/documents.blade.php b/resources/views/legal-library/documents.blade.php
+new file mode 100644
+index 00000000..dc6eacc5
+--- /dev/null
++++ b/resources/views/legal-library/documents.blade.php
+@@ -0,0 +1,104 @@
++@extends('layouts.app')
++
++@section('page-title', __('Legal Documents'))
++
++@section('action-button')
++    @can('manage legal library')
++        <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
++            <a href="{{ route('legal-library.document.create', $category->id) }}" class="btn btn-sm btn-primary mx-1">
++                <i class="ti ti-plus"></i> {{ __('Upload Document') }}
++            </a>
++            <a href="{{ route('legal-library.index') }}" class="btn btn-sm btn-secondary mx-1">
++                <i class="ti ti-arrow-left"></i> {{ __('Back to Categories') }}
++            </a>
++        </div>
++    @endcan
++@endsection
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item">{{ $category->name }}</li>
++@endsection
++
++@section('content')
++    <div class="row p-0">
++        <div class="col-xl-12">
++            <div class="card shadow-none">
++                <div class="card-header">
++                    <h5>{{ __('Documents in') }}: {{ $category->name }}</h5>
++                    @if($category->description)
++                        <p class="text-muted">{{ $category->description }}</p>
++                    @endif
++                </div>
++                <div class="card-body table-border-style">
++                    <div class="table-responsive">
++                        <table class="table dataTable data-table">
++                            <thead>
++                                <tr>
++                                    <th>{{ __('Title') }}</th>
++                                    <th>{{ __('Description') }}</th>
++                                    <th>{{ __('File Size') }}</th>
++                                    <th>{{ __('Downloads') }}</th>
++                                    <th>{{ __('Uploaded') }}</th>
++                                    <th width="200px">{{ __('Action') }}</th>
++                                </tr>
++                            </thead>
++                            <tbody>
++                                @forelse ($documents as $document)
++                                    <tr>
++                                        <td>
++                                            <strong>{{ $document->title }}</strong>
++                                        </td>
++                                        <td>{{ Str::limit($document->description ?? '-', 50) }}</td>
++                                        <td>{{ $document->formatted_file_size }}</td>
++                                        <td>
++                                            <span class="badge bg-info">{{ $document->downloads_count }}</span>
++                                        </td>
++                                        <td>{{ $document->created_at->format('d M Y') }}</td>
++                                        <td>
++                                            @can('manage legal library')
++                                                <div class="d-flex">
++                                                    <a href="{{ route('legal-library.document.download', $document->id) }}" 
++                                                       class="btn btn-sm btn-primary me-2" 
++                                                       title="{{ __('Download') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-download"></i>
++                                                    </a>
++                                                    <a href="{{ route('legal-library.document.edit', $document->id) }}" 
++                                                       class="btn btn-sm btn-info me-2"
++                                                       title="{{ __('Edit') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-pencil"></i>
++                                                    </a>
++                                                    <a href="#"
++                                                       class="btn btn-sm btn-danger bs-pass-para"
++                                                       data-confirm="{{ __('Are You Sure?') }}"
++                                                       data-text="{{ __('This action cannot be undone. Do you want to continue?') }}"
++                                                       data-confirm-yes="delete-form-{{ $document->id }}"
++                                                       title="{{ __('Delete') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-trash"></i>
++                                                    </a>
++                                                    {!! Form::open([
++                                                        'method' => 'DELETE',
++                                                        'route' => ['legal-library.document.destroy', $document->id],
++                                                        'id' => 'delete-form-' . $document->id,
++                                                    ]) !!}
++                                                    {!! Form::close() !!}
++                                                </div>
++                                            @endcan
++                                        </td>
++                                    </tr>
++                                @empty
++                                    <tr>
++                                        <td colspan="6" class="text-center">{{ __('No documents uploaded yet.') }}</td>
++                                    </tr>
++                                @endforelse
++                            </tbody>
++                        </table>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/legal-library/edit-category.blade.php b/resources/views/legal-library/edit-category.blade.php
+new file mode 100644
+index 00000000..4c98774e
+--- /dev/null
++++ b/resources/views/legal-library/edit-category.blade.php
+@@ -0,0 +1,46 @@
++@extends('layouts.app')
++
++@section('page-title', __('Edit Legal Category'))
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item">{{ __('Edit Category') }}</li>
++@endsection
++
++@section('content')
++    <div class="row">
++        <div class="col-md-12">
++            <div class="card">
++                <div class="card-header">
++                    <h5>{{ __('Edit Category') }}: {{ $category->name }}</h5>
++                </div>
++                {{ Form::model($category, ['route' => ['legal-library.category.update', $category->id], 'method' => 'PUT', 'class' => 'needs-validation', 'novalidate']) }}
++                <div class="card-body">
++                    <div class="row">
++                        <div class="form-group col-md-12">
++                            {!! Form::label('name', __('Category Name'), ['class' => 'form-label']) !!}<span class="text-danger">*</span>
++                            {!! Form::text('name', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Category Name'),
++                                'required' => 'required',
++                            ]) !!}
++                        </div>
++                        <div class="form-group col-md-12">
++                            {!! Form::label('description', __('Description'), ['class' => 'form-label']) !!}
++                            {!! Form::textarea('description', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Description'),
++                                'rows' => '4',
++                            ]) !!}
++                        </div>
++                    </div>
++                </div>
++                <div class="card-footer">
++                    <a href="{{ route('legal-library.index') }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
++                    <button type="submit" class="btn btn-primary">{{ __('Update Category') }}</button>
++                </div>
++                {{ Form::close() }}
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/legal-library/edit-document.blade.php b/resources/views/legal-library/edit-document.blade.php
+new file mode 100644
+index 00000000..33566fd9
+--- /dev/null
++++ b/resources/views/legal-library/edit-document.blade.php
+@@ -0,0 +1,58 @@
++@extends('layouts.app')
++
++@section('page-title', __('Edit Legal Document'))
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item"><a href="{{ route('legal-library.documents', $document->category_id) }}">{{ $document->category->name }}</a></li>
++    <li class="breadcrumb-item">{{ __('Edit Document') }}</li>
++@endsection
++
++@section('content')
++    <div class="row">
++        <div class="col-md-12">
++            <div class="card">
++                <div class="card-header">
++                    <h5>{{ __('Edit Document') }}: {{ $document->title }}</h5>
++                </div>
++                {{ Form::model($document, ['route' => ['legal-library.document.update', $document->id], 'method' => 'PUT', 'enctype' => 'multipart/form-data', 'class' => 'needs-validation', 'novalidate']) }}
++                <div class="card-body">
++                    <div class="row">
++                        <div class="form-group col-md-12">
++                            {!! Form::label('title', __('Document Title'), ['class' => 'form-label']) !!}<span class="text-danger">*</span>
++                            {!! Form::text('title', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Document Title'),
++                                'required' => 'required',
++                            ]) !!}
++                        </div>
++                        <div class="form-group col-md-12">
++                            {!! Form::label('description', __('Description'), ['class' => 'form-label']) !!}
++                            {!! Form::textarea('description', null, [
++                                'class' => 'form-control',
++                                'placeholder' => __('Enter Document Description'),
++                                'rows' => '4',
++                            ]) !!}
++                        </div>
++                        <div class="form-group col-md-12">
++                            <div class="alert alert-info">
++                                <i class="ti ti-info-circle"></i>
++                                {{ __('Current file') }}: <strong>{{ $document->file_name }}</strong> ({{ $document->formatted_file_size }})
++                            </div>
++                        </div>
++                        <div class="form-group col-md-12">
++                            {!! Form::label('file', __('Replace PDF File (Optional)'), ['class' => 'form-label']) !!}
++                            <input type="file" name="file" class="form-control" accept=".pdf">
++                            <small class="form-text text-muted">{{ __('Leave empty to keep the current file. Maximum file size: 20MB.') }}</small>
++                        </div>
++                    </div>
++                </div>
++                <div class="card-footer">
++                    <a href="{{ route('legal-library.documents', $document->category_id) }}" class="btn btn-secondary">{{ __('Cancel') }}</a>
++                    <button type="submit" class="btn btn-primary">{{ __('Update Document') }}</button>
++                </div>
++                {{ Form::close() }}
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/legal-library/index.blade.php b/resources/views/legal-library/index.blade.php
+new file mode 100644
+index 00000000..00d12842
+--- /dev/null
++++ b/resources/views/legal-library/index.blade.php
+@@ -0,0 +1,90 @@
++@extends('layouts.app')
++
++@section('page-title', __('Legal Library - Categories'))
++
++@section('action-button')
++    @can('manage legal library')
++        <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
++            <a href="{{ route('legal-library.category.create') }}" class="btn btn-sm btn-primary mx-1">
++                <i class="ti ti-plus"></i> {{ __('Create Category') }}
++            </a>
++        </div>
++    @endcan
++@endsection
++
++@section('breadcrumb')
++    <li class="breadcrumb-item">{{ __('Legal Library') }}</li>
++    <li class="breadcrumb-item">{{ __('Categories') }}</li>
++@endsection
++
++@section('content')
++    <div class="row p-0">
++        <div class="col-xl-12">
++            <div class="card shadow-none">
++                <div class="card-body table-border-style">
++                    <div class="table-responsive">
++                        <table class="table dataTable data-table">
++                            <thead>
++                                <tr>
++                                    <th>{{ __('Category Name') }}</th>
++                                    <th>{{ __('Description') }}</th>
++                                    <th>{{ __('Documents Count') }}</th>
++                                    <th width="200px">{{ __('Action') }}</th>
++                                </tr>
++                            </thead>
++                            <tbody>
++                                @foreach ($categories as $category)
++                                    <tr>
++                                        <td>
++                                            <a href="{{ route('legal-library.documents', $category->id) }}" 
++                                               class="btn btn-sm btn-link">
++                                                <strong>{{ $category->name }}</strong>
++                                            </a>
++                                        </td>
++                                        <td>{{ Str::limit($category->description ?? '-', 50) }}</td>
++                                        <td>
++                                            <span class="badge bg-primary">{{ $category->documents_count }}</span>
++                                        </td>
++                                        <td>
++                                            @can('manage legal library')
++                                                <div class="d-flex">
++                                                    <a href="{{ route('legal-library.documents', $category->id) }}" 
++                                                       class="btn btn-sm btn-success me-2" 
++                                                       title="{{ __('View Documents') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-eye"></i>
++                                                    </a>
++                                                    <a href="{{ route('legal-library.category.edit', $category->id) }}" 
++                                                       class="btn btn-sm btn-info me-2"
++                                                       title="{{ __('Edit Category') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-pencil"></i>
++                                                    </a>
++                                                    <a href="#"
++                                                       class="btn btn-sm btn-danger bs-pass-para"
++                                                       data-confirm="{{ __('Are You Sure?') }}"
++                                                       data-text="{{ __('This will delete the category and all its documents. This action cannot be undone.') }}"
++                                                       data-confirm-yes="delete-form-{{ $category->id }}"
++                                                       title="{{ __('Delete') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-trash"></i>
++                                                    </a>
++                                                    {!! Form::open([
++                                                        'method' => 'DELETE',
++                                                        'route' => ['legal-library.category.destroy', $category->id],
++                                                        'id' => 'delete-form-' . $category->id,
++                                                    ]) !!}
++                                                    {!! Form::close() !!}
++                                                </div>
++                                            @endcan
++                                        </td>
++                                    </tr>
++                                @endforeach
++                            </tbody>
++                        </table>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/user-legal-library/category.blade.php b/resources/views/user-legal-library/category.blade.php
+new file mode 100644
+index 00000000..380fadd1
+--- /dev/null
++++ b/resources/views/user-legal-library/category.blade.php
+@@ -0,0 +1,85 @@
++@extends('layouts.app')
++
++@section('page-title', $category->name)
++
++@section('action-button')
++    <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
++        <a href="{{ route('user.legal-library.index') }}" class="btn btn-sm btn-secondary mx-1">
++            <i class="ti ti-arrow-left"></i> {{ __('Back to Library') }}
++        </a>
++    </div>
++@endsection
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('user.legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item">{{ $category->name }}</li>
++@endsection
++
++@section('content')
++    <div class="row p-0">
++        <div class="col-xl-12">
++            <div class="card shadow-none">
++                <div class="card-header">
++                    <h5>{{ $category->name }}</h5>
++                    @if($category->description)
++                        <p class="text-muted mb-0">{{ $category->description }}</p>
++                    @endif
++                </div>
++                <div class="card-body table-border-style">
++                    @if($documents->count() > 0)
++                        <div class="table-responsive">
++                            <table class="table dataTable data-table">
++                                <thead>
++                                    <tr>
++                                        <th>{{ __('Document Title') }}</th>
++                                        <th>{{ __('Description') }}</th>
++                                        <th>{{ __('File Size') }}</th>
++                                        <th>{{ __('Downloads') }}</th>
++                                        <th>{{ __('Date') }}</th>
++                                        <th width="150px">{{ __('Action') }}</th>
++                                    </tr>
++                                </thead>
++                                <tbody>
++                                    @foreach ($documents as $document)
++                                        <tr>
++                                            <td>
++                                                <i class="ti ti-file-text text-danger"></i>
++                                                <strong>{{ $document->title }}</strong>
++                                            </td>
++                                            <td>{{ Str::limit($document->description ?? '-', 60) }}</td>
++                                            <td>{{ $document->formatted_file_size }}</td>
++                                            <td>
++                                                <span class="badge bg-info">{{ $document->downloads_count }}</span>
++                                            </td>
++                                            <td>{{ $document->created_at->format('d M Y') }}</td>
++                                            <td>
++                                                <div class="d-flex">
++                                                    <a href="{{ route('user.legal-library.view', $document->id) }}" 
++                                                       class="btn btn-sm btn-success me-2" 
++                                                       title="{{ __('View') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-eye"></i>
++                                                    </a>
++                                                    <a href="{{ route('user.legal-library.download', $document->id) }}" 
++                                                       class="btn btn-sm btn-primary" 
++                                                       title="{{ __('Download') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-download"></i>
++                                                    </a>
++                                                </div>
++                                            </td>
++                                        </tr>
++                                    @endforeach
++                                </tbody>
++                            </table>
++                        </div>
++                    @else
++                        <div class="alert alert-info">
++                            <i class="ti ti-info-circle"></i> {{ __('No documents available in this category yet.') }}
++                        </div>
++                    @endif
++                </div>
++            </div>
++        </div>
++    </div>
++@endsection
+diff --git a/resources/views/user-legal-library/index.blade.php b/resources/views/user-legal-library/index.blade.php
+new file mode 100644
+index 00000000..c3d227dc
+--- /dev/null
++++ b/resources/views/user-legal-library/index.blade.php
+@@ -0,0 +1,159 @@
++@extends('layouts.app')
++
++@section('page-title', __('Legal Library'))
++
++@section('breadcrumb')
++    <li class="breadcrumb-item">{{ __('Legal Library') }}</li>
++@endsection
++
++@section('content')
++    <div class="row p-0">
++        <!-- Search Section -->
++        <div class="col-xl-12 mb-4">
++            <div class="card">
++                <div class="card-body">
++                    <form method="GET" action="{{ route('user.legal-library.index') }}">
++                        <div class="row align-items-center">
++                            <div class="col-md-10">
++                                <input type="text" 
++                                       name="search" 
++                                       class="form-control" 
++                                       placeholder="{{ __('Search legal documents by title or description...') }}"
++                                       value="{{ $search ?? '' }}">
++                            </div>
++                            <div class="col-md-2">
++                                <button type="submit" class="btn btn-primary w-100">
++                                    <i class="ti ti-search"></i> {{ __('Search') }}
++                                </button>
++                            </div>
++                        </div>
++                    </form>
++                </div>
++            </div>
++        </div>
++
++        @if($search && $documents)
++            <!-- Search Results -->
++            <div class="col-xl-12">
++                <div class="card">
++                    <div class="card-header">
++                        <h5>{{ __('Search Results for') }}: "{{ $search }}"</h5>
++                        <a href="{{ route('user.legal-library.index') }}" class="btn btn-sm btn-secondary">
++                            {{ __('Clear Search') }}
++                        </a>
++                    </div>
++                    <div class="card-body">
++                        @if($documents->count() > 0)
++                            <div class="table-responsive">
++                                <table class="table">
++                                    <thead>
++                                        <tr>
++                                            <th>{{ __('Document') }}</th>
++                                            <th>{{ __('Category') }}</th>
++                                            <th>{{ __('Size') }}</th>
++                                            <th>{{ __('Downloads') }}</th>
++                                            <th width="150px">{{ __('Action') }}</th>
++                                        </tr>
++                                    </thead>
++                                    <tbody>
++                                        @foreach($documents as $document)
++                                            <tr>
++                                                <td>
++                                                    <strong>{{ $document->title }}</strong>
++                                                    @if($document->description)
++                                                        <br><small class="text-muted">{{ Str::limit($document->description, 60) }}</small>
++                                                    @endif
++                                                </td>
++                                                <td>
++                                                    <span class="badge bg-primary">{{ $document->category->name }}</span>
++                                                </td>
++                                                <td>{{ $document->formatted_file_size }}</td>
++                                                <td>
++                                                    <span class="badge bg-info">{{ $document->downloads_count }}</span>
++                                                </td>
++                                                <td>
++                                                    <a href="{{ route('user.legal-library.view', $document->id) }}" 
++                                                       class="btn btn-sm btn-success me-1"
++                                                       title="{{ __('View') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-eye"></i>
++                                                    </a>
++                                                    <a href="{{ route('user.legal-library.download', $document->id) }}" 
++                                                       class="btn btn-sm btn-primary"
++                                                       title="{{ __('Download') }}"
++                                                       data-bs-toggle="tooltip">
++                                                        <i class="ti ti-download"></i>
++                                                    </a>
++                                                </td>
++                                            </tr>
++                                        @endforeach
++                                    </tbody>
++                                </table>
++                            </div>
++                        @else
++                            <div class="alert alert-info">
++                                <i class="ti ti-info-circle"></i> {{ __('No documents found matching your search.') }}
++                            </div>
++                        @endif
++                    </div>
++                </div>
++            </div>
++        @else
++            <!-- Categories Grid -->
++            <div class="col-xl-12">
++                <div class="card">
++                    <div class="card-header">
++                        <h5>{{ __('Browse by Category') }}</h5>
++                    </div>
++                    <div class="card-body">
++                        @if($categories->count() > 0)
++                            <div class="row">
++                                @foreach($categories as $category)
++                                    <div class="col-md-4 col-sm-6 mb-4">
++                                        <div class="card h-100 category-card">
++                                            <div class="card-body">
++                                                <h5 class="card-title">
++                                                    <i class="ti ti-folder text-primary"></i>
++                                                    {{ $category->name }}
++                                                </h5>
++                                                @if($category->description)
++                                                    <p class="card-text text-muted">{{ Str::limit($category->description, 100) }}</p>
++                                                @endif
++                                                <div class="d-flex justify-content-between align-items-center mt-3">
++                                                    <span class="badge bg-primary">
++                                                        {{ $category->documents_count }} {{ __('document(s)') }}
++                                                    </span>
++                                                    <a href="{{ route('user.legal-library.category', $category->id) }}" 
++                                                       class="btn btn-sm btn-outline-primary">
++                                                        {{ __('Browse') }} <i class="ti ti-arrow-right"></i>
++                                                    </a>
++                                                </div>
++                                            </div>
++                                        </div>
++                                    </div>
++                                @endforeach
++                            </div>
++                        @else
++                            <div class="alert alert-info">
++                                <i class="ti ti-info-circle"></i> {{ __('No categories available yet.') }}
++                            </div>
++                        @endif
++                    </div>
++                </div>
++            </div>
++        @endif
++    </div>
++
++    @push('style')
++    <style>
++        .category-card {
++            transition: transform 0.3s, box-shadow 0.3s;
++            cursor: pointer;
++        }
++        .category-card:hover {
++            transform: translateY(-5px);
++            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
++        }
++    </style>
++    @endpush
++@endsection
+diff --git a/resources/views/user-legal-library/view.blade.php b/resources/views/user-legal-library/view.blade.php
+new file mode 100644
+index 00000000..a61de9c1
+--- /dev/null
++++ b/resources/views/user-legal-library/view.blade.php
+@@ -0,0 +1,96 @@
++@extends('layouts.app')
++
++@section('page-title', $document->title)
++
++@section('action-button')
++    <div class="text-sm-end d-flex all-button-box justify-content-sm-end">
++        <a href="{{ route('user.legal-library.download', $document->id) }}" class="btn btn-sm btn-primary mx-1">
++            <i class="ti ti-download"></i> {{ __('Download') }}
++        </a>
++        <a href="{{ route('user.legal-library.category', $document->category_id) }}" class="btn btn-sm btn-secondary mx-1">
++            <i class="ti ti-arrow-left"></i> {{ __('Back') }}
++        </a>
++    </div>
++@endsection
++
++@section('breadcrumb')
++    <li class="breadcrumb-item"><a href="{{ route('user.legal-library.index') }}">{{ __('Legal Library') }}</a></li>
++    <li class="breadcrumb-item"><a href="{{ route('user.legal-library.category', $document->category_id) }}">{{ $document->category->name }}</a></li>
++    <li class="breadcrumb-item">{{ $document->title }}</li>
++@endsection
++
++@section('content')
++    <div class="row">
++        <div class="col-xl-12">
++            <div class="card">
++                <div class="card-header">
++                    <h4>{{ $document->title }}</h4>
++                    <div class="mt-2">
++                        <span class="badge bg-primary me-2">{{ $document->category->name }}</span>
++                        <span class="badge bg-info me-2">
++                            <i class="ti ti-download"></i> {{ $document->downloads_count }} {{ __('downloads') }}
++                        </span>
++                        <span class="badge bg-secondary">
++                            <i class="ti ti-file"></i> {{ $document->formatted_file_size }}
++                        </span>
++                    </div>
++                </div>
++                <div class="card-body">
++                    @if($document->description)
++                        <div class="mb-4">
++                            <h6>{{ __('Description') }}:</h6>
++                            <p class="text-muted">{{ $document->description }}</p>
++                        </div>
++                        <hr>
++                    @endif
++
++                    <!-- Document Info -->
++                    <div class="row mb-4">
++                        <div class="col-md-6">
++                            <p><strong>{{ __('File Name') }}:</strong> {{ $document->file_name }}</p>
++                            <p><strong>{{ __('Category') }}:</strong> {{ $document->category->name }}</p>
++                        </div>
++                        <div class="col-md-6">
++                            <p><strong>{{ __('Size') }}:</strong> {{ $document->formatted_file_size }}</p>
++                            <p><strong>{{ __('Uploaded') }}:</strong> {{ $document->created_at->format('d M Y, H:i') }}</p>
++                        </div>
++                    </div>
++
++                    <!-- PDF Preview -->
++                    <div class="pdf-viewer-container">
++                        <h6 class="mb-3">{{ __('Document Preview') }}:</h6>
++                        <div class="ratio ratio-16x9" style="min-height: 600px;">
++                            <iframe 
++                                src="{{ Storage::url($document->file_path) }}" 
++                                type="application/pdf" 
++                                width="100%" 
++                                height="100%"
++                                style="border: 1px solid #ddd; border-radius: 5px;">
++                                <p>{{ __('Your browser does not support PDF preview.') }} 
++                                    <a href="{{ route('user.legal-library.download', $document->id) }}">{{ __('Download the PDF') }}</a>
++                                </p>
++                            </iframe>
++                        </div>
++                    </div>
++
++                    <!-- Alternative: Embed with object -->
++                    <div class="mt-3 text-center">
++                        <a href="{{ route('user.legal-library.download', $document->id) }}" class="btn btn-lg btn-primary">
++                            <i class="ti ti-download"></i> {{ __('Download Document') }}
++                        </a>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++
++    @push('style')
++    <style>
++        .pdf-viewer-container {
++            background: #f8f9fa;
++            padding: 20px;
++            border-radius: 8px;
++        }
++    </style>
++    @endpush
++@endsection
+diff --git a/routes/web.php b/routes/web.php
+index b9cbd009..6189302b 100644
+--- a/routes/web.php
++++ b/routes/web.php
+@@ -6,8 +6,10 @@
+ use App\Http\Controllers\CinetPayController;
+ use App\Http\Controllers\FedapayController;
+ use App\Http\Controllers\KhaltiPaymentController;
++use App\Http\Controllers\LegalLibraryController;
+ use App\Http\Controllers\NepalstePaymnetController;
+ use App\Http\Controllers\OzowController;
++use App\Http\Controllers\UserLegalLibraryController;
+ use App\Http\Controllers\PaiementProController;
+ use App\Http\Controllers\TapPaymentController;
+ use Illuminate\Support\Facades\Route;
+@@ -203,7 +205,34 @@
+ 
+     Route::resource('documents', DocumentController::class);
+ 
+-    
++    // Legal Library Routes - Administration
++    Route::prefix('legal-library')->name('legal-library.')->group(function () {
++        Route::get('/', [LegalLibraryController::class, 'index'])->name('index');
++        
++        // Category routes
++        Route::get('/category/create', [LegalLibraryController::class, 'createCategory'])->name('category.create');
++        Route::post('/category/store', [LegalLibraryController::class, 'storeCategory'])->name('category.store');
++        Route::get('/category/{id}/edit', [LegalLibraryController::class, 'editCategory'])->name('category.edit');
++        Route::put('/category/{id}', [LegalLibraryController::class, 'updateCategory'])->name('category.update');
++        Route::delete('/category/{id}', [LegalLibraryController::class, 'destroyCategory'])->name('category.destroy');
++        
++        // Document routes
++        Route::get('/category/{categoryId}/documents', [LegalLibraryController::class, 'showDocuments'])->name('documents');
++        Route::get('/category/{categoryId}/document/create', [LegalLibraryController::class, 'createDocument'])->name('document.create');
++        Route::post('/category/{categoryId}/document/store', [LegalLibraryController::class, 'storeDocument'])->name('document.store');
++        Route::get('/document/{id}/edit', [LegalLibraryController::class, 'editDocument'])->name('document.edit');
++        Route::put('/document/{id}', [LegalLibraryController::class, 'updateDocument'])->name('document.update');
++        Route::delete('/document/{id}', [LegalLibraryController::class, 'destroyDocument'])->name('document.destroy');
++        Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('document.download');
++    });
++
++    // Legal Library Routes - User Access
++    Route::prefix('library')->name('user.legal-library.')->group(function () {
++        Route::get('/', [UserLegalLibraryController::class, 'index'])->name('index');
++        Route::get('/category/{categoryId}', [UserLegalLibraryController::class, 'showCategory'])->name('category');
++        Route::get('/document/{id}/view', [UserLegalLibraryController::class, 'viewDocument'])->name('view');
++        Route::get('/document/{id}/download', [UserLegalLibraryController::class, 'downloadDocument'])->name('download');
++    });
+ 
+     Route::resource('cause', CauseController::class);
+     Route::post('/cause/get-highcourts', [CauseController::class, 'getHighCourt'])->name('get.highcourt');
+-- 
+2.39.5
+

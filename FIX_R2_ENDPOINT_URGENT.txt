@@ -1,0 +1,238 @@
+═══════════════════════════════════════════════════════════════════
+  🚨 FIX URGENT - Endpoint R2 Malformé
+═══════════════════════════════════════════════════════════════════
+
+PROBLÈME IDENTIFIÉ
+------------------
+❌ L'endpoint R2 dans la base de données est MALFORMÉ
+❌ Format actuel (INCORRECT):
+   https://7f65e0eba4a7304ea7//7baf0bafc7/aecf3f2.r2.cloudflarestorage.com
+   
+   Problèmes:
+   - Double slash '//' après l'account ID
+   - Format incorrect qui empêche la connexion
+
+❌ CONSÉQUENCE:
+   AWS HTTP error: cURL error 6: Could not resolve host
+   → Impossible de se connecter à R2
+   → Uploads échouent
+   → Téléchargements échouent
+
+
+═══════════════════════════════════════════════════════════════════
+  ✅ SOLUTION IMMÉDIATE
+═══════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : Trouver le Bon Account ID
+-----------------------------------
+1. Connectez-vous à Cloudflare Dashboard
+   https://dash.cloudflare.com
+
+2. Allez dans "R2 Object Storage" (menu gauche)
+
+3. Cliquez sur votre bucket: "dossy-pro-documents"
+
+4. Cliquez sur l'onglet "Settings"
+
+5. Dans la section "S3 API", vous verrez:
+   
+   Endpoint for S3 Clients:
+   https://xxxxxxxxxxxxxxxxx.r2.cloudflarestorage.com
+   
+   COPIEZ cette URL complète (c'est votre endpoint correct)
+
+
+ÉTAPE 2 : Correction via Interface Admin (RECOMMANDÉ)
+------------------------------------------------------
+1. Connectez-vous en Super Admin sur Dossy Pro
+
+2. Allez dans: Settings → Storage Settings
+
+3. Sélectionnez: Cloudflare R2
+
+4. Dans le champ "R2 Endpoint":
+   - SUPPRIMEZ l'ancienne valeur
+   - COLLEZ la nouvelle valeur de Cloudflare
+   - Format: https://xxxxxxxxxxxxx.r2.cloudflarestorage.com
+
+5. Cliquez sur "Save Changes"
+
+6. IMPORTANT: Allez en SSH et exécutez:
+   php artisan cache:clear
+   php artisan config:clear
+
+
+ÉTAPE 3 : OU Correction via SQL (Alternative)
+----------------------------------------------
+Si l'interface admin ne fonctionne pas, utilisez SQL:
+
+1. Connectez-vous à phpMyAdmin ou MySQL
+
+2. Exécutez cette requête (REMPLACEZ <VOTRE_ACCOUNT_ID>):
+
+   UPDATE settings 
+   SET value = 'https://<VOTRE_ACCOUNT_ID>.r2.cloudflarestorage.com' 
+   WHERE `key` = 'r2_endpoint';
+
+Exemple avec un vrai Account ID:
+   UPDATE settings 
+   SET value = 'https://a1b2c3d4e5f6g7h8.r2.cloudflarestorage.com' 
+   WHERE `key` = 'r2_endpoint';
+
+3. Puis en SSH:
+   cd ~/public_html
+   php artisan cache:clear
+   php artisan config:clear
+
+
+ÉTAPE 4 : Vérification
+-----------------------
+ssh dossypro@ssh-dossypro.alwaysdata.net
+cd ~/public_html
+
+# Vérifier la correction
+php check_r2_endpoint.php
+
+ATTENDU:
+✅ Endpoint R2 actuel: https://xxxxxxxxxxxxx.r2.cloudflarestorage.com
+✅ Format correct détecté
+✅ Pas de double slash
+
+
+ÉTAPE 5 : Test de Connexion
+---------------------------
+php test_r2_upload_config.php
+
+ATTENDU:
+✅ Connexion R2 réussie!
+✅ Fichiers dans legal_documents/ : X
+✅ URL générée correcte
+
+
+═══════════════════════════════════════════════════════════════════
+  📋 FORMAT ENDPOINT R2 - EXEMPLES
+═══════════════════════════════════════════════════════════════════
+
+CORRECT:
+✅ https://a1b2c3d4e5f6g7h8.r2.cloudflarestorage.com
+✅ https://1234567890abcdef.r2.cloudflarestorage.com
+
+INCORRECT:
+❌ https://7f65e0eba4a7304ea7//7baf0bafc7/aecf3f2.r2.cloudflarestorage.com
+❌ https://account-id.r2.dev (c'est l'URL publique, pas l'endpoint)
+❌ https://files.dossypro.com (c'est votre custom domain, pas l'endpoint)
+
+
+═══════════════════════════════════════════════════════════════════
+  🔍 COMMENT IDENTIFIER L'ENDPOINT CORRECT
+═══════════════════════════════════════════════════════════════════
+
+CLOUDFLARE DASHBOARD → R2 → dossy-pro-documents → Settings:
+
+┌─────────────────────────────────────────────────────────────┐
+│ S3 API                                                      │
+├─────────────────────────────────────────────────────────────┤
+│ Endpoint for S3 Clients                                     │
+│ https://xxxxxxxxxxxxx.r2.cloudflarestorage.com             │
+│ ↑ COPIEZ CETTE VALEUR ↑                                     │
+└─────────────────────────────────────────────────────────────┘
+
+C'est CETTE valeur qu'il faut mettre dans r2_endpoint !
+
+
+═══════════════════════════════════════════════════════════════════
+  ⚠️  NE PAS CONFONDRE
+═══════════════════════════════════════════════════════════════════
+
+Il y a 3 URLs différentes pour R2:
+
+1. ENDPOINT (pour les APIs S3)
+   → https://xxxxxxxxxxxxx.r2.cloudflarestorage.com
+   → À mettre dans: r2_endpoint
+   → Utilisé pour: Upload, delete, list files
+
+2. PUBLIC URL (domain R2 par défaut)
+   → https://pub-xxxxxx.r2.dev
+   → À mettre dans: r2_url (si pas de custom domain)
+   → Utilisé pour: Affichage public des fichiers
+
+3. CUSTOM DOMAIN (votre domaine)
+   → https://files.dossypro.com
+   → À mettre dans: r2_url
+   → Utilisé pour: Affichage public des fichiers
+
+
+POUR DOSSY PRO:
+- r2_endpoint = https://xxxxxxxxxxxxx.r2.cloudflarestorage.com
+- r2_url = https://files.dossypro.com
+
+
+═══════════════════════════════════════════════════════════════════
+  🧪 APRÈS CORRECTION - TEST
+═══════════════════════════════════════════════════════════════════
+
+1. Vider le cache:
+   php artisan cache:clear
+   php artisan config:clear
+
+2. Tester la connexion:
+   php test_r2_upload_config.php
+   
+   ATTENDU:
+   ✅ Connexion R2 réussie!
+
+3. Upload un document via Legal Library
+
+4. Vérifier sur Cloudflare R2 Dashboard:
+   Bucket dossy-pro-documents → legal_documents/
+   → Le fichier DOIT apparaître
+
+5. Télécharger depuis l'interface client
+   → Le PDF doit s'afficher
+
+
+═══════════════════════════════════════════════════════════════════
+  📞 SI VOUS NE TROUVEZ PAS L'ACCOUNT ID
+═══════════════════════════════════════════════════════════════════
+
+Cloudflare Dashboard → R2 → Votre bucket → Settings
+
+Cherchez cette section:
+
+╔═══════════════════════════════════════════════════════════════╗
+║ S3 API                                                        ║
+╠═══════════════════════════════════════════════════════════════╣
+║ Use the S3 API to interact with your bucket                  ║
+║                                                               ║
+║ Endpoint for S3 Clients                                      ║
+║ https://XXXXXXXXXXXXXXXXX.r2.cloudflarestorage.com           ║
+║                                                               ║
+║ Bucket Name                                                   ║
+║ dossy-pro-documents                                           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Les X représentent votre Account ID.
+COPIEZ l'URL complète.
+
+
+═══════════════════════════════════════════════════════════════════
+  ✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+□ Account ID copié depuis Cloudflare Dashboard
+□ Endpoint R2 corrigé dans la base de données
+□ Format vérifié: https://<account-id>.r2.cloudflarestorage.com
+□ Cache Laravel vidé (cache:clear + config:clear)
+□ php check_r2_endpoint.php → Format correct ✅
+□ php test_r2_upload_config.php → Connexion réussie ✅
+□ Upload test document → Apparaît dans R2 ✅
+□ Download test → Fonctionne ✅
+
+
+═══════════════════════════════════════════════════════════════════
+
+Date: 2025-11-26
+Urgence: CRITIQUE - Bloque tous les uploads R2
+Action: Corriger r2_endpoint dans la base de données
+
+═══════════════════════════════════════════════════════════════════

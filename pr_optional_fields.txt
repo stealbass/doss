@@ -1,0 +1,97 @@
+# 🔧 Correction : Champs Remise et Taxe Optionnels
+
+## 🐛 Problème
+
+Lors de la création ou de l'édition d'une facture, l'utilisateur est **obligé** de renseigner une valeur pour le champ "Remise" (discount) et de sélectionner une taxe, même si la facture n'a ni remise ni taxe.
+
+**Impact utilisateur** :
+- ❌ Impossible de créer une facture sans remise
+- ❌ Obligation de sélectionner une taxe même si non applicable
+- ❌ Workflow non naturel et frustrant
+
+## ✅ Solution
+
+Suppression de l'attribut HTML `required` sur les champs `discount` et `tax` dans les vues de création et d'édition de factures.
+
+### Modifications Apportées
+
+**Fichiers modifiés** :
+- `resources/views/bills/create.blade.php` (lignes ~220 et ~229)
+- `resources/views/bills/edit.blade.php` (lignes ~216 et ~227)
+
+**Changement** :
+```php
+// AVANT - Champs obligatoires
+{{ Form::number('discount', '', [
+    'class' => 'form-control discount',
+    'placeholder' => __('Discount'),
+    'required' => 'required',  // ❌ Attribut supprimé
+]) }}
+
+{{ Form::select('tax', $taxes, '', [
+    'class' => 'form-control ptax',
+    'id' => 'tax',
+    'required' => 'required',  // ❌ Attribut supprimé
+]) }}
+
+// APRÈS - Champs optionnels
+{{ Form::number('discount', '', [
+    'class' => 'form-control discount',
+    'placeholder' => __('Discount'),
+    // ✅ Plus de 'required'
+]) }}
+
+{{ Form::select('tax', $taxes, '', [
+    'class' => 'form-control ptax',
+    'id' => 'tax',
+    // ✅ Plus de 'required'
+]) }}
+```
+
+## 🎯 Résultats
+
+### Avant
+- ❌ Formulaire bloqué si remise ou taxe non remplis
+- ❌ Impossible de sauvegarder une facture simple
+
+### Après
+- ✅ Remise optionnelle (valeur par défaut = 0 si vide)
+- ✅ Taxe optionnelle (pas de taxe appliquée si non sélectionnée)
+- ✅ Les calculs automatiques fonctionnent correctement dans tous les cas
+- ✅ Formulaire se soumet normalement même si ces champs sont vides
+
+## 🧮 Compatibilité
+
+Cette correction fonctionne parfaitement avec les améliorations de calcul automatique du PR #5 :
+
+```javascript
+// La fonction calculateRow() gère déjà les valeurs optionnelles
+var discount = parseFloat($(el.find('.discount')).val()) || 0;  // 0 si vide
+var taxId = $(el.find('.ptax')).val();
+
+// Si pas de taxe sélectionnée, calcul sans taxe
+if (taxId && taxId > 0) {
+    // Calcul avec taxe
+} else {
+    // ✅ Calcul sans taxe fonctionne correctement
+}
+```
+
+## 🧪 Tests
+
+**Scénarios à tester** :
+1. ✅ Créer une facture sans remise (champ vide)
+2. ✅ Créer une facture sans taxe (pas de sélection)
+3. ✅ Créer une facture avec remise et taxe (cas complet)
+4. ✅ Éditer une facture et retirer la remise/taxe
+
+## 📝 Documentation
+
+Documentation complète créée : `CORRECTION_CHAMPS_OPTIONNELS_FACTURE.md`
+
+---
+
+**Type** : 🐛 Bug Fix  
+**Impact** : 🟡 Moyen (UX améliorée)  
+**Breaking Changes** : ❌ Non  
+**Lié au PR** : #5 (Calcul automatique des factures)

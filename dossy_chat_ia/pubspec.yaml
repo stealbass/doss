@@ -1,0 +1,129 @@
+name: dossy_chat_ia
+description: "Analyse et Assistant Juridique, Fiscal & Social - Application Flutter pour l'Afrique Francophone"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Navigation
+  cupertino_icons: ^1.0.6
+  flutter_svg: ^2.0.9
+  google_fonts: ^6.1.0
+  flutter_screenutil: ^5.9.0
+  animations: ^2.0.11
+  lottie: ^3.0.0
+
+  # State Management
+  provider: ^6.1.1
+  flutter_riverpod: ^2.4.9
+
+  # Network & API
+  http: ^1.1.2
+  dio: ^5.4.0
+  connectivity_plus: ^5.0.2
+
+  # Local Storage
+  shared_preferences: ^2.2.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+
+  # Authentication & Security
+  flutter_secure_storage: ^9.0.0
+  local_auth: ^2.1.8
+
+  # File Management
+  file_picker: ^10.3.8
+  image_picker: ^1.0.5
+  path: ^1.8.3
+  share_plus: ^7.2.1
+
+  # PDF & Documents
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  flutter_pdfview: ^1.3.2
+  open_file: ^3.3.2
+
+  # Audio Recording & Transcription
+  audioplayers: ^5.2.1
+  permission_handler: ^11.1.0
+
+
+  # Payment Integration
+  flutterwave_standard: ^1.0.8
+  app_links: ^3.4.5
+
+  # Internationalization
+  intl: 0.20.2
+  flutter_localizations:
+    sdk: flutter
+
+  # QR Code
+  qr_flutter: ^4.1.0
+
+  # Charts & Analytics
+  fl_chart: ^0.65.0
+
+  # WebView
+  webview_flutter: ^4.4.4
+
+  # Firebase
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.9
+  firebase_analytics: ^10.7.4
+
+  # Notifications
+  flutter_local_notifications: ^17.1.0
+
+  # Utilities
+  uuid: ^4.2.2
+  url_launcher: ^6.2.2
+  flutter_markdown: ^0.6.18+1
+  timeago: ^3.6.0
+  cached_network_image: ^3.3.0
+  shimmer: ^3.0.0
+
+  # In-App Purchase (iOS)
+  in_app_purchase: ^3.1.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.7
+  flutter_launcher_icons: ^0.13.1
+  change_app_package_name: ^1.1.0
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/app_icon.png
+  adaptive_icon_background: "#00C853"
+  adaptive_icon_foreground: assets/icons/app_icon_foreground.png
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700

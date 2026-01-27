@@ -1,0 +1,21 @@
+# Document Extraction Dependencies (OPTIONAL but RECOMMENDED)
+# These packages enable high-quality extraction from multiple document formats
+
+# PDF Extraction (choose one or both)
+pdfplumber>=0.10.0  # Recommended: Better text extraction from PDFs
+PyPDF2>=4.0.0      # Fallback: Basic PDF extraction
+
+# Office Document Extraction
+python-docx>=0.8.11     # Extract from .docx (Word)
+openpyxl>=3.10.0        # Extract from .xlsx (Excel)
+python-pptx>=0.6.23     # Extract from .pptx (PowerPoint)
+
+# Database Connection
+mysql-connector-python>=8.0.0
+
+# Text Processing (optional, for better quality)
+nltk>=3.8.0              # Natural Language Toolkit (tokenization, stemming)
+textacy>=0.12.0          # Advanced text processing
+
+# Note: All packages are optional - the script has graceful degradation
+# If a package is not installed, it will skip that format with a warning

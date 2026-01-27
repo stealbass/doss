@@ -1,0 +1,42 @@
+--- a/app/Http/Controllers/Api/Mobile/DocumentController.php
++++ b/app/Http/Controllers/Api/Mobile/DocumentController.php
+@@ -9,6 +9,7 @@ use App\Models\SubmittedDocument;
+ use App\Models\DocumentDownload;
+ use App\Models\LegalDocument;
+ use App\Models\Utility;
++use App\Services\SyncDocumentExtractionService;
+ use App\Services\AdvancedRagService;
+ use Illuminate\Http\Request;
+ use Illuminate\Support\Facades\Validator;
+@@ -167,9 +168,29 @@ class DocumentController extends Controller
+             ]);
+             Log::debug('✅ [UPLOAD] Document record created', ['document_id' => $document->id]);
+ 
+-            // Dispatch background job for text extraction + embedding + Pinecone indexing
+-            Log::debug('🔵 [UPLOAD] Dispatching ProcessDocumentForRAG job');
++            // Step 1: Extract text SYNCHRONOUSLY for immediate availability
++            // This allows users to query the document immediately after upload
++            Log::debug('🔵 [UPLOAD] Starting SYNCHRONOUS text extraction');
++            $extractionService = new SyncDocumentExtractionService();
++            $extractionSuccess = $extractionService->extractText($document);
++            
++            // Reload document to check extraction result
++            $document->refresh();
++            Log::debug('✅ [UPLOAD] Text extraction completed', [
++                'success' => $extractionSuccess,
++                'has_text' => !empty($document->extracted_text),
++                'text_length' => $document->extracted_text_length ?? 0,
++                'processing_status' => $document->processing_status,
++            ]);
++
++            // Step 2: Dispatch background job ONLY for Pinecone indexing
++            // Text is already extracted, so this job will focus on:
++            // - Anonymization detection
++            // - Pinecone vector embeddings + upsertion
++            Log::debug('🔵 [UPLOAD] Dispatching Pinecone indexing job');
+             ProcessDocumentForRAG::dispatch($document->id);
+-            Log::debug('✅ [UPLOAD] Job dispatched');
++            Log::debug('✅ [UPLOAD] Pinecone indexing job dispatched');
+ 
+             Log::info('Document uploaded, queued for RAG processing', [
+                 'document_id' => $document->id,

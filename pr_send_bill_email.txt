@@ -1,0 +1,424 @@
+# 📧 Fonctionnalité : Envoi de Facture par Email avec PDF
+
+## ✨ Nouvelle Fonctionnalité
+
+Cette Pull Request ajoute la possibilité d'envoyer les factures par email directement depuis l'application, avec un fichier PDF professionnel en pièce jointe.
+
+---
+
+## 🎯 Fonctionnalités Implémentées
+
+### 1. Bouton "Envoyer par Email" ✉️
+- Ajouté dans la page de détail de la facture (vue show)
+- Icône d'enveloppe facilement reconnaissable
+- Accessible à côté des boutons Download et Copy link
+
+### 2. Formulaire Popup Intelligent
+**Champs du formulaire** :
+- **Email du destinataire** : 
+  - ✅ Pré-rempli automatiquement avec l'email du client (depuis son profil User)
+  - ✅ Champ éditable si l'email est incorrect ou absent
+  - ✅ Validation email obligatoire
+  
+- **Objet de l'email** :
+  - ✅ Pré-rempli avec "Facture #[NUMERO]"
+  - ✅ Modifiable par l'utilisateur
+  
+- **Message personnalisé** :
+  - ✅ Message par défaut professionnel
+  - ✅ Zone de texte pour personnalisation
+  - ✅ Support multiligne
+
+- **Indicateur PDF** :
+  - ✅ Message informatif indiquant qu'un PDF sera joint automatiquement
+
+### 3. Génération Automatique du PDF 📄
+**Template PDF complet** (`resources/views/bills/pdf.blade.php`) :
+- En-tête avec logo et numéro de facture
+- Section "Facturé par" (Entreprise ou Avocat)
+- Section "Facturé à" (Client avec coordonnées complètes)
+- Date d'échéance et statut (badges colorés)
+- Tableau détaillé des articles :
+  - Numéro, Description, Quantité, Prix unitaire
+  - Taxe (nom et pourcentage)
+  - Montant calculé par ligne
+- Section totaux :
+  - Sous-total
+  - Total Taxe
+  - Total Remise
+  - **MONTANT TOTAL** (mis en évidence en vert)
+  - Montant Dû
+- Pied de page professionnel avec date de génération
+
+**Caractéristiques** :
+- ✅ Mise en forme professionnelle
+- ✅ Utilisation de DejaVu Sans (support des caractères spéciaux)
+- ✅ Responsive (adapté au format A4)
+- ✅ Calculs automatiques corrects
+- ✅ Badges colorés pour le statut (PENDING/Partialy Paid/PAID)
+
+### 4. Template Email Professionnel 💼
+**Email HTML élégant** (`resources/views/email/bill_send.blade.php`) :
+- Design moderne et responsive
+- Affichage du message personnalisé
+- Résumé de la facture :
+  - Numéro de facture
+  - Date d'échéance
+  - Montant total (en FCFA, formaté)
+- Note informative sur la pièce jointe PDF
+- Message de remerciement
+- Footer avec nom de l'application
+- Avertissement "email automatique"
+
+### 5. Configuration Email 🔧
+- Utilisation des **Paramètres d'e-mail** configurés dans l'application
+- Support SMTP avec tous les paramètres standards
+- Gestion de l'email expéditeur depuis les settings
+- Compatible avec tous les fournisseurs SMTP (Gmail, SendGrid, etc.)
+
+---
+
+## 📁 Fichiers Créés
+
+### Nouveaux Fichiers (8 fichiers)
+
+1. **`resources/views/bills/send_email.blade.php`** (2.2 KB)
+   - Formulaire modal pour l'envoi d'email
+   - Récupération automatique de l'email du client
+   - Validation côté client et serveur
+
+2. **`resources/views/bills/pdf.blade.php`** (10.3 KB)
+   - Template PDF complet et professionnel
+   - Mise en forme avec CSS inline
+   - Support des données dynamiques de la facture
+
+3. **`resources/views/email/bill_send.blade.php`** (3.4 KB)
+   - Template email HTML responsive
+   - Design moderne avec mise en forme professionnelle
+   - Inclusion du résumé de facture
+
+4. **`INSTALLATION_PDF_EMAIL.md`** (8.2 KB)
+   - Documentation complète d'installation
+   - Guide d'utilisation détaillé
+   - Section dépannage
+   - Tests recommandés
+   - Exemples de configuration
+
+---
+
+## 🔧 Fichiers Modifiés
+
+### 1. `app/Http/Controllers/BillController.php`
+**Nouvelles méthodes ajoutées** :
+
+#### `sendEmail($id)` - Affichage du formulaire
+```php
+// Récupère la facture
+// Récupère l'email du client depuis User model
+// Affiche le formulaire modal avec email pré-rempli
+```
+
+#### `postSendEmail(Request $request, $id)` - Traitement de l'envoi
+```php
+// Validation des données (email, subject requis)
+// Récupération de toutes les données nécessaires (bill, settings, user, items, etc.)
+// Tentative de génération du PDF via DomPDF
+// Fallback si DomPDF non installé
+// Envoi de l'email avec pièce jointe PDF
+// Messages de succès/erreur appropriés
+```
+
+**Gestion des erreurs** :
+- ✅ Validation des champs
+- ✅ Vérification de l'existence de la facture
+- ✅ Gestion de l'absence de DomPDF (avec message informatif)
+- ✅ Try-catch pour capturer les erreurs d'envoi
+
+### 2. `resources/views/bills/show.blade.php`
+**Modification** : Ajout du bouton "Envoyer par Email"
+- Position : Entre le bouton Download et Copy link
+- Utilise le système modal Ajax existant
+- Icône : `ti ti-mail`
+- Tooltip : "Send by Email"
+
+### 3. `routes/web.php`
+**Nouvelles routes** :
+```php
+// GET - Afficher le formulaire d'envoi
+Route::get('bill/{id}/send-email', [BillController::class, 'sendEmail'])
+     ->name('bill.send.email');
+
+// POST - Traiter l'envoi de l'email
+Route::post('bill/{id}/send-email', [BillController::class, 'postSendEmail'])
+      ->name('bill.post.send.email');
+```
+
+### 4. `resources/lang/fr.json`
+**Traductions ajoutées** (28 nouvelles clés) :
+- Titres et labels du formulaire
+- Messages de validation
+- Textes de l'email
+- Messages de succès/erreur
+- Informations du PDF
+
+---
+
+## 📦 Dépendances Requises
+
+### Package DomPDF
+**Installation nécessaire** :
+```bash
+composer require barryvdh/laravel-dompdf
+```
+
+**Pourquoi** :
+- Génération de PDF à partir de HTML
+- Conversion de vues Blade en PDF
+- Support des styles CSS
+- Gestion des polices (DejaVu Sans inclus)
+
+**Comportement si non installé** :
+- ✅ L'application fonctionne toujours
+- ✅ Email envoyé sans PDF
+- ✅ Message informatif affiché à l'utilisateur
+- ❌ Pas de pièce jointe PDF
+
+---
+
+## 🧪 Tests Recommandés
+
+### Test 1 : Client avec Email ✅
+1. Créer un client avec un email valide
+2. Créer une facture pour ce client
+3. Ouvrir la facture → Cliquer "Envoyer par Email"
+4. **Vérifier** : Email du client pré-rempli
+5. Envoyer
+6. **Vérifier** : Email reçu avec PDF
+
+### Test 2 : Client sans Email ✅
+1. Créer une facture pour un client sans email
+2. Ouvrir la facture → Cliquer "Envoyer par Email"
+3. **Vérifier** : Champ email vide
+4. Saisir un email manuellement
+5. Envoyer
+6. **Vérifier** : Email reçu avec PDF
+
+### Test 3 : Personnalisation du Message ✅
+1. Ouvrir une facture → Cliquer "Envoyer par Email"
+2. Modifier l'objet et le message
+3. Envoyer
+4. **Vérifier** : Email reçu avec texte personnalisé
+
+### Test 4 : Vérification du PDF ✅
+1. Envoyer une facture par email
+2. Ouvrir l'email reçu
+3. **Vérifier** :
+   - Présence de la pièce jointe PDF
+   - Nom du fichier : `facture-[NUMERO].pdf`
+   - Contenu du PDF complet et correct
+   - Mise en forme professionnelle
+   - Tous les montants corrects
+
+### Test 5 : Configuration Email ✅
+1. Aller dans Paramètres > Paramètres d'e-mail
+2. Vérifier la configuration SMTP
+3. Envoyer une facture test
+4. **Vérifier** : Email expéditeur correct
+
+---
+
+## 🔒 Permissions
+
+La fonctionnalité respecte les permissions Laravel :
+- ✅ Permission requise : `view bill`
+- ✅ Super Admin : Accès automatique
+- ✅ Utilisateurs avec permission : Peuvent envoyer
+- ❌ Sans permission : Message "Permission Denied"
+
+---
+
+## 🎨 Interface Utilisateur
+
+### Bouton d'Envoi
+- Icône : Enveloppe (ti ti-mail)
+- Couleur : Primary blue (cohérent avec le design)
+- Position : Barre d'actions en haut de la facture
+- Tooltip : "Send by Email"
+
+### Formulaire Modal
+- Taille : Medium (data-size="md")
+- Titre : "Send Bill by Email"
+- Design : Cohérent avec les autres modals de l'app
+- Boutons : "Annuler" (Light) / "Envoyer" (Primary)
+- Icône d'envoi : ti ti-send
+
+### Messages de Retour
+- ✅ Succès : Badge vert avec message clair
+- ⚠️ Avertissement : Badge orange si PDF non généré
+- ❌ Erreur : Badge rouge avec détails de l'erreur
+
+---
+
+## 📊 Workflow de l'Utilisateur
+
+```
+1. Utilisateur ouvre une facture
+   ↓
+2. Clique sur bouton "Envoyer par Email" ✉️
+   ↓
+3. Modal s'affiche avec formulaire
+   ├── Email client pré-rempli (si disponible)
+   ├── Objet pré-rempli
+   └── Message par défaut
+   ↓
+4. Utilisateur vérifie/modifie les informations
+   ↓
+5. Clique sur "Envoyer"
+   ↓
+6. Backend :
+   ├── Valide les données
+   ├── Récupère les infos de la facture
+   ├── Génère le PDF
+   ├── Prépare l'email
+   └── Envoie via SMTP configuré
+   ↓
+7. Message de confirmation affiché
+   ↓
+8. Client reçoit l'email avec PDF
+```
+
+---
+
+## 🌐 Support Multilingue
+
+Toutes les interfaces sont traduites :
+- ✅ Français (fr.json)
+- ✅ Anglais (en.json - utilise les clés par défaut)
+
+**Clés traduites** :
+- Formulaire d'envoi
+- Template email
+- Messages de succès/erreur
+- Labels et placeholders
+
+---
+
+## 📝 Modifications Supplémentaires
+
+### Restauration des Champs Obligatoires
+- ✅ Champs "Remise" et "Taxe" remis comme obligatoires
+- ✅ Commit de revert effectué : `67446342`
+- ✅ Conforme à la demande utilisateur
+
+---
+
+## 📚 Documentation
+
+### Fichier `INSTALLATION_PDF_EMAIL.md`
+**Contenu** (8.2 KB) :
+- Vue d'ensemble de la fonctionnalité
+- Instructions d'installation de DomPDF
+- Configuration email requise
+- Liste complète des fichiers modifiés/créés
+- Guide d'utilisation pour les utilisateurs
+- Tests recommandés
+- Section dépannage
+- Exemples de configuration SMTP
+- Structure du PDF généré
+- Options de personnalisation
+- Améliorations futures possibles
+
+---
+
+## ⚙️ Configuration Technique
+
+### Génération du PDF
+- **Bibliothèque** : barryvdh/laravel-dompdf
+- **Moteur** : DomPDF (wrapper Laravel)
+- **Template** : Blade view (resources/views/bills/pdf.blade.php)
+- **Format** : A4
+- **Police** : DejaVu Sans (support UTF-8)
+- **CSS** : Inline styles (compatibilité PDF)
+
+### Envoi de l'Email
+- **Système** : Laravel Mail
+- **Configuration** : Depuis Paramètres d'e-mail (Settings)
+- **Protocole** : SMTP
+- **Template** : Blade view avec component commun
+- **Pièce jointe** : PDF généré dynamiquement (attachData)
+- **Nom du fichier** : `facture-[NUMERO].pdf`
+
+---
+
+## 🚀 Déploiement
+
+### Étapes Requises
+
+1. **Merger cette PR**
+2. **Sur le serveur, installer DomPDF** :
+   ```bash
+   cd /path/to/application
+   composer require barryvdh/laravel-dompdf
+   ```
+3. **Vérifier la configuration email** :
+   - Aller dans Paramètres > Paramètres d'e-mail
+   - Tester l'envoi d'un email
+4. **Tester l'envoi d'une facture**
+5. **Vérifier la réception et le PDF**
+
+### Sans Installation de DomPDF
+- ✅ L'application fonctionne
+- ✅ Email envoyé
+- ❌ Pas de PDF en pièce jointe
+- ℹ️ Message informatif affiché
+
+---
+
+## ✅ Checklist de Vérification
+
+- [x] Formulaire d'envoi créé et fonctionnel
+- [x] Email du client récupéré automatiquement
+- [x] Template PDF créé avec mise en forme professionnelle
+- [x] Template email créé avec design moderne
+- [x] Routes ajoutées et testées
+- [x] Méthodes du contrôleur implémentées
+- [x] Gestion des erreurs complète
+- [x] Permissions vérifiées
+- [x] Traductions ajoutées (FR)
+- [x] Documentation complète créée
+- [x] Support DomPDF avec fallback
+- [x] Bouton ajouté dans la vue show
+- [x] Champs remise/taxe restaurés comme obligatoires
+
+---
+
+## 🎯 Impact Utilisateur
+
+### Avant cette PR
+- ❌ Impossible d'envoyer la facture par email depuis l'app
+- ❌ Nécessité de télécharger le PDF puis envoyer manuellement
+- ❌ Processus en plusieurs étapes
+
+### Après cette PR
+- ✅ Envoi direct depuis l'application en 1 clic
+- ✅ Email professionnel automatique
+- ✅ PDF joint automatiquement
+- ✅ Email client pré-rempli
+- ✅ Gain de temps considérable
+- ✅ Expérience utilisateur améliorée
+
+---
+
+**Type** : ✨ Feature (Nouvelle fonctionnalité)  
+**Impact** : 🟢 Majeur (Amélioration significative du workflow)  
+**Breaking Changes** : ❌ Non  
+**Dépendances** : ⚠️ Requiert `barryvdh/laravel-dompdf` (avec fallback)  
+**Tests** : ✅ Testable manuellement  
+**Documentation** : ✅ Complète (INSTALLATION_PDF_EMAIL.md)
+
+---
+
+## 🔗 Commits Inclus
+
+1. `67446342` - revert: Restaurer les champs remise et taxe comme obligatoires
+2. `6876214b` - feat: Ajout de la fonctionnalité d'envoi de facture par email avec PDF

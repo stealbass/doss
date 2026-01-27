@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "dossy-pro",
+  "private_key_id": "6f9ad6fcfd3cd57ce813ea58ed23bc91bb1929be",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDc3WmicjOL+aXD\n0D6lw1kGxQCRahGecD1iFhoFqWZgHZFBzO+EVndCf6icYnHgPI5oCDx9WqQggAtK\ndFE5WcYCr/pAy7ItBZZmwlWDVeMxgkE0oPDZW85w1ffu/cWhRY4VyK3DclLH+x1M\nwAc7kdCXLv6vJgXR8G5gcasMumoDOR19vcglTA/u+r0EHv7M4IEQsbpQfjqLyd0R\ngFb2LrljdU5hXaeRAfrKG+3g3CgannXRRrOZoUpOzQ1UroQrlIzx8L43E+R6sFSo\nXzeUE0H7PpymB7vBm4nWG6F6tX7Ql30cupWrEGyjcGdxCYzhhYwSUJB8ALSunvOL\nWp9wYxr/AgMBAAECggEAC99vJUdkU/r4mT0hkQGeUInYjPiZt92qvxIXFgTUNwh/\n3Xypx4Bqas23/6gfHQHEWf1PWyG7PvADK15zW1TjGxPgrQkGK/tn6WA6/pNoYinx\nXWXlbJnN0C0AZf2IWTIHAE7IYIBNyOhL2+tauC4Pe4EQOdQebfmxxUd2/Xkr575Z\nrRsCD/04OfdSzGCbNBYi0uCLFzStzOSG2Vj7AyfFmmgFYyYOeoR/lKcP+BiZW601\n5Me92x2Kvb3om4iZOg1wDoPyE1FqVVjceWQP1yo2lUhJh5/Uyd1kCct0y1RbwnFB\nGLaw/fM91RRJxhOt5pq8QUn0l/aTLRQNKYc7Q81nyQKBgQD3BJjFTMlT+OtvGvpt\nfJE4G8s2HVjRGMpLpy12h685kpLMrHIs1hf0T+Yg7SyBKdhSnH8z6gQO/urfQxdl\nmp8haqBHA9HcDcNJnOtLVa0ZkgIYHOv6/b089xa35lR+6efnfhTj2RfpzkMCiZbx\nVDYSny7z083+USTvuiUlBNsGiwKBgQDk5V3AI6BLGTCaKIzfc4cZNu00NqacRf6k\nY95wzsuY8fmOe8XLDmiHTVQzwwggIFQVi7aqttoQINJi3UGcFauC7iK3WDV8tRGI\nvMo7gVHnDIZb/qeakLLtFbNENXeE90CocT8vaXYFGS7uSaiG5PimSFDs9UilrWRX\n2VGdXp7/3QKBgDBGbbThdNc8ZoaoNxj+p0LX67b/tUPoHGD8ox3vFoeh5Z6qdQXe\nMYBFvSviLjhv/R7oBtQWgASOPUi0y/XHaiIVvI0kafcfmXLhf/qRG+tLZa1guZ2r\nyTgI8h+unATRocjUEzEUVGAVN3NfgGhZlNe+1GZClpeFNDrFnkzFzihRAoGBAIrg\ni0AvnWrTLsTpw4cz3g0zYTojynTYlwaAvY6uOaNjdSm4+SoZZNxq06LQO1bapomo\nCj2L0cSlVWC8o7kjALvg5lldgJ5YcfoHqZ/u95V66O5aFLDYCGeGmgzRb+HR7n4E\nr/SBRSUUwX+8Wy71L9Qb3lXXAKvdBxux9C3KIihVAoGBAO6SpLvMR0wy+juHlUXX\nc0D3wzTMnfvBswg6jHMy+nmO7KieH9RcIBk7+/pFxrPveiBhi9/OiVNmm3Y7WOCv\nB1q7o0NjqTKBEu8ncztZl6DDhnmd7Iit+wTydctHEhcQD4KhrNMpxIYiTM1kC/1R\nB0sLOjwjHzNIxaQXce1SdEs+\n-----END PRIVATE KEY-----\n",
+  "client_email": "calendar-service@dossy-pro.iam.gserviceaccount.com",
+  "client_id": "116109992460777986037",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/calendar-service%40dossy-pro.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

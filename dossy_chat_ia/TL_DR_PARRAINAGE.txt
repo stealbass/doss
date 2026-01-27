@@ -1,0 +1,33 @@
+# ⚡ TL;DR - CORRECTION PARRAINAGE (VERSION ULTRA-COURTE)
+
+## 🎯 LE PROBLÈME
+Utilisateur parrainé affiche "En attente" même après avoir payé ❌
+
+## 🔧 LA SOLUTION
+Ajout d'UNE LIGNE au fichier `SubscriptionController.php` à la ligne 430:
+```php
+ReferralController::completeReferral($user->id);
+```
+
+## ✅ LE RÉSULTAT
+Utilisateur parrainé affiche maintenant "Terminé" après paiement ✅
+
+---
+
+## 📁 FICHIERS MODIFIÉS
+- `app/Http/Controllers/Api/Mobile/SubscriptionController.php` (Ligne 430)
+
+## ❌ RISQUES
+Aucun
+
+## ⏱️ TEMPS DE DÉPLOIEMENT
+5 minutes
+
+---
+
+## 📚 POUR PLUS DE DÉTAILS
+→ Lire: `RÉSUMÉ_SIMPLE_PARRAINAGE.md`
+
+---
+
+✅ **PRÊT POUR PRODUCTION**
