@@ -321,6 +321,12 @@ class AppLocalizations_fr {
   static const String pleaseEnterName = 'Veuillez entrer votre nom';
   static const String mandatoryField = 'Champ obligatoire';
   static const String validEmail = 'Veuillez entrer un email valide';
+  static const String completeProfileTitle = 'Compléter votre profil';
+  static const String completeProfileMessage =
+      'Pour améliorer les réponses de l\'IA, veuillez compléter votre profil.';
+  static const String missingFieldsLabel = 'Champs manquants';
+  static const String completeNow = 'Compléter maintenant';
+  static const String later = 'Plus tard';
   
   // Auth Screens - Login
   static const String loginSubtitle = 'Connectez-vous à votre compte';
@@ -618,6 +624,7 @@ class AppLocalizations_fr {
   static const String uploads = 'Uploads:';
   static const String noDocuments = 'Aucun document';
   static const String uploadDocumentsForAdvancedRAG = 'Uploadez vos documents pour\nutiliser le RAG avancé';
+  static const String uploadDocumentsAndAskChat = 'Chargez vos documents et interrogez le chat sur leur contenu';
   static const String uploading = 'Upload...';
   static const String deleteDocument = 'Supprimer le document';
   static const String confirmDeleteDocument = 'Êtes-vous sûr de vouloir supprimer ce document ?';
@@ -736,7 +743,9 @@ class AppLocalizations_fr {
   static const String loadMore = 'Charger plus';
   static const String subAccountCreationFailed = 'Échec lors de la création du sous-compte';
   static const String accountActivated = 'Compte activé';
+  static const String accountDisabled = 'Compte désactivé';
   static const String accountDeleted = 'Compte supprimé';
+  static const String createFirstSubAccount = 'Créez votre premier sous-compte pour commencer à gérer votre équipe.';
   static const String mustBeAuthenticatedForSubAccount = 'Vous devez être connecté pour créer un sous-compte';
   static const String noDocumentFound = 'Aucun document trouvé';
   static const String noTaxParameters = 'Aucun paramètre fiscal';

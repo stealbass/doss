@@ -123,8 +123,8 @@ class HearingController extends Controller
             'request_assigned_to' => $request->assigned_to,
         ]);
         
-        // Send notification email about the new hearing
-        SendHearingCreatedNotification::dispatch($hearing);
+        // Send notification email about the new hearing immediately
+        SendHearingCreatedNotification::dispatchSync($hearing);
 
         return redirect()->back()->with('success', __('Hearing successfully created.'));
     }

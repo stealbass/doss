@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../providers/fiscal_resource_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/download_helpers.dart';
@@ -19,6 +20,30 @@ class FiscalResourceDetailScreen extends StatefulWidget {
 
 class _FiscalResourceDetailScreenState extends State<FiscalResourceDetailScreen> {
   bool _isDownloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Track view when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _trackView();
+    });
+  }
+
+  Future<void> _trackView() async {
+    try {
+      final authProvider = context.read<AuthProvider>();
+      final provider = context.read<FiscalResourceProvider>();
+      final token = authProvider.token;
+      
+      if (token != null && token.isNotEmpty) {
+        await provider.trackResourceView(widget.resource.id, token);
+      }
+    } catch (e) {
+      // Silently fail - tracking is not critical
+      print('DEBUG: Failed to track resource view: $e');
+    }
+  }
 
   Future<void> _downloadResource() async {
     setState(() => _isDownloading = true);
@@ -51,6 +76,32 @@ class _FiscalResourceDetailScreenState extends State<FiscalResourceDetailScreen>
     }
   }
 
+  Future<void> _shareResource() async {
+    try {
+      final resource = widget.resource;
+      final shareText = '''📊 ${resource.title}
+
+Type: ${resource.resourceTypeDisplay}
+Année: ${resource.year ?? 'N/A'}
+
+✨ Partagé depuis DOSSY Chat IA''';
+
+      await Share.share(
+        shareText,
+        subject: resource.title,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors du partage: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -62,11 +113,7 @@ class _FiscalResourceDetailScreenState extends State<FiscalResourceDetailScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.shareToImplement)),
-              );
-            },
+            onPressed: _shareResource,
           ),
         ],
       ),

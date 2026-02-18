@@ -124,7 +124,7 @@ Y a-t-il des questions sur ce point ?
     final isFr = locale.languageCode == 'fr';
 
     // Check if user has access to audio transcription (Professional or Enterprise plans)
-    final planLower = user?.plan?.toLowerCase() ?? '';
+    final planLower = user?.plan.toLowerCase() ?? '';
     final hasAccess = planLower.contains('professionnel') || planLower.contains('cabinet') || planLower.contains('entreprise');
 
     return Scaffold(

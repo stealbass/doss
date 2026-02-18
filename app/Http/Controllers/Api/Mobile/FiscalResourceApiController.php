@@ -98,7 +98,7 @@ class FiscalResourceApiController extends Controller
         $user = $request->user();
 
         // Increment download count
-        $resource->increment('downloads_count');
+        $resource->incrementDownloads();
 
         // Get file URL from cloud storage (R2/S3/Wasabi) or local
         $downloadUrl = Utility::get_file($resource->file_path);
@@ -115,6 +115,23 @@ class FiscalResourceApiController extends Controller
             'data' => [
                 'download_url' => $downloadUrl,
                 'file_name' => $resource->file_name,
+            ],
+        ]);
+    }
+
+    public function view(Request $request, $id)
+    {
+        $resource = FiscalSocialResource::findOrFail($id);
+        
+        // Increment view count
+        $resource->incrementViews();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vue enregistrée',
+            'data' => [
+                'views_count' => $resource->views_count,
+                'downloads_count' => $resource->downloads_count,
             ],
         ]);
     }

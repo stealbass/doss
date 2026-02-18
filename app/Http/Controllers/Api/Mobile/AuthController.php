@@ -38,8 +38,9 @@ class AuthController extends Controller
             'password_confirmation' => 'required|string|same:password',
             'phone' => 'nullable|string|max:20',
             'jurisdiction' => 'nullable|string|max:10',
-            'role' => 'nullable|string|in:student,lawyer,enterprise',
+            'mobile_role' => 'nullable|string|in:student,lawyer,enterprise',
             'referral_code' => 'nullable|string|max:50',
+            'device_type' => 'nullable|string|in:ios,android,web',
         ]);
 
         if ($validator->fails()) {
@@ -78,12 +79,23 @@ class AuthController extends Controller
 
             // Store jurisdiction and role in user table if columns exist
             // Otherwise we'll store them in a JSON field or separate table later
-            if ($request->jurisdiction || $request->role) {
+            if ($request->jurisdiction || $request->mobile_role) {
                 $user->update([
                     'jurisdiction' => $request->jurisdiction,
-                    'mobile_role' => $request->role ?? 'student',
+                    'mobile_role' => $request->mobile_role ?? 'student',
                 ]);
             }
+
+            // Track mobile installation/activity
+            $deviceType = $request->get('device_type');
+            if ($deviceType && in_array($deviceType, ['ios', 'android', 'web'], true)) {
+                $user->primary_device = $deviceType;
+            }
+            if (!$user->mobile_app_installed_at) {
+                $user->mobile_app_installed_at = now();
+            }
+            $user->last_mobile_activity_at = now();
+            $user->save();
 
             // Apply referral code if provided
             if ($request->referral_code) {
@@ -133,7 +145,7 @@ class AuthController extends Controller
                         'email' => $user->email,
                         'phone' => $request->phone,
                         'plan' => $freePlan->name ?? 'Gratuit',
-                        'role' => $request->role ?? 'student',
+                        'mobile_role' => $request->mobile_role ?? 'student',
                         'jurisdiction' => $request->jurisdiction,
                         'subscription_end' => null,
                         'searches_used' => 0,
@@ -179,6 +191,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'device_type' => 'nullable|string|in:ios,android,web',
         ]);
 
         if ($validator->fails()) {
@@ -215,8 +228,21 @@ class AuthController extends Controller
         // Get user details for phone, address, city
         $userDetail = UserDetail::where('user_id', $user->id)->first();
 
+        // Update mobile activity tracking
+        $deviceType = $request->get('device_type');
+        if ($deviceType && in_array($deviceType, ['ios', 'android', 'web'], true)) {
+            $user->primary_device = $deviceType;
+        }
+        if (!$user->mobile_app_installed_at) {
+            $user->mobile_app_installed_at = now();
+        }
+        $user->last_mobile_activity_at = now();
+        $user->save();
+
         // Generate token
         $token = $user->createToken('mobile-app')->plainTextToken;
+
+        $missingFields = $this->getMissingProfileFields($user);
 
         return response()->json([
             'success' => true,
@@ -231,6 +257,7 @@ class AuthController extends Controller
                     'city' => optional($userDetail)->city,
                     'plan' => $subscription && $subscription->plan ? $subscription->plan->name : 'Gratuit',
                     'role' => $user->mobile_role ?? 'student',
+                    'mobile_role' => $user->mobile_role,
                     'jurisdiction' => $user->jurisdiction,
                     'subscription_end' => $subscription ? $subscription->expires_at : null,
                     'searches_used' => $subscription ? $subscription->searches_used : 0,
@@ -243,6 +270,8 @@ class AuthController extends Controller
                     'referral_count' => $user->referrals()->count(),
                     'created_at' => $user->created_at->toIso8601String(),
                 ],
+                'profile_complete' => empty($missingFields),
+                'missing_fields' => $missingFields,
                 'token' => $token,
                 'subscription' => $subscription ? [
                     'plan_id' => $subscription->plan->id,
@@ -284,10 +313,7 @@ class AuthController extends Controller
 
         try {
             // Configurer les paramètres SMTP depuis la base de données
-            // Utiliser l'ID 1 pour les paramètres de l'admin principal
-            Utility::getSMTPDetails(1);
-            
-            Log::info('SMTP configured for password reset', ['email' => $request->email]);
+            Utility::getSMTPDetails(1); // Admin SMTP settings
             
             $status = Password::sendResetLink(
                 $request->only('email')
@@ -347,6 +373,8 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $userDetail = UserDetail::where('user_id', $user->id)->first();
+
+        $missingFields = $this->getMissingProfileFields($user);
         
         // Get subscription
         $subscription = $user->activeMobileSubscription()
@@ -365,6 +393,7 @@ class AuthController extends Controller
                     'city' => optional($userDetail)->city,
                     'plan' => $subscription && $subscription->plan ? $subscription->plan->name : 'Gratuit',
                     'role' => $user->mobile_role ?? 'student',
+                    'mobile_role' => $user->mobile_role,
                     'jurisdiction' => $user->jurisdiction,
                     'subscription_end' => $subscription ? $subscription->expires_at : null,
                     'searches_used' => $subscription ? $subscription->searches_used : 0,
@@ -377,6 +406,8 @@ class AuthController extends Controller
                     'referral_count' => $user->referrals()->count(),
                     'created_at' => $user->created_at->toIso8601String(),
                 ],
+                'profile_complete' => empty($missingFields),
+                'missing_fields' => $missingFields,
                 'subscription' => $subscription ? [
                     'plan_id' => $subscription->plan->id,
                     'plan_name' => $subscription->plan->name,
@@ -420,6 +451,8 @@ class AuthController extends Controller
             'phone' => 'sometimes|nullable|string|max:20',
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:100',
+            'jurisdiction' => 'sometimes|nullable|string|max:10',
+            'mobile_role' => 'sometimes|nullable|string|in:student,lawyer,enterprise',
             'current_password' => 'required_with:new_password',
             'new_password' => 'sometimes|string|min:8|confirmed',
         ]);
@@ -445,6 +478,14 @@ class AuthController extends Controller
                 // Update basic info
                 if ($request->has('name')) {
                     $user->name = $request->name;
+                }
+
+                if ($request->has('jurisdiction')) {
+                    $user->jurisdiction = $request->jurisdiction;
+                }
+
+                if ($request->has('mobile_role')) {
+                    $user->mobile_role = $request->mobile_role;
                 }
 
                 // Phone is stored in user_details table, NOT in users table
@@ -480,6 +521,8 @@ class AuthController extends Controller
                     ->with('plan')
                     ->first();
 
+                $missingFields = $this->getMissingProfileFields($user);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Profile updated successfully',
@@ -493,6 +536,7 @@ class AuthController extends Controller
                             'city' => $userDetail->city,
                             'plan' => $subscription && $subscription->plan ? $subscription->plan->name : 'Gratuit',
                             'role' => $user->mobile_role ?? 'student',
+                            'mobile_role' => $user->mobile_role,
                             'jurisdiction' => $user->jurisdiction,
                             'subscription_end' => $subscription ? $subscription->expires_at : null,
                             'searches_used' => $subscription ? $subscription->searches_used : 0,
@@ -507,6 +551,8 @@ class AuthController extends Controller
                             'referral_count' => $user->referrals()->count(),
                             'created_at' => $user->created_at->toIso8601String(),
                         ],
+                        'profile_complete' => empty($missingFields),
+                        'missing_fields' => $missingFields,
                     ],
                 ], 200);
             });
@@ -560,5 +606,23 @@ class AuthController extends Controller
         } while (User::where('referral_code', $code)->exists());
 
         return $code;
+    }
+
+    /**
+     * Determine missing profile fields required for mobile AI usage.
+     */
+    private function getMissingProfileFields(User $user): array
+    {
+        $missing = [];
+
+        if (empty($user->jurisdiction)) {
+            $missing[] = 'jurisdiction';
+        }
+
+        if (empty($user->mobile_role)) {
+            $missing[] = 'mobile_role';
+        }
+
+        return $missing;
     }
 }

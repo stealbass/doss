@@ -1837,5 +1837,13 @@
     "Clear Search": "Clear Search",
     "document(s)": "document(s)",
     "This will delete the category and all its documents. This action cannot be undone.": "This will delete the category and all its documents. This action cannot be undone.",
-    "This action cannot be undone. Do you want to continue?": "This action cannot be undone. Do you want to continue?"
+    "This action cannot be undone. Do you want to continue?": "This action cannot be undone. Do you want to continue?",
+    "Total Documents": "Total Documents",
+    "Total Categories": "Total Categories",
+    "Download All Documents": "Download All Documents",
+    "Delete All Documents": "Delete All Documents",
+    "This will permanently delete all documents for this subscriber. Continue?": "This will permanently delete all documents for this subscriber. Continue?",
+    "No documents found for this user.": "No documents found for this user.",
+    "All documents deleted successfully.": "All documents deleted successfully.",
+    "Unable to create zip file.": "Unable to create zip file."
 }

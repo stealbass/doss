@@ -8,6 +8,7 @@ use App\Models\group;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\PointOfContacts;
+use App\Models\Document;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Utility;
@@ -15,10 +16,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
 use PragmaRX\Google2FAQRCode\Google2FA;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use ZipArchive;
 class UserController extends Controller
 {
     public function __construct()
@@ -673,6 +676,128 @@ class UserController extends Controller
         $plan = Plan::where('id', $user->plan)->first();
         $cases = Cases::where('created_by', $user_id)->get();
         return view('users.detail', compact('user', 'user_detail', 'users', 'plan', 'client', 'cases', 'advocates'));
+    }
+
+    public function downloadAllDocuments($user_id)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $user = User::find($user_id);
+        if (!$user) {
+            return redirect()->back()->with('error', __('User not found.'));
+        }
+
+        $documents = Document::where('created_by', $user_id)->get();
+        if ($documents->isEmpty()) {
+            return redirect()->back()->with('error', __('No documents found for this user.'));
+        }
+
+        $settings = Utility::getStorageSetting();
+        $storageSetting = $settings['storage_setting'] ?? 'local';
+        $this->configureStorageDisks($settings, $storageSetting);
+
+        $tmpDir = storage_path('app/tmp');
+        if (!is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0755, true);
+        }
+
+        $zipName = 'documents_' . $user_id . '_' . now()->format('Ymd_His') . '.zip';
+        $zipPath = $tmpDir . DIRECTORY_SEPARATOR . $zipName;
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return redirect()->back()->with('error', __('Unable to create zip file.'));
+        }
+
+        $disk = $storageSetting === 'local' ? Storage::disk() : Storage::disk($storageSetting);
+
+        foreach ($documents as $document) {
+            if (empty($document->file)) {
+                continue;
+            }
+
+            $storagePath = 'uploads/documents/' . $document->file;
+            if (!$disk->exists($storagePath)) {
+                continue;
+            }
+
+            if ($storageSetting === 'local') {
+                $zip->addFile($disk->path($storagePath), $document->file);
+            } else {
+                $zip->addFromString($document->file, $disk->get($storagePath));
+            }
+        }
+
+        $zip->close();
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    public function deleteAllDocuments($user_id)
+    {
+        if (Auth::user()->type !== 'super admin') {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $user = User::find($user_id);
+        if (!$user) {
+            return redirect()->back()->with('error', __('User not found.'));
+        }
+
+        $documents = Document::where('created_by', $user_id)->get();
+        if ($documents->isEmpty()) {
+            return redirect()->back()->with('error', __('No documents found for this user.'));
+        }
+
+        $settings = Utility::getStorageSetting();
+        $storageSetting = $settings['storage_setting'] ?? 'local';
+        $this->configureStorageDisks($settings, $storageSetting);
+        $disk = $storageSetting === 'local' ? Storage::disk() : Storage::disk($storageSetting);
+
+        foreach ($documents as $document) {
+            if (!empty($document->file)) {
+                $storagePath = 'uploads/documents/' . $document->file;
+                if ($disk->exists($storagePath)) {
+                    $disk->delete($storagePath);
+                }
+            }
+            $document->delete();
+        }
+
+        return redirect()->back()->with('success', __('All documents deleted successfully.'));
+    }
+
+    private function configureStorageDisks(array $settings, string $storageSetting): void
+    {
+        if ($storageSetting === 'wasabi') {
+            config([
+                'filesystems.disks.wasabi.key' => $settings['wasabi_key'] ?? '',
+                'filesystems.disks.wasabi.secret' => $settings['wasabi_secret'] ?? '',
+                'filesystems.disks.wasabi.region' => $settings['wasabi_region'] ?? '',
+                'filesystems.disks.wasabi.bucket' => $settings['wasabi_bucket'] ?? '',
+                'filesystems.disks.wasabi.endpoint' => 'https://s3.' . ($settings['wasabi_region'] ?? '') . '.wasabisys.com',
+            ]);
+        } elseif ($storageSetting === 's3') {
+            config([
+                'filesystems.disks.s3.key' => $settings['s3_key'] ?? '',
+                'filesystems.disks.s3.secret' => $settings['s3_secret'] ?? '',
+                'filesystems.disks.s3.region' => $settings['s3_region'] ?? '',
+                'filesystems.disks.s3.bucket' => $settings['s3_bucket'] ?? '',
+                'filesystems.disks.s3.use_path_style_endpoint' => false,
+            ]);
+        } elseif ($storageSetting === 'r2') {
+            config([
+                'filesystems.disks.r2.key' => $settings['r2_key'] ?? '',
+                'filesystems.disks.r2.secret' => $settings['r2_secret'] ?? '',
+                'filesystems.disks.r2.region' => $settings['r2_region'] ?? 'auto',
+                'filesystems.disks.r2.bucket' => $settings['r2_bucket'] ?? '',
+                'filesystems.disks.r2.endpoint' => $settings['r2_endpoint'] ?? '',
+                'filesystems.disks.r2.url' => $settings['r2_url'] ?? '',
+                'filesystems.disks.r2.use_path_style_endpoint' => false,
+            ]);
+        }
     }
 
     public function LoginWithAdmin(Request $request, User $user, $id)

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/subscription_provider.dart';
 import '../../../data/providers/auth_provider.dart';
+import '../../../data/services/coupon_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/subscription/plan_card.dart';
 
@@ -281,6 +282,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   ) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final subscriptionProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+    final couponController = TextEditingController();
+    final couponService = CouponService();
     
     // Find the selected plan
     final selectedPlan = subscriptionProvider.plans.firstWhere(
@@ -289,45 +292,209 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     );
 
     // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<dynamic>(
       context: context,
       builder: (dialogContext) {
         final l10n = AppLocalizations.of(dialogContext)!;
-        final price = duration == 'monthly' ? selectedPlan.price : (selectedPlan.priceYearly ?? selectedPlan.price * 12);
-        return AlertDialog(
-          title: Text(l10n.confirmSubscription),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${l10n.planLabel}: ${selectedPlan.nameFr ?? selectedPlan.name}'),
-              SizedBox(height: 8.h),
-              Text('${l10n.amountLabel}: ${price.toInt()} ${selectedPlan.currency}'),
-              SizedBox(height: 8.h),
-              Text('${l10n.durationLabel}: ${duration == 'monthly' ? l10n.monthly : l10n.annual}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l10n.confirmButton),
-            ),
-          ],
+        final price = duration == 'monthly'
+            ? selectedPlan.price
+            : (selectedPlan.priceYearly ?? selectedPlan.price * 12);
+
+        bool isValidatingCoupon = false;
+        bool couponApplied = false;
+        Map<String, dynamic>? appliedCouponData;
+
+        double discountAmount() {
+          final raw = appliedCouponData?['pricing']?['discount_amount'];
+          if (raw is num) return raw.toDouble();
+          if (raw is String) return double.tryParse(raw) ?? 0.0;
+          return 0.0;
+        }
+
+        int finalAmount() {
+          final raw = appliedCouponData?['pricing']?['final_price'];
+          if (raw is num) return raw.toInt();
+          if (raw is String) {
+            final parsed = double.tryParse(raw);
+            if (parsed != null) return parsed.toInt();
+          }
+          return price.toInt();
+        }
+        String appliedCouponCode() =>
+          appliedCouponData?['coupon']?['code'] ?? '';
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final isFr = Localizations.localeOf(context).languageCode == 'fr';
+            return AlertDialog(
+              title: Text(l10n.confirmSubscription),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${l10n.planLabel}: ${selectedPlan.nameFr ?? selectedPlan.name}'),
+                  SizedBox(height: 8.h),
+                  Text('${l10n.amountLabel}: ${finalAmount()} ${selectedPlan.currency}'),
+                  if (couponApplied) ...[
+                    SizedBox(height: 6.h),
+                    Text(
+                      '-${discountAmount().toStringAsFixed(0)} ${selectedPlan.currency} (${l10n.applied}: ${appliedCouponCode()})',
+                      style: TextStyle(color: AppColors.success, fontSize: 12.sp),
+                    ),
+                  ],
+                  SizedBox(height: 8.h),
+                  Text('${l10n.durationLabel}: ${duration == "monthly" ? l10n.monthly : l10n.annual}'),
+                  SizedBox(height: 12.h),
+                  Text(
+                    l10n.promoCode,
+                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: couponController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            hintText: l10n.enterYourCode,
+                            isDense: true,
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      ElevatedButton(
+                        onPressed: couponApplied || isValidatingCoupon
+                            ? null
+                            : () async {
+                                final token = authProvider.token;
+                                if (token == null) {
+                                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                    SnackBar(content: Text(l10n.loginToMakePayment)),
+                                  );
+                                  return;
+                                }
+                                if (couponController.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                    SnackBar(content: Text(l10n.promoCodeInvalid)),
+                                  );
+                                  return;
+                                }
+
+                                setState(() => isValidatingCoupon = true);
+                                final result = await couponService.validateCoupon(
+                                  couponCode: couponController.text.trim(),
+                                  planId: planId,
+                                  token: token,
+                                );
+                                setState(() => isValidatingCoupon = false);
+
+                                if (result['success'] == true && result['coupon_valid'] == true) {
+                                  setState(() {
+                                    couponApplied = true;
+                                    appliedCouponData = result;
+                                  });
+                                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                    SnackBar(content: Text(l10n.promoCodeAppliedSuccess)),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                    SnackBar(content: Text(result['message'] ?? l10n.promoCodeInvalid)),
+                                  );
+                                }
+                              },
+                        child: isValidatingCoupon
+                            ? SizedBox(
+                                width: 16.w,
+                                height: 16.h,
+                                child: const CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(l10n.apply),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: dialogContext,
+                          builder: (instructionContext) {
+                            return AlertDialog(
+                              title: Text(isFr
+                                  ? 'Instructions de paiement'
+                                  : 'Payment instructions'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(isFr
+                                      ? 'Vous serez redirigé vers le checkout Flutterwave.'
+                                      : 'You will be redirected to the Flutterwave checkout.'),
+                                  SizedBox(height: 8.h),
+                                  Text(isFr
+                                      ? 'En bas, cliquez sur « Changer la méthode de paiement ».'
+                                      : 'At the bottom, tap “Change payment method”.'),
+                                  SizedBox(height: 6.h),
+                                  Text(isFr
+                                      ? 'Choisissez Carte ou Mobile Money.'
+                                      : 'Choose Card or Mobile Money.'),
+                                  SizedBox(height: 8.h),
+                                  Text(isFr
+                                      ? 'Après paiement, vous serez redirigé vers l’app et votre abonnement sera validé.'
+                                      : 'After payment, you’ll be redirected to the app and your subscription will be validated.'),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(instructionContext),
+                                  child: Text(l10n.ok),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.info_outline),
+                      label: Text(isFr
+                          ? 'Voir les instructions de paiement'
+                          : 'View payment instructions'),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: Text(l10n.cancel),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogContext, {
+                    'confirmed': true,
+                    'final_amount': finalAmount(),
+                    'coupon_code': couponApplied ? appliedCouponCode() : null,
+                  }),
+                  child: Text(l10n.confirmButton),
+                ),
+              ],
+            );
+          },
         );
       },
     );
 
-    if (confirmed != true) return;
+    if (confirmed == null) return;
+    if (confirmed is bool && confirmed != true) return;
     if (!context.mounted) return;
 
-    // Navigate to payment screen with selected plan details
-    final amount = duration == 'monthly' 
-        ? selectedPlan.price 
-        : (selectedPlan.priceYearly ?? selectedPlan.price * 12);
+    final confirmedMap = confirmed is Map<String, dynamic> ? confirmed : null;
+    final amount = confirmedMap?['final_amount'] as int? ??
+        (duration == 'monthly'
+            ? selectedPlan.price
+            : (selectedPlan.priceYearly ?? selectedPlan.price * 12)).toInt();
+    final couponCode = confirmedMap?['coupon_code'] as String?;
     
     Navigator.pushNamed(
       context,
@@ -338,6 +505,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         'billing_cycle': duration,
         'amount': amount.toInt(),
         'currency': selectedPlan.currency,
+        if (couponCode != null) 'coupon_code': couponCode,
       },
     );
   }

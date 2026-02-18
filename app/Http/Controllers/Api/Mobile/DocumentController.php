@@ -334,6 +334,7 @@ class DocumentController extends Controller
                     'legal_documents.file_name',
                     'legal_documents.file_size',
                     'legal_documents.downloads_count',
+                    'legal_documents.views_count',
                     'legal_documents.created_at',
                 ])
                 ->with('category:id,name');
@@ -380,6 +381,7 @@ class DocumentController extends Controller
                         'file_name' => $doc->file_name,
                         'file_size' => $doc->formatted_file_size,
                         'downloads_count' => $doc->downloads_count ?? 0,
+                        'views_count' => $doc->views_count ?? 0,
                         'created_at' => $doc->created_at->format('Y-m-d'),
                     ];
                 });
@@ -521,6 +523,9 @@ class DocumentController extends Controller
             'document_id' => $documentId,
             'url_scheme' => parse_url($url, PHP_URL_SCHEME),
         ]);
+
+        // Increment document downloads_count
+        $document->incrementDownloads();
 
         // Record download
         DocumentDownload::create([
@@ -830,5 +835,49 @@ class DocumentController extends Controller
                 : 0,
             'reset_at' => $subscription->quota_reset_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * Track when user views/opens a legal document
+     * 
+     * @param Request $request
+     * @param int $documentId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function viewLegalDocument(Request $request, $documentId)
+    {
+        $user = $request->user();
+        
+        Log::info('Legal document view request', [
+            'user_id' => $user->id,
+            'document_id' => $documentId,
+        ]);
+
+        $document = LegalDocument::find($documentId);
+
+        if (!$document) {
+            Log::warning('Legal document not found', ['document_id' => $documentId]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Document introuvable',
+            ], 404);
+        }
+
+        // Increment document views_count
+        $document->incrementViews();
+
+        Log::info('Legal document view tracked', [
+            'document_id' => $documentId,
+            'new_views_count' => $document->views_count,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vue enregistrée',
+            'data' => [
+                'views_count' => $document->views_count,
+                'downloads_count' => $document->downloads_count,
+            ],
+        ], 200);
     }
 }

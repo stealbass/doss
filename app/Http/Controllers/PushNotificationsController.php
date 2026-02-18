@@ -129,8 +129,12 @@ class PushNotificationsController extends Controller
     {
         $plans = MobileAppPlan::where('is_active', true)->get();
         
-        // Charger tous les utilisateurs mobiles avec leurs abonnements
-        $users = User::whereHas('mobileSubscriptions')
+        // Charger tous les utilisateurs mobiles (abonnés ou activité mobile)
+        $users = User::where(function ($query) {
+                $query->whereHas('mobileSubscriptions')
+                    ->orWhereNotNull('last_mobile_activity_at')
+                    ->orWhereNotNull('mobile_app_installed_at');
+            })
             ->with(['activeMobileSubscription.plan'])
             ->orderBy('name', 'asc')
             ->get();
@@ -448,7 +452,11 @@ class PushNotificationsController extends Controller
             return User::whereIn('id', $userIds)->get();
         }
 
-        $query = User::whereHas('mobileSubscriptions');
+        $query = User::where(function ($query) {
+            $query->whereHas('mobileSubscriptions')
+                ->orWhereNotNull('last_mobile_activity_at')
+                ->orWhereNotNull('mobile_app_installed_at');
+        });
 
         switch ($notification->target_audience) {
             case 'students':

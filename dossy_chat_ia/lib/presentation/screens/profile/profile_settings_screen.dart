@@ -3,8 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/providers/auth_provider.dart';
+import '../../../data/providers/chat_provider.dart';
 import '../../../data/providers/document_provider.dart';
 import '../../../data/providers/locale_provider.dart';
 import '../../../data/providers/theme_provider.dart';
@@ -23,7 +25,11 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late TextEditingController _cityController;
+  String? _selectedRole;
+  String? _selectedJurisdiction;
   bool _isEditing = false;
+
+  final List<String> _roles = const ['student', 'lawyer', 'enterprise'];
 
   @override
   void initState() {
@@ -33,6 +39,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _addressController = TextEditingController(text: user?.address ?? '');
     _cityController = TextEditingController(text: user?.city ?? '');
+    _selectedRole = user?.role;
+    _selectedJurisdiction = user?.jurisdiction;
   }
 
   @override
@@ -44,6 +52,43 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     super.dispose();
   }
 
+  List<DropdownMenuItem<String>> _buildCountryItems() {
+    try {
+      return AppConstants.countries.map((country) {
+        return DropdownMenuItem(
+          value: country['code'],
+          child: Row(
+            children: [
+              Text(
+                country['flag'] ?? '',
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(country['name'] ?? '')),
+            ],
+          ),
+        );
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  String _roleLabel(AppLocalizations l10n, String? role) {
+    if (role == 'lawyer') return l10n.roleLawyer;
+    if (role == 'enterprise') return l10n.roleEnterprise;
+    return l10n.roleStudent;
+  }
+
+  String _countryName(String? code) {
+    if (code == null || code.isEmpty) return '';
+    final match = AppConstants.countries.firstWhere(
+      (country) => country['code'] == code,
+      orElse: () => const {'name': ''},
+    );
+    return match['name'] ?? '';
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -53,6 +98,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim(),
       city: _cityController.text.trim(),
+      jurisdiction: _selectedJurisdiction,
+      mobileRole: _selectedRole,
     );
 
     if (!mounted) return;
@@ -66,6 +113,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           _phoneController.text = updatedUser.phone ?? '';
           _addressController.text = updatedUser.address ?? '';
           _cityController.text = updatedUser.city ?? '';
+          _selectedRole = updatedUser.role;
+          _selectedJurisdiction = updatedUser.jurisdiction;
         }
       });
       final l10n = AppLocalizations.of(context)!;
@@ -152,6 +201,17 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                           color: Colors.white.withAlpha((0.9 * 255).round()),
                         ),
                       ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        [
+                          _roleLabel(l10n, user.role),
+                          _countryName(user.jurisdiction),
+                        ].where((value) => value.isNotEmpty).join(' • '),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: Colors.white.withAlpha((0.85 * 255).round()),
+                        ),
+                      ),
                       SizedBox(height: 16.h),
                       Container(
                         padding: EdgeInsets.symmetric(
@@ -230,6 +290,50 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                               ),
                             ),
                             SizedBox(height: 16.h),
+                            DropdownButtonFormField<String>(
+                              value: _selectedRole,
+                              items: _roles.map((role) {
+                                final roleLabel = role == 'student'
+                                    ? l10n.roleStudent
+                                    : role == 'lawyer'
+                                        ? l10n.roleLawyer
+                                        : l10n.roleEnterprise;
+                                return DropdownMenuItem(
+                                  value: role,
+                                  child: Text(roleLabel),
+                                );
+                              }).toList(),
+                              onChanged: _isEditing
+                                  ? (value) {
+                                      setState(() {
+                                        _selectedRole = value;
+                                      });
+                                    }
+                                  : null,
+                              decoration: InputDecoration(
+                                labelText: l10n.youAre,
+                                prefixIcon: const Icon(Icons.work_outline),
+                              ),
+                              hint: Text(l10n.selectYourProfile),
+                            ),
+                            SizedBox(height: 16.h),
+                            DropdownButtonFormField<String>(
+                              value: _selectedJurisdiction,
+                              items: _buildCountryItems(),
+                              onChanged: _isEditing
+                                  ? (value) {
+                                      setState(() {
+                                        _selectedJurisdiction = value;
+                                      });
+                                    }
+                                  : null,
+                              decoration: InputDecoration(
+                                labelText: l10n.countryJurisdiction,
+                                prefixIcon: const Icon(Icons.flag_outlined),
+                              ),
+                              hint: Text(l10n.selectYourCountry),
+                            ),
+                            SizedBox(height: 16.h),
                             TextFormField(
                               controller: _cityController,
                               enabled: _isEditing,
@@ -274,6 +378,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                                     _addressController.text =
                                         user.address ?? '';
                                     _cityController.text = user.city ?? '';
+                                    _selectedRole = user.role;
+                                    _selectedJurisdiction = user.jurisdiction;
                                   });
                                 },
                                 child: Text(l10n.cancel),
@@ -580,6 +686,8 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                         // Clear document cache before logout
                         final documentProvider = Provider.of<DocumentProvider>(context, listen: false);
                         await documentProvider.clearCache();
+
+                        Provider.of<ChatProvider>(context, listen: false).clearChat();
                         
                         await authProvider.logout();
                         if (!context.mounted) return;

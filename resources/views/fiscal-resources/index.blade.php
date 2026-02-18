@@ -8,9 +8,14 @@
                 <h1 class="h3 mb-0 text-gray-800">
                     <i class="fas fa-file-invoice-dollar"></i> Ressources Fiscales & Sociales
                 </h1>
-                <a href="{{ route('fiscal-resources.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nouvelle Ressource
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('fiscal-resources.bulk-upload.form') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-upload"></i> Import Multiple
+                    </a>
+                    <a href="{{ route('fiscal-resources.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nouvelle Ressource
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -38,8 +43,8 @@
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Actives</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-resources">{{ $stats['active'] ?? 0 }}</div>
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Visibles Mobile</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="active-resources">{{ $stats['mobile_visible'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-check-circle fa-2x text-gray-300"></i>
@@ -55,7 +60,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Vues Totales</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-views">{{ $stats['views'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-views">{{ $stats['total_views'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-eye fa-2x text-gray-300"></i>
@@ -70,8 +75,8 @@
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">14 Pays</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">Supportés</div>
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pays</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['countries'] ?? 0 }} supportés</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-globe fa-2x text-gray-300"></i>
@@ -90,19 +95,20 @@
         <div class="card-body">
             <form method="GET" action="{{ route('fiscal-resources.index') }}" class="form-inline">
                 <div class="form-group mr-3">
-                    <select name="type" class="form-control" onchange="this.form.submit()">
+                    <select name="resource_type" class="form-control" onchange="this.form.submit()">
                         <option value="">Tous les types</option>
-                        <option value="salary_grid" {{ request('type') == 'salary_grid' ? 'selected' : '' }}>Grilles Salariales</option>
-                        <option value="tax_parameters" {{ request('type') == 'tax_parameters' ? 'selected' : '' }}>Paramètres Fiscaux</option>
-                        <option value="social_contributions" {{ request('type') == 'social_contributions' ? 'selected' : '' }}>Cotisations Sociales</option>
-                        <option value="leave_rules" {{ request('type') == 'leave_rules' ? 'selected' : '' }}>Règles de Congés</option>
-                        <option value="employment_law" {{ request('type') == 'employment_law' ? 'selected' : '' }}>Droit du Travail</option>
-                        <option value="business_creation" {{ request('type') == 'business_creation' ? 'selected' : '' }}>Création Entreprise</option>
-                        <option value="tax_forms" {{ request('type') == 'tax_forms' ? 'selected' : '' }}>Formulaires Fiscaux</option>
-                        <option value="legal_thresholds" {{ request('type') == 'legal_thresholds' ? 'selected' : '' }}>Seuils Légaux</option>
-                        <option value="labor_regulations" {{ request('type') == 'labor_regulations' ? 'selected' : '' }}>Réglementation Travail</option>
-                        <option value="accounting_standards" {{ request('type') == 'accounting_standards' ? 'selected' : '' }}>Normes Comptables</option>
-                        <option value="other" {{ request('type') == 'other' ? 'selected' : '' }}>Autres</option>
+                        <option value="cgi" {{ request('resource_type') == 'cgi' ? 'selected' : '' }}>CGI</option>
+                        <option value="finance_law" {{ request('resource_type') == 'finance_law' ? 'selected' : '' }}>Loi de Finances</option>
+                        <option value="tax_procedure" {{ request('resource_type') == 'tax_procedure' ? 'selected' : '' }}>Procédure Fiscale</option>
+                        <option value="circular" {{ request('resource_type') == 'circular' ? 'selected' : '' }}>Circulaire</option>
+                        <option value="doctrine" {{ request('resource_type') == 'doctrine' ? 'selected' : '' }}>Doctrine</option>
+                        <option value="convention" {{ request('resource_type') == 'convention' ? 'selected' : '' }}>Convention</option>
+                        <option value="labor_code" {{ request('resource_type') == 'labor_code' ? 'selected' : '' }}>Code du Travail</option>
+                        <option value="social_code" {{ request('resource_type') == 'social_code' ? 'selected' : '' }}>Code de Sécurité Sociale</option>
+                        <option value="collective_agreement" {{ request('resource_type') == 'collective_agreement' ? 'selected' : '' }}>Convention Collective</option>
+                        <option value="salary_grid" {{ request('resource_type') == 'salary_grid' ? 'selected' : '' }}>Grilles Salariales</option>
+                        <option value="administrative_form" {{ request('resource_type') == 'administrative_form' ? 'selected' : '' }}>Formulaire Administratif</option>
+                        <option value="other" {{ request('resource_type') == 'other' ? 'selected' : '' }}>Autres</option>
                     </select>
                 </div>
 
@@ -132,7 +138,7 @@
                     <i class="fas fa-search"></i> Rechercher
                 </button>
 
-                @if(request()->hasAny(['type', 'country', 'year', 'search']))
+                @if(request()->hasAny(['resource_type', 'country', 'year', 'search']))
                     <a href="{{ route('fiscal-resources.index') }}" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Réinitialiser
                     </a>
@@ -171,13 +177,13 @@
                                 <small class="text-muted">{{ Str::limit($resource->description, 50) }}</small>
                             </td>
                             <td>
-                                <span class="badge badge-info">{{ $resource->type }}</span>
+                                <span class="badge badge-info">{{ Str::title(str_replace('_', ' ', $resource->resource_type)) }}</span>
                             </td>
                             <td>
                                 <img src="https://flagcdn.com/24x18/{{ strtolower($resource->country) }}.png" alt="{{ $resource->country }}" class="mr-1">
                                 {{ $resource->country }}
                             </td>
-                            <td>{{ $resource->applicable_year ?? '-' }}</td>
+                            <td>{{ $resource->year ?? '-' }}</td>
                             <td>
                                 @if($resource->version)
                                     <span class="badge badge-primary">v{{ $resource->version }}</span>
@@ -189,7 +195,7 @@
                                 <i class="fas fa-eye"></i> {{ $resource->views_count }}
                             </td>
                             <td>
-                                @if($resource->is_active)
+                                @if($resource->is_mobile_visible)
                                     <span class="badge badge-success">Active</span>
                                 @else
                                     <span class="badge badge-secondary">Inactive</span>
@@ -206,7 +212,11 @@
                                     <a href="{{ route('fiscal-resources.edit', $resource->id) }}" class="btn btn-sm btn-warning" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    @if(\Auth::user()->type == 'super admin')
+                                    @php
+                                        $fiscalPermissions = json_decode(\Auth::user()->permission_json ?? '[]', true) ?? [];
+                                        $canDeleteFiscal = \Auth::user()->type == 'super admin' || (\Auth::user()->type == 'superAdminEmployee' && (in_array('manage fiscal-resources', $fiscalPermissions) || in_array(5, $fiscalPermissions)));
+                                    @endphp
+                                    @if($canDeleteFiscal)
                                         <form action="{{ route('fiscal-resources.destroy', $resource->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette ressource ?');">
                                             @csrf
                                             @method('DELETE')

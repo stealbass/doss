@@ -16,15 +16,34 @@ class TemplatesListScreen extends StatefulWidget {
 class _TemplatesListScreenState extends State<TemplatesListScreen> {
   String _selectedCategory = 'Tous';
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   int _currentDisplayPage = 1;
   final int _itemsPerPage = 10;
+  int? _highlightedTemplateId;
+  bool _handledInitialRoute = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_handledInitialRoute) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        if (args is Map<String, dynamic> && args['templateId'] != null) {
+          _highlightedTemplateId = args['templateId'] as int;
+        }
+        _handledInitialRoute = true;
+      }
+      setState(() {
+        _selectedCategory = AppLocalizations.of(context)!.all;
+      });
       _loadAllTemplates();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   /// Load all templates from all pages to ensure all categories are shown
@@ -35,20 +54,67 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
     if (authProvider.token == null) return;
 
     // Load first page to get total pages
-    await templateProvider.fetchTemplates(authProvider.token!);
+    await templateProvider.fetchTemplates(
+      authProvider.token!,
+      search: _searchQuery.isNotEmpty ? _searchQuery : null,
+    );
+
+    if (!mounted) return;
+
+    // Reset to first page display after initial fetch
+    setState(() => _currentDisplayPage = 1);
 
     // If there are more pages, load them all
     if (templateProvider.totalPages > 1) {
-      for (int page = 2; page <= templateProvider.totalPages; page++) {
-        await templateProvider.fetchTemplates(
-          authProvider.token!,
-          page: page,
-        );
-      }
+      _loadRemainingPages(
+        authProvider.token!,
+        templateProvider.totalPages,
+      );
     }
 
-    // Reset to first page display
-    setState(() => _currentDisplayPage = 1);
+    if (_highlightedTemplateId != null) {
+      _openHighlightedTemplate(templateProvider, _highlightedTemplateId!);
+    }
+  }
+
+  void _openHighlightedTemplate(TemplateProvider templateProvider, int templateId) {
+    try {
+      final template = templateProvider.templates.firstWhere(
+        (t) => t.id == templateId,
+      );
+
+      _highlightedTemplateId = null;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushNamed(
+          context,
+          '/template-details',
+          arguments: template,
+        );
+      });
+    } catch (_) {
+      // If not found yet, it may arrive after loading remaining pages.
+    }
+  }
+
+  Future<void> _loadRemainingPages(String token, int totalPages) async {
+    final templateProvider = Provider.of<TemplateProvider>(context, listen: false);
+
+    for (int page = 2; page <= totalPages; page++) {
+      await templateProvider.fetchTemplates(
+        token,
+        page: page,
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        append: true,
+      );
+
+      if (!mounted) return;
+
+      if (_highlightedTemplateId != null) {
+        _openHighlightedTemplate(templateProvider, _highlightedTemplateId!);
+      }
+    }
   }
 
   Future<void> _loadTemplates() async {
@@ -59,9 +125,10 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
   List<DocumentTemplate> _getFilteredTemplates(
       List<DocumentTemplate> templates) {
     var filtered = templates;
+    final allLabel = AppLocalizations.of(context)!.all;
 
     // Filter by category
-    if (_selectedCategory != 'Tous') {
+    if (_selectedCategory != allLabel) {
       filtered =
           filtered.where((t) => t.categoryName == _selectedCategory).toList();
     }
@@ -82,8 +149,12 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
   }
 
   Set<String> _getCategories(List<DocumentTemplate> templates) {
-    final categories = templates.map((t) => t.categoryName).toSet();
-    return {'Tous', ...categories};
+    final allLabel = AppLocalizations.of(context)!.all;
+    final categories = templates
+        .where((t) => t.categoryName.isNotEmpty)
+        .map((t) => t.categoryName)
+        .toSet();
+    return {allLabel, ...categories};
   }
 
   @override
@@ -103,7 +174,7 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
       ),
       body: Consumer<TemplateProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading) {
+          if (provider.isLoading && provider.templates.isEmpty) {
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -154,20 +225,17 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  onSubmitted: (_) => _loadTemplates(),
                   decoration: InputDecoration(
                     hintText: l10n.searchTemplates,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             onPressed: () {
-                              setState(() {
-                                _searchQuery = '';
-                              });
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
                             },
                             icon: const Icon(Icons.clear),
                           )
@@ -284,19 +352,17 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
               ),
 
               // Pagination Controls
-              if (filteredTemplates.isNotEmpty && totalPages > 1)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  color: Colors.grey[100],
+              if (totalPages > 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ElevatedButton.icon(
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
                         onPressed: _currentDisplayPage > 1
                             ? () => setState(() => _currentDisplayPage--)
                             : null,
-                        icon: const Icon(Icons.chevron_left),
-                        label: Text(l10n.previous),
                       ),
                       Text(
                         'Page $_currentDisplayPage / $totalPages',
@@ -305,12 +371,11 @@ class _TemplatesListScreenState extends State<TemplatesListScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      ElevatedButton.icon(
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
                         onPressed: _currentDisplayPage < totalPages
                             ? () => setState(() => _currentDisplayPage++)
                             : null,
-                        label: const Text('Suivant'),
-                        icon: const Icon(Icons.chevron_right),
                       ),
                     ],
                   ),

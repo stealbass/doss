@@ -12,6 +12,8 @@ class AuthProvider with ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _error;
+  bool _needsProfileCompletion = false;
+  List<String> _missingProfileFields = [];
   
   // ✅ SECURE: Utilise FlutterSecureStorage au lieu de SharedPreferences
   final _secureStorage = const FlutterSecureStorage();
@@ -22,6 +24,8 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _user != null && _token != null;
+  bool get needsProfileCompletion => _needsProfileCompletion;
+  List<String> get missingProfileFields => List.unmodifiable(_missingProfileFields);
   
   final ApiService _apiService = ApiService();
   
@@ -86,6 +90,10 @@ class AuthProvider with ChangeNotifier {
         // Parse user data from response
         final userData = response['data']['user'];
         _user = UserModel.fromJson(userData);
+
+        _missingProfileFields =
+            List<String>.from(response['data']['missing_fields'] ?? []);
+        _needsProfileCompletion = _missingProfileFields.isNotEmpty;
         
         // ✅ SECURE: Stocker en FlutterSecureStorage (encrypted)
         await _secureStorage.write(
@@ -140,6 +148,7 @@ class AuthProvider with ChangeNotifier {
     required String passwordConfirmation,
     required String phone,
     String? jurisdiction,
+    String? mobileRole,
     String? referralCode,
   }) async {
     _isLoading = true;
@@ -190,6 +199,7 @@ class AuthProvider with ChangeNotifier {
         passwordConfirmation: passwordConfirmation,
         phone: phone,
         jurisdiction: jurisdiction,
+        mobileRole: mobileRole,
         referralCode: referralCode,
       );
       
@@ -256,11 +266,23 @@ class AuthProvider with ChangeNotifier {
     // Clear non-sensitive data
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('is_logged_in');
+    await prefs.remove('chat_user_id');
     
     // CRITICAL: Clear Hive cache to prevent data leakage between users
     try {
-      final box = Hive.box<Map>('documents');
-      await box.clear();
+      final documentsBox = Hive.box<Map>('documents');
+      await documentsBox.clear();
+
+      if (Hive.isBoxOpen('auth_box')) {
+        await Hive.box('auth_box').clear();
+      }
+      if (Hive.isBoxOpen('user_box')) {
+        await Hive.box('user_box').clear();
+      }
+      if (Hive.isBoxOpen('cache_box')) {
+        await Hive.box('cache_box').clear();
+      }
+
       print('✅ Hive cache cleared on logout');
     } catch (e) {
       print('⚠️ Could not clear Hive cache: $e');
@@ -280,6 +302,10 @@ class AuthProvider with ChangeNotifier {
         // Parse user data properly from the nested structure
         final userData = response['data']['user'] ?? response['data'];
         _user = UserModel.fromJson(userData);
+
+        _missingProfileFields =
+            List<String>.from(response['data']['missing_fields'] ?? []);
+        _needsProfileCompletion = _missingProfileFields.isNotEmpty;
         
         // Update secure storage
         await _secureStorage.write(key: 'user_data', value: json.encode(_user!.toJson()));
@@ -310,6 +336,8 @@ class AuthProvider with ChangeNotifier {
     String? avatar,
     String? address,
     String? city,
+    String? jurisdiction,
+    String? mobileRole,
   }) async {
     if (_token == null) return false;
     
@@ -326,6 +354,8 @@ class AuthProvider with ChangeNotifier {
         avatar: avatar,
         address: address,
         city: city,
+        jurisdiction: jurisdiction,
+        mobileRole: mobileRole,
       );
       
       print('🟢 AUTH PROVIDER - Response: $response');
@@ -334,6 +364,10 @@ class AuthProvider with ChangeNotifier {
         // Parse user data properly from the nested structure
         final userData = response['data']['user'] ?? response['data'];
         _user = UserModel.fromJson(userData);
+
+        _missingProfileFields =
+            List<String>.from(response['data']['missing_fields'] ?? []);
+        _needsProfileCompletion = _missingProfileFields.isNotEmpty;
         
         // Update secure storage
         await _secureStorage.write(key: 'user_data', value: json.encode(_user!.toJson()));
@@ -373,7 +407,6 @@ class AuthProvider with ChangeNotifier {
     // So we'll use a callback or direct provider access via context
     // For now, this method can be extended to handle subscription updates
     // The actual subscription sync will happen in the app initialization
-    print('DEBUG: Auth login complete, subscription will be fetched by app');
   }
   
   // Send password reset email

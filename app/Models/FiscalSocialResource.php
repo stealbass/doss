@@ -127,6 +127,22 @@ class FiscalSocialResource extends Model
     }
 
     /**
+     * Increment download count
+     */
+    public function incrementDownloads()
+    {
+        $this->increment('downloads_count');
+    }
+
+    /**
+     * Increment view count
+     */
+    public function incrementViews()
+    {
+        $this->increment('views_count');
+    }
+
+    /**
      * Auto-index/reindex on create/update, clean up on delete
      */
     protected static function boot()

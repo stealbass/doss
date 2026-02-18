@@ -162,6 +162,8 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::get('user/{id}/plan', [UserController::class, 'upgradePlan'])->name('plan.upgrade');
     Route::get('user/{id}/plan/{pid}', [UserController::class, 'activePlan'])->name('plan.active');
     Route::get('user/{id}/plans/{planid}', [UserController::class, 'deactivatePlan'])->name('plan.deactivate');
+    Route::get('users/{id}/documents/download-all', [UserController::class, 'downloadAllDocuments'])->name('users.documents.download');
+    Route::delete('users/{id}/documents', [UserController::class, 'deleteAllDocuments'])->name('users.documents.delete');
     Route::any('company-reset-password/{id}', [UserController::class, 'companyPassword'])->name('company.reset');
     Route::any('users/verify/{id}', [UserController::class, 'verify'])->name('users.verify');
     Route::get('users/detail/{id}', [UserController::class, 'detail'])->name('users.detail');
@@ -911,7 +913,11 @@ Route::post('payu/settings', [PayUPaymentController::class, 'settingConfig'])->n
 Route::middleware(['auth', 'XSS'])->prefix('admin')->name('')->group(function () {
     Route::prefix('document-templates')->name('document-templates.')->group(function () {
         Route::get('/', [App\Http\Controllers\DocumentTemplateController::class, 'index'])->name('index');
+        Route::get('/bulk-upload', [App\Http\Controllers\DocumentTemplateController::class, 'bulkUploadForm'])->name('bulk-upload.form');
+        Route::post('/bulk-upload', [App\Http\Controllers\DocumentTemplateController::class, 'bulkUploadStore'])->name('bulk-upload.store');
         Route::post('/', [App\Http\Controllers\DocumentTemplateController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [App\Http\Controllers\DocumentTemplateController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\DocumentTemplateController::class, 'update'])->name('update');
         Route::post('/categories/store', [App\Http\Controllers\DocumentTemplateController::class, 'storeCategory'])->name('categories.store');
         Route::get('/{id}/download', [App\Http\Controllers\DocumentTemplateController::class, 'download'])->name('download');
         Route::post('/{id}/toggle-mobile', [App\Http\Controllers\DocumentTemplateController::class, 'toggleMobileVisibility'])->name('toggle-mobile');
@@ -924,6 +930,8 @@ Route::middleware(['auth', 'XSS'])->prefix('admin')->name('')->group(function ()
     // MOVED OUTSIDE admin prefix to match view route calls
     Route::prefix('fiscal-resources')->name('fiscal-resources.')->group(function () {
         Route::get('/', [App\Http\Controllers\FiscalSocialResourceController::class, 'index'])->name('index');
+        Route::get('/bulk-upload', [App\Http\Controllers\FiscalSocialResourceController::class, 'bulkUploadForm'])->name('bulk-upload.form');
+        Route::post('/bulk-upload', [App\Http\Controllers\FiscalSocialResourceController::class, 'bulkUploadStore'])->name('bulk-upload.store');
         Route::get('/create', [App\Http\Controllers\FiscalSocialResourceController::class, 'create'])->name('create');
         Route::post('/', [App\Http\Controllers\FiscalSocialResourceController::class, 'store'])->name('store');
         Route::post('/categories/store', [App\Http\Controllers\FiscalSocialResourceController::class, 'storeCategory'])->name('categories.store');

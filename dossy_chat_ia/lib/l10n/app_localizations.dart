@@ -253,6 +253,11 @@ class AppLocalizations {
   String get profileUpdatedSuccess => locale.languageCode == 'en' ? AppLocalizations_en.profileUpdatedSuccess : AppLocalizations_fr.profileUpdatedSuccess;
   String get updateError => locale.languageCode == 'en' ? AppLocalizations_en.updateError : AppLocalizations_fr.updateError;
   String get pleaseEnterName => locale.languageCode == 'en' ? AppLocalizations_en.pleaseEnterName : AppLocalizations_fr.pleaseEnterName;
+  String get completeProfileTitle => locale.languageCode == 'en' ? AppLocalizations_en.completeProfileTitle : AppLocalizations_fr.completeProfileTitle;
+  String get completeProfileMessage => locale.languageCode == 'en' ? AppLocalizations_en.completeProfileMessage : AppLocalizations_fr.completeProfileMessage;
+  String get missingFieldsLabel => locale.languageCode == 'en' ? AppLocalizations_en.missingFieldsLabel : AppLocalizations_fr.missingFieldsLabel;
+  String get completeNow => locale.languageCode == 'en' ? AppLocalizations_en.completeNow : AppLocalizations_fr.completeNow;
+  String get later => locale.languageCode == 'en' ? AppLocalizations_en.later : AppLocalizations_fr.later;
   
   // Auth Screens
   String get loginSubtitle => locale.languageCode == 'en' ? AppLocalizations_en.loginSubtitle : AppLocalizations_fr.loginSubtitle;
@@ -587,6 +592,7 @@ class AppLocalizations {
   String get uploads => locale.languageCode == 'en' ? AppLocalizations_en.uploads : AppLocalizations_fr.uploads;
   String get noDocuments => locale.languageCode == 'en' ? AppLocalizations_en.noDocuments : AppLocalizations_fr.noDocuments;
   String get uploadDocumentsForAdvancedRAG => locale.languageCode == 'en' ? AppLocalizations_en.uploadDocumentsForAdvancedRAG : AppLocalizations_fr.uploadDocumentsForAdvancedRAG;
+  String get uploadDocumentsAndAskChat => locale.languageCode == 'en' ? AppLocalizations_en.uploadDocumentsAndAskChat : AppLocalizations_fr.uploadDocumentsAndAskChat;
   String get uploading => locale.languageCode == 'en' ? AppLocalizations_en.uploading : AppLocalizations_fr.uploading;
   String get deleteDocument => locale.languageCode == 'en' ? AppLocalizations_en.deleteDocument : AppLocalizations_fr.deleteDocument;
   String get confirmDeleteDocument => locale.languageCode == 'en' ? AppLocalizations_en.confirmDeleteDocument : AppLocalizations_fr.confirmDeleteDocument;
@@ -697,12 +703,15 @@ class AppLocalizations {
   String get loadMore => locale.languageCode == 'en' ? AppLocalizations_en.loadMore : AppLocalizations_fr.loadMore;
   String get subAccountCreationFailed => locale.languageCode == 'en' ? AppLocalizations_en.subAccountCreationFailed : AppLocalizations_fr.subAccountCreationFailed;
   String get accountActivated => locale.languageCode == 'en' ? AppLocalizations_en.accountActivated : AppLocalizations_fr.accountActivated;
+  String get accountDisabled => locale.languageCode == 'en' ? AppLocalizations_en.accountDisabled : AppLocalizations_fr.accountDisabled;
   String get accountDeleted => locale.languageCode == 'en' ? AppLocalizations_en.accountDeleted : AppLocalizations_fr.accountDeleted;
+  String get createFirstSubAccount => locale.languageCode == 'en' ? AppLocalizations_en.createFirstSubAccount : AppLocalizations_fr.createFirstSubAccount;
   String get mustBeAuthenticatedForSubAccount => locale.languageCode == 'en' ? AppLocalizations_en.mustBeAuthenticatedForSubAccount : AppLocalizations_fr.mustBeAuthenticatedForSubAccount;
   String get noDocumentFound => locale.languageCode == 'en' ? AppLocalizations_en.noDocumentFound : AppLocalizations_fr.noDocumentFound;
   String get noTaxParameters => locale.languageCode == 'en' ? AppLocalizations_en.noTaxParameters : AppLocalizations_fr.noTaxParameters;
   String get creatingInProgress => locale.languageCode == 'en' ? AppLocalizations_en.creatingInProgress : AppLocalizations_fr.creatingInProgress;
   String get confirmDeletion => locale.languageCode == 'en' ? AppLocalizations_en.confirmDeletion : AppLocalizations_fr.confirmDeletion;
+  String get taxParameters => locale.languageCode == 'en' ? AppLocalizations_en.taxParameters : AppLocalizations_fr.taxParameters;
   String get taxCodeCGI => locale.languageCode == 'en' ? AppLocalizations_en.taxCodeCGI : AppLocalizations_fr.taxCodeCGI;
   String get taxCodeLPF => locale.languageCode == 'en' ? AppLocalizations_en.taxCodeLPF : AppLocalizations_fr.taxCodeLPF;
   String get calculationSuccessful => locale.languageCode == 'en' ? AppLocalizations_en.calculationSuccessful : AppLocalizations_fr.calculationSuccessful;

@@ -9,6 +9,8 @@ use App\Models\MobileAppSubscription;
 use App\Services\SimpleRagService;
 use App\Services\AdvancedRagService;
 use App\Services\OpenAIService;
+use App\Services\DangerousQuestionDetector;
+use App\Services\UserContextProfiler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -19,15 +21,21 @@ class ChatController extends Controller
     private SimpleRagService $simpleRag;
     private AdvancedRagService $advancedRag;
     private OpenAIService $openai;
+    private DangerousQuestionDetector $dangerDetector;
+    private UserContextProfiler $profiler;
 
     public function __construct(
         SimpleRagService $simpleRag,
         AdvancedRagService $advancedRag,
-        OpenAIService $openai
+        OpenAIService $openai,
+        DangerousQuestionDetector $dangerDetector,
+        UserContextProfiler $profiler
     ) {
         $this->simpleRag = $simpleRag;
         $this->advancedRag = $advancedRag;
         $this->openai = $openai;
+        $this->dangerDetector = $dangerDetector;
+        $this->profiler = $profiler;
     }
 
     /**
@@ -194,7 +202,7 @@ class ChatController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'conversation_id' => 'nullable|integer|exists:conversations,id',
-            'message' => 'required|string|max:2000',
+            'message' => 'required|string|max:20000',
             'use_rag' => 'nullable|boolean',
             'rag_type' => 'nullable|in:simple,advanced,both',
             'document_ids' => 'nullable|array',
@@ -415,7 +423,8 @@ class ChatController extends Controller
                                 $localResults = $this->advancedRag->searchUserDocuments(
                                     $request->message,
                                     $user->id,
-                                    10
+                                    10,
+                                    $request->document_ids
                                 );
 
                                 if (!empty($localResults)) {
@@ -506,7 +515,8 @@ class ChatController extends Controller
             }
 
             // Only use RAG if question needs documents (not for greetings or general chat)
-            $needsRag = $this->questionNeedsDocuments($request->message);
+            $isDocumentLookup = $this->isDocumentLookupIntent($request->message);
+            $needsRag = $this->questionNeedsDocuments($request->message) || $isDocumentLookup;
             
             Log::info('Mobile chat: RAG detection', [
                 'message' => $request->message,
@@ -515,8 +525,8 @@ class ChatController extends Controller
                 'hasSelectedDocuments' => $hasSelectedDocuments,
             ]);
             
-            // Toujours utiliser les bibliothèques globales sauf si documents utilisateur spécifiques
-            $allowGlobalRag = true;
+            // Ne pas utiliser les bibliothèques globales si l'utilisateur a sélectionné des documents
+            $allowGlobalRag = !$hasSelectedDocuments;
 
             if ($useRag && ($needsRag || !empty($userDocumentContent))) {
                 // Advanced RAG (User Documents from Pinecone)
@@ -614,8 +624,42 @@ class ChatController extends Controller
                     . $context;
             }
             
+            // ✅ ÉTAPE 1: DÉTECTION DE QUESTIONS DANGEREUSES
+            $dangerCheck = $this->dangerDetector->detect($request->message);
+            
+            if ($dangerCheck['is_dangerous'] && $dangerCheck['should_block']) {
+                Log::warning('Dangerous question blocked', [
+                    'user_id' => $user->id,
+                    'category' => $dangerCheck['category'],
+                    'severity' => $dangerCheck['severity'],
+                    'message_preview' => substr($request->message, 0, 100),
+                ]);
+
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => $dangerCheck['message'],
+                    'blocked' => true,
+                    'reason' => 'dangerous_content',
+                ], 403);
+            }
+
+            // Si la question est sensible mais pas dangereuse, ajouter un avertissement
+            if ($dangerCheck['is_sensitive'] ?? false) {
+                $context .= "\n\n=== AVERTISSEMENT CONTENU SENSIBLE ===\n";
+                $context .= "Cette question concerne des sujets sensibles. Fournis une réponse factuelle et légale uniquement.\n";
+                $context .= "Mots-clés détectés: " . implode(', ', $dangerCheck['keywords'] ?? []) . "\n";
+                $context .= "===================================\n\n";
+            }
+
+            // ✅ ÉTAPE 2: CONSTRUIRE LE CONTEXTE UTILISATEUR PERSONNALISÉ
+            $userContext = $this->profiler->buildUserContextPrompt($user, $history);
+            
             // Add country-specific AI instructions
             $context .= "\n\n" . $countryContext;
+            
+            // ✅ ÉTAPE 3: INJECTER LE PROFIL UTILISATEUR DANS LE PROMPT
+            $context .= "\n\n" . $userContext;
 
 
             // Get AI model from subscription plan
@@ -628,6 +672,9 @@ class ChatController extends Controller
                 'history_count' => count($history),
                 'sources_count' => count($sources),
                 'query' => $request->message,
+                'has_user_profile' => true,
+                'danger_check' => $dangerCheck['is_dangerous'] ?? false,
+                'sensitive_check' => $dangerCheck['is_sensitive'] ?? false,
             ]);
             
             // Debug: Log the full context for inspection
@@ -682,6 +729,18 @@ class ChatController extends Controller
                 'source_types' => array_column($sources, 'type'),
             ]);
 
+            // If user asked to find a document, prepend a fixed response line when we found sources
+            if ($isDocumentLookup && !empty($sources)) {
+                $hasLibrarySource = collect($sources)->contains(function ($source) {
+                    $type = strtolower(trim((string)($source['type'] ?? '')));
+                    return in_array($type, ['legal', 'legal_document', 'template', 'document_template', 'fiscal', 'fiscal_resource'], true);
+                });
+
+                if ($hasLibrarySource) {
+                    $response['message'] = "Voici le document que vous recherchez :\n\n" . $response['message'];
+                }
+            }
+
             // Save assistant message
             $assistantMessage = Message::create([
                 'conversation_id' => $conversation->id,
@@ -697,6 +756,29 @@ class ChatController extends Controller
             if ($conversation->messages()->count() == 2) {
                 $title = mb_substr($request->message, 0, 50);
                 $conversation->update(['title' => $title]);
+            }
+
+            // ✅ ÉTAPE 4: METTRE À JOUR LE PROFIL UTILISATEUR (asynchrone)
+            try {
+                // Recharger l'historique complet avec le nouveau message
+                $fullHistory = $conversation->messages()
+                    ->orderBy('created_at', 'asc')
+                    ->get()
+                    ->map(function ($msg) {
+                        return [
+                            'role' => $msg->role,
+                            'content' => $msg->content,
+                        ];
+                    })
+                    ->toArray();
+                
+                $this->profiler->updateUserProfile($user, $fullHistory);
+            } catch (\Exception $e) {
+                Log::warning('Failed to update user profile', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Ne pas bloquer la réponse si la mise à jour du profil échoue
             }
 
             DB::commit();
@@ -821,6 +903,37 @@ class ChatController extends Controller
         }
         
         return false; // Default: no RAG for general chat
+    }
+
+    /**
+     * Detect if the user is explicitly searching for a document in the libraries.
+     */
+    private function isDocumentLookupIntent(string $message): bool
+    {
+        $text = mb_strtolower(trim($message));
+
+        $phrases = [
+            'avez-vous', 'avez vous', 'as-tu', 'as tu',
+            'pouvez-vous', 'pouvez vous', 'peux-tu', 'peux tu',
+            'disponible', 'existe', 'existe-t-il', 'existe t il',
+            'où trouver', 'ou trouver', 'je cherche', 'je recherche', 'trouver un document',
+            'document disponible', 'document existe', 'dans la bibliothèque', 'dans la bibliotheque',
+            'modèle disponible', 'modele disponible', 'modèle existe', 'modele existe',
+            'as-tu le', 'avez-vous le', 'avez vous le', 'peux-tu me donner', 'peux tu me donner',
+            'pouvez-vous me donner', 'pouvez vous me donner',
+            'me fournir', 'me donner', 'me partager', 'envoyer le document',
+            'lien du document', 'lien du modele', 'lien du modèle',
+            'télécharger', 'telecharger', 'accès au document', 'acces au document',
+            'obtenir le document', 'obtenir un document', 'trouver le document',
+        ];
+
+        foreach ($phrases as $phrase) {
+            if (str_contains($text, $phrase)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

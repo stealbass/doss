@@ -225,6 +225,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                             color: AppColors.textSecondary,
                           ),
                         ),
+                        SizedBox(height: 6.h),
+                        Text(
+                          AppLocalizations.of(context)!.uploadDocumentsAndAskChat,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ],
                     ),
                   );

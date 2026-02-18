@@ -11,6 +11,18 @@
 @section('content')
     <div class="row p-0">
         <div class="col-xl-12">
+            <div class="card shadow-none mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>{{ __('Coupon') }}:</strong> {{ $coupon->name }} ({{ $coupon->code }})
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <strong>{{ __('Used') }}:</strong> {{ $usedCount }} / {{ $coupon->limit }}
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card shadow-none">
                 <div class="card-body table-border-style">
                     <div class="table-responsive">

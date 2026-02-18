@@ -97,7 +97,7 @@
 
                         <div class="col-md-4">
                             <div class="form-group">
-                                {{ Form::label('year', __('Year'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                                {{ Form::label('year', __('Année de creation du dossier'), ['class' => 'col-form-label']) }}<x-required></x-required>
                                 <select class="form-control multi-select" name="year" id="year" required>
                                     <option value="">{{ __('Please Select') }}</option>
                                     @foreach (App\Models\Utility::getYears() as $year)
@@ -118,7 +118,7 @@
 
                         <div class="col-md-4">
                             <div class="form-group">
-                                {{ Form::label('filing_date', __('Date of filing'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                                {{ Form::label('filing_date', __('Date de création du dossier'), ['class' => 'col-form-label']) }}<x-required></x-required>
                                 {{ Form::date('filing_date', null, ['class' => 'form-control', 'required' => 'required']) }}
                             </div>
                         </div>

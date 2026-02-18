@@ -20,6 +20,7 @@ class LegalDocument extends Model
         'file_name',
         'file_size',
         'downloads_count',
+        'views_count',
         'created_by',
         'extracted_text',
     ];
@@ -27,6 +28,7 @@ class LegalDocument extends Model
     protected $casts = [
         'file_size' => 'integer',
         'downloads_count' => 'integer',
+        'views_count' => 'integer',
     ];
 
     /**
@@ -66,6 +68,14 @@ class LegalDocument extends Model
     public function incrementDownloads()
     {
         $this->increment('downloads_count');
+    }
+
+    /**
+     * Increment view count
+     */
+    public function incrementViews()
+    {
+        $this->increment('views_count');
     }
 
     /**

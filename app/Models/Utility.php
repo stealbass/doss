@@ -22,8 +22,12 @@ class Utility extends Model
 
     public static function settings($user_id = null)
     {
+        if ($user_id !== null) {
+            return self::fetchSettings($user_id);
+        }
+
         if (self::$settings === null) {
-            self::$settings = self::fetchSettings($user_id);
+            self::$settings = self::fetchSettings();
         }
 
         return self::$settings;
@@ -31,7 +35,7 @@ class Utility extends Model
 
     private static function fetchSettings($user_id = null)
     {
-        if (Auth::check()) {
+        if ($user_id === null && Auth::check()) {
             $user_id = Auth::user()->creatorId();
         }
 

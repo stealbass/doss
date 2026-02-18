@@ -145,6 +145,8 @@ class FiscalResource {
     };
     return types[resourceType] ?? resourceType;
   }
+
+  String get formattedFileSize => 'Document'; // Placeholder - fichiers fiscaux
 }
 
 class SalaryGrid {
@@ -275,6 +277,8 @@ class FiscalResourceProvider with ChangeNotifier {
           
           if (append) {
             _resources.addAll(newResources);
+            final seen = <int>{};
+            _resources = _resources.where((r) => seen.add(r.id)).toList();
           } else {
             _resources = newResources;
           }
@@ -416,6 +420,33 @@ class FiscalResourceProvider with ChangeNotifier {
       print('DEBUG: Download URL error: $e');
       print('DEBUG: Stack trace: $stackTrace');
       return null;
+    }
+  }
+
+  /// Track when user views/opens a fiscal resource
+  Future<bool> trackResourceView(int resourceId, String token) async {
+    try {
+      if (token.isEmpty) {
+        return false;
+      }
+
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/fiscal-resources/$resourceId/view'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
+      
+      return false;
+    } catch (e) {
+      print('DEBUG: Error tracking resource view: $e');
+      return false;
     }
   }
 }

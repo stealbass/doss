@@ -99,6 +99,14 @@ class AdvancedRagService
             $chunks = $this->chunkText($document->extracted_text, 800);
 
             $vectors = [];
+            $fileName = $document->original_filename
+                ?? $document->stored_filename
+                ?? $document->storage_path
+                ?? 'Document';
+            $fileName = trim((string) $fileName);
+            if ($fileName === '') {
+                $fileName = 'Document';
+            }
             foreach ($chunks as $index => $chunk) {
                 // Generate embedding for this chunk
                 $embedding = $this->generateEmbedding($chunk);
@@ -117,7 +125,8 @@ class AdvancedRagService
                         'user_id' => $document->user_id,
                         'chunk_index' => $index,
                         'text' => $chunk,
-                        'file_name' => $document->file_name,
+                        'file_name' => $fileName,
+                        'document_title' => $fileName,
                         'created_at' => $document->created_at->toIso8601String(),
                     ]
                 ];
@@ -464,6 +473,21 @@ class AdvancedRagService
             }
             
             $url = "https://{$host}/vectors/upsert";
+
+            // Sanitize metadata to avoid null values (Pinecone rejects nulls)
+            $vectors = array_map(function ($vector) {
+                if (!isset($vector['metadata']) || !is_array($vector['metadata'])) {
+                    return $vector;
+                }
+
+                foreach ($vector['metadata'] as $key => $value) {
+                    if ($value === null) {
+                        $vector['metadata'][$key] = '';
+                    }
+                }
+
+                return $vector;
+            }, $vectors);
 
             // Build curl options with SSL/TLS workaround
             $options = [
@@ -814,17 +838,25 @@ class AdvancedRagService
      * @param string $query Search query
      * @param int $userId Filter by user ID
      * @param int $topK Number of results
+     * @param array|null $documentIds Limit search to specific documents
      * @return array Search results with context
      */
-    public function searchUserDocuments(string $query, int $userId, int $topK = 20): array
+    public function searchUserDocuments(string $query, int $userId, int $topK = 20, ?array $documentIds = null): array
     {
         try {
-            Log::info("Searching user documents", ['user_id' => $userId, 'query' => $query]);
+            Log::info("Searching user documents", [
+                'user_id' => $userId,
+                'query' => $query,
+                'document_ids' => $documentIds,
+            ]);
 
             // Get completed submitted documents for this user
             $documents = SubmittedDocument::where('user_id', $userId)
                 ->where('processing_status', 'completed')
                 ->where('extracted_text', '!=', null)
+                ->when(!empty($documentIds), function ($query) use ($documentIds) {
+                    $query->whereIn('id', $documentIds);
+                })
                 ->orderBy('processed_at', 'desc')
                 ->get();
 
@@ -871,7 +903,7 @@ class AdvancedRagService
                 $context = $this->extractRelevantContext(
                     $doc->extracted_text,
                     $queryLower,
-                    500 // 500 chars de contexte
+                    1500 // contexte élargi pour tableaux/sections chiffrées
                 );
 
                 $results[] = [
@@ -934,10 +966,30 @@ class AdvancedRagService
      */
     private function extractRelevantContext(string $text, string $query, int $contextLength = 500): string
     {
+        $text = (string) $text;
+        if ($text === '') {
+            return '';
+        }
+
+        // Fast keyword window (better for tables and numeric fields)
+        $queryWords = array_filter(explode(' ', $query));
+        $textLower = strtolower($text);
+        foreach ($queryWords as $word) {
+            if (strlen($word) > 2) {
+                $pos = stripos($textLower, $word);
+                if ($pos !== false) {
+                    $start = max(0, $pos - (int) ($contextLength / 2));
+                    $snippet = substr($text, $start, $contextLength);
+                    return trim($snippet);
+                }
+            }
+        }
+
         // Split into sentences
         $sentences = preg_split('/[.!?]+/', $text, -1, PREG_SPLIT_NO_EMPTY);
         
         $relevantSentences = [];
+
         $queryWords = array_filter(explode(' ', $query));
 
         foreach ($sentences as $sentence) {
@@ -982,7 +1034,7 @@ class AdvancedRagService
             Log::info("Combined search initiated", ['user_id' => $userId, 'query' => $query]);
 
             // Search user documents first (faster, no API calls)
-            $userDocResults = $this->searchUserDocuments($query, $userId, $topK);
+            $userDocResults = $this->searchUserDocuments($query, $userId, $topK, null);
 
             // Search Pinecone (if configured)
             $pineconeResults = [];
@@ -1004,7 +1056,7 @@ class AdvancedRagService
         } catch (\Exception $e) {
             Log::error("Error in combined search: " . $e->getMessage());
             // Fallback to user documents only
-            return $this->searchUserDocuments($query, $userId, $topK);
+            return $this->searchUserDocuments($query, $userId, $topK, null);
         }
     }
 

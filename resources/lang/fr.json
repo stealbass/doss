@@ -2060,5 +2060,13 @@
         "ChatGPT Activé": "ChatGPT Activé",
         "Staff": "Personnel",
         "Group": "Groupe",
-        "Role": "Rôle"
+        "Role": "Rôle",
+        "Total Documents": "Total des documents",
+        "Total Categories": "Total des catégories",
+        "Download All Documents": "Télécharger tous les documents",
+        "Delete All Documents": "Supprimer tous les documents",
+        "This will permanently delete all documents for this subscriber. Continue?": "Cette action supprimera définitivement tous les documents de cet abonné. Continuer ?",
+        "No documents found for this user.": "Aucun document trouvé pour cet utilisateur.",
+        "All documents deleted successfully.": "Tous les documents ont été supprimés avec succès.",
+        "Unable to create zip file.": "Impossible de créer l'archive ZIP."
 }

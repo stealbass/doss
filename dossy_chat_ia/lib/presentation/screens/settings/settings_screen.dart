@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/theme_provider.dart';
 import '../../../data/providers/locale_provider.dart';
 import '../../../data/providers/auth_provider.dart';
+import '../../../data/providers/chat_provider.dart';
 import '../../../data/services/storage_service.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -135,6 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirmed == true) {
       final authProvider = context.read<AuthProvider>();
+      context.read<ChatProvider>().clearChat();
       await authProvider.logout();
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');

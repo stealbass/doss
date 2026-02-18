@@ -63,7 +63,7 @@ class TemplateProvider with ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
 
-  Future<void> fetchTemplates(String token, {int? page, int? categoryId, String? search}) async {
+  Future<void> fetchTemplates(String token, {int? page, int? categoryId, String? search, bool append = false}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -89,9 +89,16 @@ class TemplateProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success']) {
-          _templates = (data['data'] as List)
+          final newTemplates = (data['data'] as List)
               .map((json) => DocumentTemplate.fromJson(json))
               .toList();
+          if (append) {
+            _templates.addAll(newTemplates);
+            final seen = <int>{};
+            _templates = _templates.where((t) => seen.add(t.id)).toList();
+          } else {
+            _templates = newTemplates;
+          }
           _total = data['total'] ?? 0;
           _currentPage = data['page'] ?? 1;
           _totalPages = data['total_pages'] ?? 1;

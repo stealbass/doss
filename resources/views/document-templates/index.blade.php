@@ -10,9 +10,14 @@
                     <h1 class="h3 mb-0">Banque de Modèles d'Actes et Contrats</h1>
                     <p class="text-muted">Gérez les templates de documents pour l'application mobile</p>
                 </div>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadTemplateModal">
-                    <i class="fas fa-plus"></i> Ajouter un Template
-                </button>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('document-templates.bulk-upload.form') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-upload"></i> Import Multiple
+                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadTemplateModal">
+                        <i class="fas fa-plus"></i> Ajouter un Template
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -150,7 +155,7 @@
                         @forelse($templates as $template)
                             <tr>
                                 <td>
-                                    <div class="fw-bold">{{ $template->title }}</div>
+                                    <div class="fw-bold">{{ $template->name ?? $template->file_name ?? 'N/A' }}</div>
                                     <small class="text-muted">{{ Str::limit($template->description, 50) }}</small>
                                 </td>
                                 <td>{{ $template->category->name ?? 'N/A' }}</td>
@@ -185,12 +190,23 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
+                                        @php
+                                            $templatePermissions = json_decode(\Auth::user()->permission_json ?? '[]', true) ?? [];
+                                            $canManageTemplates = \Auth::user()->type == 'super admin' || (\Auth::user()->type == 'superAdminEmployee' && (in_array('manage document-template', $templatePermissions) || in_array(4, $templatePermissions)));
+                                        @endphp
+                                        @if($canManageTemplates)
+                                            <a href="{{ route('document-templates.edit', $template->id) }}" 
+                                               class="btn btn-outline-warning" 
+                                               title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        @endif
                                         <a href="{{ route('document-templates.download', $template->id) }}" 
                                            class="btn btn-outline-primary" 
                                            title="Télécharger">
                                             <i class="fas fa-download"></i>
                                         </a>
-                                        @if(\Auth::user()->type == 'super admin')
+                                        @if($canManageTemplates)
                                             <button type="button" 
                                                     class="btn btn-outline-danger delete-template" 
                                                     data-id="{{ $template->id }}"

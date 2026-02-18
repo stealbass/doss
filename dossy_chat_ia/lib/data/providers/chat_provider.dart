@@ -31,6 +31,7 @@ class ChatProvider with ChangeNotifier {
       content: message,
       isUser: true,
       timestamp: DateTime.now(),
+      selectedDocumentIds: documentIds,
     );
     _messages.add(userMessage);
     notifyListeners();
@@ -115,6 +116,7 @@ class ChatProvider with ChangeNotifier {
           isAnonymized: response['data']['is_anonymized'],
           generatedDocument: response['data']['generated_document'],
           isDocumentGeneration: response['data']['is_document_generation'] ?? false,
+          selectedDocumentIds: documentIds,
         );
         
         print('Message créé: ${aiMessage.content}');

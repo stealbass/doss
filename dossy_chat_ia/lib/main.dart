@@ -192,6 +192,7 @@ class DossyChatIAApp extends StatelessWidget {
                       amount: args['amount'] as int,
                       currency: args['currency'] as String,
                       billingCycle: args['billing_cycle'] as String,
+                      couponCode: args['coupon_code'] as String?,
                     );
                   },
                   '/referral': (context) => const ReferralScreen(),

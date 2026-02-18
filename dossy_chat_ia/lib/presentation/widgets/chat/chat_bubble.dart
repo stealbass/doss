@@ -21,8 +21,31 @@ class ChatBubble extends StatelessWidget {
     required this.message,
   });
 
+  List<Map<String, dynamic>> _filterSources(MessageModel message) {
+    final sources = message.sources ?? [];
+    if (sources.isEmpty) return const [];
+
+    final selectedIds = message.selectedDocumentIds ?? [];
+    if (selectedIds.isEmpty) return sources;
+
+    return sources.where((source) {
+      final type = (source['type'] ?? '').toString();
+      if (type != 'user_document_semantic' && type != 'user_document_local') {
+        return false;
+      }
+      final id = source['id'];
+      if (id is int) return selectedIds.contains(id);
+      if (id is String) {
+        final parsed = int.tryParse(id);
+        return parsed != null && selectedIds.contains(parsed);
+      }
+      return false;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filteredSources = _filterSources(message);
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: Row(
@@ -117,7 +140,7 @@ class ChatBubble extends StatelessWidget {
                         ],
                         
                         // Sources
-                        if (!message.isUser && message.sources != null && message.sources!.isNotEmpty) ...[
+                        if (!message.isUser && filteredSources.isNotEmpty) ...[
                           SizedBox(height: 12.h),
                           Text(
                             'Sources :',
@@ -131,7 +154,7 @@ class ChatBubble extends StatelessWidget {
                           Wrap(
                             spacing: 6.w,
                             runSpacing: 6.h,
-                            children: message.sources!.map((source) {
+                            children: filteredSources.map((source) {
                               final title = source['title'] ?? 'Document';
                               final type = source['type'] ?? 'unknown';
                               final docId = source['id'];
@@ -197,7 +220,7 @@ class ChatBubble extends StatelessWidget {
                                   ),
                                 ),
                               );
-                            }).toList(),
+                              }).toList(),
                           ),
                         ],
                       ],
@@ -510,7 +533,7 @@ class ChatBubble extends StatelessWidget {
       final pdfFileName = safeName.replaceAll('.html', '.pdf').replaceAll('.txt', '.pdf');
       final uniquePdfName = pdfFileName.endsWith('.pdf') 
           ? pdfFileName.replaceFirst('.pdf', '_$timestamp.pdf')
-          : '$pdfFileName\_$timestamp.pdf';
+          : '${pdfFileName}_$timestamp.pdf';
       final filePath = '${downloadsDir.path}/$uniquePdfName';
       
       final pdfBytes = await pdf.save();
@@ -575,7 +598,7 @@ class ChatBubble extends StatelessWidget {
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: pw.EdgeInsets.all(20),
+        margin: const pw.EdgeInsets.all(20),
         build: (pw.Context context) {
           final List<pw.Widget> widgets = [];
           
@@ -594,7 +617,7 @@ class ChatBubble extends StatelessWidget {
                 pw.SizedBox(height: 5),
                 pw.Text(
                   'Généré le: ${DateTime.now().toString().split('.')[0]}',
-                  style: pw.TextStyle(
+                  style: const pw.TextStyle(
                     fontSize: 10,
                     color: PdfColors.grey,
                   ),
@@ -610,7 +633,7 @@ class ChatBubble extends StatelessWidget {
             widgets.add(
               pw.Paragraph(
                 text: paragraph,
-                style: pw.TextStyle(
+                style: const pw.TextStyle(
                   fontSize: 11,
                   lineSpacing: 1.5,
                 ),
@@ -625,7 +648,7 @@ class ChatBubble extends StatelessWidget {
           widgets.add(
             pw.Text(
               'Document généré par Dossy AI',
-              style: pw.TextStyle(
+              style: const pw.TextStyle(
                 fontSize: 9,
                 color: PdfColors.grey,
               ),
@@ -849,8 +872,8 @@ class ChatBubble extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: message.sources!.map((source) {
-                final title = source is Map ? (source['title'] ?? 'Document') : source.toString();
-                final type = source is Map ? (source['type'] ?? 'unknown') : 'text';
+                final title = (source['title'] ?? 'Document');
+                final type = (source['type'] ?? 'unknown');
                 return Padding(
                   padding: EdgeInsets.only(bottom: 8.h),
                   child: Row(

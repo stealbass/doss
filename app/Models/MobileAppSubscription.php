@@ -363,7 +363,7 @@ class MobileAppSubscription extends Model
             }
 
             // Configure SMTP from database settings (same pattern as push notifications)
-            $ownerId = $this->user->created_by ?? $this->user_id;
+            $ownerId = $this->user->creatorId() ?: 1;
             try {
                 Utility::getSMTPDetails($ownerId);
             } catch (\Exception $e) {

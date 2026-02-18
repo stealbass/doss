@@ -8,6 +8,7 @@ use App\Models\Utility;
 use App\Jobs\ProcessLegalDocumentForRAG;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator as FacadesValidator;
 
@@ -51,8 +52,8 @@ class LegalLibraryController extends Controller
             return true;
         }
         
-        // Allow SuperAdmin Employee with 'manage legal-library' permission
-        if ($user->type === 'superAdminEmployee') {
+        // Allow SuperAdmin Employee (type or flag) with 'manage legal-library' permission
+        if ($user->type === 'superAdminEmployee' || (int) $user->super_admin_employee === 1) {
             $permissions = json_decode($user->permission_json, true) ?? [];
             return in_array('manage legal-library', $permissions) || in_array(3, $permissions);
         }
@@ -60,6 +61,25 @@ class LegalLibraryController extends Controller
         // Allow all authenticated users (company employees, advocates, clients, etc.)
         // In SAAS, every authenticated user should have access to Legal Library
         return Auth::check();
+    }
+
+    /**
+     * Check if user can delete legal library content
+     */
+    private function canDeleteLegalLibrary()
+    {
+        $user = Auth::user();
+
+        if ($user->type === 'super admin') {
+            return true;
+        }
+
+        if ($user->type === 'superAdminEmployee' || (int) $user->super_admin_employee === 1) {
+            $permissions = json_decode($user->permission_json, true) ?? [];
+            return in_array('manage legal-library', $permissions) || in_array(3, $permissions);
+        }
+
+        return false;
     }
     /**
      * Display a listing of categories
@@ -181,16 +201,28 @@ class LegalLibraryController extends Controller
      */
     public function destroyCategory($id)
     {
-        if ($this->canManageLegalLibrary()) {
-            $category = LegalCategory::find($id);
-            if ($category) {
-                $category->delete();
-                return redirect()->route('legal-library.index')->with('success', __('Category successfully deleted.'));
-            }
-            return redirect()->back()->with('error', __('Category not found.'));
-        } else {
+        if (!$this->canDeleteLegalLibrary()) {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
+
+        $category = LegalCategory::with('documents')->find($id);
+        if (!$category) {
+            return redirect()->back()->with('error', __('Category not found.'));
+        }
+
+        $disk = $this->getStorageDisk();
+        DB::transaction(function () use ($category, $disk) {
+            foreach ($category->documents as $document) {
+                if (!empty($document->file_path) && Storage::disk($disk)->exists($document->file_path)) {
+                    Storage::disk($disk)->delete($document->file_path);
+                }
+                $document->delete();
+            }
+
+            $category->delete();
+        });
+
+        return redirect()->route('legal-library.index')->with('success', __('Category successfully deleted.'));
     }
 
     /**
@@ -208,7 +240,10 @@ class LegalLibraryController extends Controller
             $documents = LegalDocument::where('category_id', $categoryId)
                 ->get();
 
-            return view('legal-library.documents', compact('category', 'documents'));
+            $totalDocuments = LegalDocument::count();
+            $totalCategories = LegalCategory::count();
+
+            return view('legal-library.documents', compact('category', 'documents', 'totalDocuments', 'totalCategories'));
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
@@ -469,18 +504,25 @@ class LegalLibraryController extends Controller
      */
     public function destroyDocument($id)
     {
-        if ($this->canManageLegalLibrary()) {
-            $document = LegalDocument::find($id);
-            if ($document) {
-                $categoryId = $document->category_id;
-                $document->delete();
-                return redirect()->route('legal-library.documents', $categoryId)
-                    ->with('success', __('Document successfully deleted.'));
-            }
-            return redirect()->back()->with('error', __('Document not found.'));
-        } else {
+        if (!$this->canDeleteLegalLibrary()) {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
+
+        $document = LegalDocument::find($id);
+        if (!$document) {
+            return redirect()->back()->with('error', __('Document not found.'));
+        }
+
+        $categoryId = $document->category_id;
+        $disk = $this->getStorageDisk();
+        if (!empty($document->file_path) && Storage::disk($disk)->exists($document->file_path)) {
+            Storage::disk($disk)->delete($document->file_path);
+        }
+
+        $document->delete();
+
+        return redirect()->route('legal-library.documents', $categoryId)
+            ->with('success', __('Document successfully deleted.'));
     }
 
     /**

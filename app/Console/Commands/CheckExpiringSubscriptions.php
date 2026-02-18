@@ -51,7 +51,8 @@ class CheckExpiringSubscriptions extends Command
             foreach ($expiringUsers as $user) {
                 try {
                     // Configure SMTP
-                    Utility::getSMTPDetails(1); // Admin SMTP settings
+                    $smtpOwnerId = $user->creatorId() ?: 1;
+                    Utility::getSMTPDetails($smtpOwnerId);
                     
                     // Get plan details
                     $plan = Plan::find($user->plan);

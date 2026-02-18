@@ -71,9 +71,9 @@ EXIGENCE: Réponds STRICTEMENT en JSON valide sans Markdown ni texte additionnel
 
 Contraintes:
 - Déduis le domaine de droit le plus pertinent (ex: Droit civil, pénal, commercial...).
-- Si le texte est incomplet (seulement les faits sans la décision), analyse ce qui est fourni et indique \"Décision non fournie dans l'extrait\" pour les champs manquants.
-- Pour Solution: si le texte ne contient pas la décision finale, écris \"Solution non fournie dans l'extrait - il s'agit d'un extrait partiel de l'arrêt\".
-- Pour Portée: si la solution n'est pas fournie, écris \"Impossible de déterminer la portée sans la décision complète\".
+- Si le texte est incomplet (seulement les faits sans la décision), analyse ce qui est fourni et indique "Décision non fournie dans l'extrait" pour les champs manquants.
+- Pour Solution: si le texte ne contient pas la décision finale, écris "Solution non fournie dans l'extrait - il s'agit d'un extrait partiel de l'arrêt".
+- Pour Portée: si la solution n'est pas fournie, écris "Impossible de déterminer la portée sans la décision complète".
 - N'invente PAS de faits.
 - Style clair et technique adapté aux étudiants en droit OHADA.
 
@@ -158,7 +158,7 @@ $decisionText
         pdf.addPage(
           pw.MultiPage(
             pageFormat: PdfPageFormat.a4,
-            margin: pw.EdgeInsets.all(20),
+            margin: const pw.EdgeInsets.all(20),
             build: (pw.Context context) {
               final List<pw.Widget> widgets = [];
 

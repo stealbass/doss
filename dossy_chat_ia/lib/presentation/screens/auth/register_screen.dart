@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/auth_provider.dart';
-import 'package:flutter/foundation.dart';
 import '../../../l10n/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -75,6 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       passwordConfirmation: _passwordConfirmController.text,
       phone: _phoneController.text.trim(),
       jurisdiction: _selectedJurisdiction,
+      mobileRole: _selectedRole,
       referralCode: _referralCodeController.text.trim().isNotEmpty
           ? _referralCodeController.text.trim()
           : null,
@@ -170,22 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 16.h),
-            // Debug banner to ensure the screen builds correctly
-            if (kDebugMode)
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
-                margin: EdgeInsets.only(bottom: 12.h),
-                decoration: BoxDecoration(
-                  color: Colors.yellow.shade100,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: Colors.orange.shade700),
-                ),
-                child: Text(
-                  'DEBUG: Register form rendering — API: ${AppConstants.baseUrl}',
-                  style: TextStyle(fontSize: 12.sp, color: Colors.black87),
-                ),
-              ),
+            // Debug banner removed
 
             // Welcome Text
             Text(
@@ -426,35 +412,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                     child: Padding(
                       padding: EdgeInsets.only(top: 12.h),
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.textSecondary,
+                      child: Wrap(
+                        spacing: 4.w,
+                        runSpacing: 4.h,
+                        children: [
+                          Text(
+                            l10n.iAcceptThe,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                          children: [
-                            TextSpan(
-                              text: l10n.iAcceptThe,
-                            ),
-                            TextSpan(
-                              text: l10n.termsOfUse,
-                              style: const TextStyle(
+                          GestureDetector(
+                            onTap: () async {
+                              final url = 'https://dossypro.com/pages/conditions_g%C3%A9n%C3%A9rales_d%27utilisation';
+                              if (await canLaunchUrl(Uri.parse(url))) {
+                                await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Text(
+                              l10n.termsOfUse,
+                              style: TextStyle(
+                                fontSize: 13.sp,
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
-                            TextSpan(
-                              text: l10n.andThe,
+                          ),
+                          Text(
+                            l10n.andThe,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
                             ),
-                            TextSpan(
-                              text: l10n.privacyPolicy,
-                              style: const TextStyle(
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              final url = 'https://dossypro.com/privacy';
+                              if (await canLaunchUrl(Uri.parse(url))) {
+                                await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Text(
+                              l10n.privacyPolicy,
+                              style: TextStyle(
+                                fontSize: 13.sp,
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

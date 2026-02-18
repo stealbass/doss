@@ -181,9 +181,9 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 l10n.createFirstSubAccount,
-                                style: TextStyle(fontSize: 14),
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ],
                           ),
@@ -257,7 +257,7 @@ class _EnterpriseDashboardScreenState extends State<EnterpriseDashboardScreen> {
                                 );
                                 if (success) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text(l10n.accountDeleted),
                                       backgroundColor: Colors.green,
                                     ),

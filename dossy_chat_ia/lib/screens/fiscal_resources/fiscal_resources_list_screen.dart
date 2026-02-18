@@ -16,12 +16,14 @@ class FiscalResourcesListScreen extends StatefulWidget {
 class _FiscalResourcesListScreenState extends State<FiscalResourcesListScreen> {
   String _selectedCategory = 'Tous';
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   final int _currentYear = DateTime.now().year;
   int _currentDisplayPage = 1;
   final int _itemsPerPage = 10;
 
   List<String> _buildCategories(List<FiscalResource> resources) {
-    final set = <String>{'Tous'};
+    final allLabel = AppLocalizations.of(context)!.all;
+    final set = <String>{allLabel};
     for (final r in resources) {
       if (r.categoryName != null && r.categoryName!.isNotEmpty) {
         set.add(r.categoryName!);
@@ -34,8 +36,17 @@ class _FiscalResourcesListScreenState extends State<FiscalResourcesListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _selectedCategory = AppLocalizations.of(context)!.all;
+      });
       _loadAllResources();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   /// Load all resources from all pages to ensure all categories are shown
@@ -79,8 +90,9 @@ class _FiscalResourcesListScreenState extends State<FiscalResourcesListScreen> {
 
   List<FiscalResource> _getFilteredResources(List<FiscalResource> resources) {
     var filtered = resources;
+    final allLabel = AppLocalizations.of(context)!.all;
 
-    if (_selectedCategory != 'Tous') {
+    if (_selectedCategory != allLabel) {
       filtered = filtered
           .where((r) => r.categoryName == _selectedCategory)
           .toList();
@@ -162,20 +174,17 @@ class _FiscalResourcesListScreenState extends State<FiscalResourcesListScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => _searchQuery = value),
+                  onSubmitted: (_) => _loadResources(),
                   decoration: InputDecoration(
-                    hintText: 'Rechercher une ressource...',
+                    hintText: l10n.searchResources,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             onPressed: () {
-                              setState(() {
-                                _searchQuery = '';
-                              });
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
                             },
                             icon: const Icon(Icons.clear),
                           )
@@ -275,19 +284,17 @@ class _FiscalResourcesListScreenState extends State<FiscalResourcesListScreen> {
               ),
 
               // Pagination Controls
-              if (filteredResources.isNotEmpty && totalPages > 1)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  color: Colors.grey[100],
+              if (totalPages > 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ElevatedButton.icon(
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
                         onPressed: _currentDisplayPage > 1
                             ? () => setState(() => _currentDisplayPage--)
                             : null,
-                        icon: const Icon(Icons.chevron_left),
-                        label: Text(l10n.previous),
                       ),
                       Text(
                         'Page $_currentDisplayPage / $totalPages',
@@ -296,12 +303,11 @@ class _FiscalResourcesListScreenState extends State<FiscalResourcesListScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      ElevatedButton.icon(
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
                         onPressed: _currentDisplayPage < totalPages
                             ? () => setState(() => _currentDisplayPage++)
                             : null,
-                        label: Text(l10n.next),
-                        icon: const Icon(Icons.chevron_right),
                       ),
                     ],
                   ),

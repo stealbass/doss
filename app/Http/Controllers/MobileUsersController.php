@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class MobileUsersController extends Controller
 {
@@ -30,12 +31,16 @@ class MobileUsersController extends Controller
         $status = $request->get('status');
         $search = $request->get('search');
 
-        // Query de base - Utilisateurs avec abonnement mobile
+        // Query de base - Utilisateurs mobile (abonnement OU activite mobile)
         $query = User::with(['activeMobileSubscription.plan', 'mobilePayments'])
             ->withSum(['mobilePayments as total_payments' => function($query) {
                 $query->where('status', 'successful');
             }], 'amount')
-            ->whereHas('mobileSubscriptions');
+            ->where(function($q) {
+                $q->whereHas('mobileSubscriptions')
+                  ->orWhereNotNull('last_mobile_activity_at')
+                  ->orWhereNotNull('mobile_app_installed_at');
+            });
 
         // Filtre par rôle mobile (mobile_role)
         if ($role) {
@@ -69,16 +74,24 @@ class MobileUsersController extends Controller
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%")
-                    ->orWhere('phone', 'LIKE', "%{$search}%");
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+
+                if (Schema::hasColumn('users', 'phone')) {
+                    $q->orWhere('phone', 'LIKE', "%{$search}%");
+                }
             });
         }
 
         $users = $query->orderBy('created_at', 'desc')->paginate(25);
 
         // Statistiques globales
+        $mobileUsersQuery = User::query()->where(function($q) {
+            $q->whereHas('mobileSubscriptions')
+              ->orWhereNotNull('last_mobile_activity_at')
+              ->orWhereNotNull('mobile_app_installed_at');
+        });
         $stats = [
-            'total_users' => User::whereHas('mobileSubscriptions')->count(),
+            'total_users' => (clone $mobileUsersQuery)->count(),
             'active_subscriptions' => MobileAppSubscription::where('status', 'active')
                 ->where(function($q) {
                     $q->whereNull('expires_at')
@@ -86,9 +99,9 @@ class MobileUsersController extends Controller
                 })
                 ->count(),
             'total_revenue' => MobileAppPayment::where('status', 'successful')->sum('amount'),
-            'new_users_this_month' => User::whereHas('mobileSubscriptions')
-                ->whereYear('created_at', now()->year)
-                ->whereMonth('created_at', now()->month)
+            'new_users_this_month' => (clone $mobileUsersQuery)
+                ->whereYear('last_mobile_activity_at', now()->year)
+                ->whereMonth('last_mobile_activity_at', now()->month)
                 ->count(),
         ];
 
@@ -279,7 +292,11 @@ class MobileUsersController extends Controller
     public function export(Request $request)
     {
         $users = User::with(['activeMobileSubscription.plan'])
-            ->whereHas('mobileSubscriptions')
+            ->where(function($q) {
+                $q->whereHas('mobileSubscriptions')
+                  ->orWhereNotNull('last_mobile_activity_at')
+                  ->orWhereNotNull('mobile_app_installed_at');
+            })
             ->get();
 
         $filename = 'mobile-users-' . now()->format('Y-m-d-His') . '.csv';
@@ -332,16 +349,21 @@ class MobileUsersController extends Controller
      */
     public function statistics()
     {
+        $mobileUsersQuery = User::query()->where(function($q) {
+            $q->whereHas('mobileSubscriptions')
+              ->orWhereNotNull('last_mobile_activity_at')
+              ->orWhereNotNull('mobile_app_installed_at');
+        });
         $stats = [
-            'total_users' => User::whereHas('mobileSubscriptions')->count(),
+            'total_users' => (clone $mobileUsersQuery)->count(),
             'active_users' => User::whereHas('activeMobileSubscription')->count(),
             'total_revenue' => MobileAppPayment::where('status', 'successful')->sum('amount'),
             'revenue_this_month' => MobileAppPayment::where('status', 'successful')
                 ->whereYear('paid_at', now()->year)
                 ->whereMonth('paid_at', now()->month)
                 ->sum('amount'),
-            'new_users_today' => User::whereHas('mobileSubscriptions')
-                ->whereDate('created_at', now()->toDateString())
+            'new_users_today' => (clone $mobileUsersQuery)
+                ->whereDate('last_mobile_activity_at', now()->toDateString())
                 ->count(),
             'users_by_plan' => MobileAppSubscription::where('status', 'active')
                 ->with('plan')
@@ -349,7 +371,7 @@ class MobileUsersController extends Controller
                 ->groupBy('plan.name')
                 ->map(fn($group) => $group->count())
                 ->toArray(),
-            'users_by_role' => User::whereHas('mobileSubscriptions')
+            'users_by_role' => (clone $mobileUsersQuery)
                 ->select('mobile_role', DB::raw('count(*) as count'))
                 ->groupBy('mobile_role')
                 ->pluck('count', 'mobile_role')

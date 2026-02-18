@@ -32,6 +32,15 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
     'Droit Administratif',
     'Droit du Travail',
     'Droit Constitutionnel',
+    'Droit Fiscal',
+    'Droit des Affaires',
+    'Droit des Contrats',
+    'Droit des Sociétés',
+    'Droit OHADA',
+    'Droit Foncier',
+    'Droit de la Famille',
+    'Droit International Public',
+    'Procédure Civile',
   ];
 
   final List<String> _difficulties = ['Facile', 'Moyen', 'Difficile'];
@@ -89,12 +98,14 @@ class _QcmGeneratorScreenState extends State<QcmGeneratorScreen> {
 
       final api = ApiService();
       final domain = _selectedDomain ?? 'Droit';
+      final allDomains = _domains.join(', ');
       final content = _courseController.text.trim();
       final diff = _difficulty.toLowerCase();
       final n = _numberOfQuestions;
 
       final prompt = '''Tu es un enseignant de droit OHADA.
 Génère $n questions de QCM en "$domain" (niveau: $diff). Si un contenu de cours est fourni, aligne-toi strictement dessus.
+Tu peux répondre pour tous les domaines suivants: $allDomains.
 
 Réponds STRICTEMENT en JSON valide (sans Markdown) au format:
 {

@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\MobileAppPlan;
 use App\Models\MobileAppPayment;
 use App\Models\MobileAppSetting;
+use App\Models\Utility;
 use App\Models\MobileAppSubscription;
+use App\Models\UserCoupon;
+use App\Models\Coupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
@@ -28,6 +31,7 @@ class PaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'plan_id' => 'required|integer|exists:mobile_app_plans,id',
             'billing_cycle' => 'required|in:monthly,annual',
+            'coupon_code' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -40,12 +44,12 @@ class PaymentController extends Controller
 
         $user = $request->user();
         $plan = MobileAppPlan::find($request->plan_id);
-        $settings = MobileAppSetting::first();
+        $keys = $this->resolveFlutterwaveKeys();
 
-        if (!$settings) {
+        if (empty($keys['public_key'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Flutterwave settings not configured',
+                'message' => 'Flutterwave public key not configured',
             ], 500);
         }
 
@@ -57,9 +61,57 @@ class PaymentController extends Controller
         }
 
         // Calculate amount based on billing cycle
-        $amount = ($request->billing_cycle === 'monthly') 
-            ? $plan->price_monthly 
+        $originalAmount = ($request->billing_cycle === 'monthly')
+            ? $plan->price_monthly
             : $plan->price_yearly;
+
+        $amount = $originalAmount;
+        $discountAmount = 0;
+        $couponData = null;
+
+        // Validate and apply coupon if provided
+        if ($request->filled('coupon_code')) {
+            $coupon = Coupon::where('code', strtoupper($request->coupon_code))
+                ->where('is_active', 1)
+                ->first();
+
+            if ($coupon) {
+                $usedCount = UserCoupon::where('coupon', $coupon->id)->count();
+
+                if ($usedCount >= $coupon->limit) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ce code promo a atteint sa limite d\'utilisation',
+                    ], 400);
+                }
+
+                $userAlreadyUsed = UserCoupon::where('coupon', $coupon->id)
+                    ->where('user', $user->id)
+                    ->exists();
+
+                if ($userAlreadyUsed) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vous avez déjà utilisé ce code promo',
+                    ], 400);
+                }
+
+                $discountAmount = ($originalAmount * $coupon->discount) / 100;
+                $amount = $originalAmount - $discountAmount;
+
+                $couponData = [
+                    'id' => $coupon->id,
+                    'code' => $coupon->code,
+                    'discount' => $coupon->discount,
+                    'discount_amount' => $discountAmount,
+                ];
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Code promo invalide ou expiré',
+                ], 400);
+            }
+        }
 
         if ($amount <= 0) {
             return response()->json([
@@ -73,6 +125,16 @@ class PaymentController extends Controller
             $txRef = 'DOSSY-MOBILE-' . $user->id . '-' . time() . '-' . rand(1000, 9999);
 
             // Create pending payment record
+            $flutterwaveData = [
+                'billing_cycle' => $request->billing_cycle,
+                'plan_name' => $plan->name,
+                'original_amount' => $originalAmount,
+            ];
+
+            if ($couponData) {
+                $flutterwaveData['coupon'] = $couponData;
+            }
+
             $payment = MobileAppPayment::create([
                 'user_id' => $user->id,
                 'mobile_app_plan_id' => $plan->id,
@@ -82,10 +144,7 @@ class PaymentController extends Controller
                 'status' => 'pending',
                 'transaction_id' => $txRef,
                 'flutterwave_reference' => $txRef,
-                'flutterwave_data' => [
-                    'billing_cycle' => $request->billing_cycle,
-                    'plan_name' => $plan->name,
-                ],
+                'flutterwave_data' => $flutterwaveData,
             ]);
 
             // Return data for frontend to construct Flutterwave payment (same as SaaS)
@@ -101,7 +160,7 @@ class PaymentController extends Controller
                     'name' => $user->name,
                     'phone' => $user->phone ?? '',
                     'plan_name' => $plan->name,
-                    'public_key' => $settings->flutterwave_public_key,
+                    'public_key' => $keys['public_key'],
                     'callback_url' => url('/api/mobile/payment/callback'),
                     'redirect_url' => route('mobile.payment.callback', ['tx_ref' => $txRef, 'plan_id' => $plan->id]),
                 ],
@@ -150,9 +209,9 @@ class PaymentController extends Controller
             return redirect()->to('dossychatia://payment/callback?status=error&message=' . urlencode('Payment not found'));
         }
 
-        $settings = MobileAppSetting::first();
+        $keys = $this->resolveFlutterwaveKeys();
         
-        if (!$settings || !$settings->flutterwave_secret_key) {
+        if (empty($keys['secret_key'])) {
             Log::error('Flutterwave settings not configured');
             return redirect()->to('dossychatia://payment/callback?status=error&message=' . urlencode('Flutterwave not configured'));
         }
@@ -165,7 +224,7 @@ class PaymentController extends Controller
             $url = "https://api.flutterwave.com/v3/transactions/{$transactionId}/verify";
             
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $settings->flutterwave_secret_key,
+                'Authorization' => 'Bearer ' . $keys['secret_key'],
                 'Content-Type' => 'application/json',
             ])->get($url);
 
@@ -194,7 +253,25 @@ class PaymentController extends Controller
                 ]);
 
                 // Activate subscription (same logic as SaaS)
-                $this->activateSubscription($payment);
+                $subscription = $this->activateSubscription($payment);
+
+                if ($subscription) {
+                    $this->sendSubscriptionConfirmationEmail($payment, $subscription);
+                }
+
+                // Mark coupon as used if present
+                $coupon = $payment->flutterwave_data['coupon'] ?? null;
+                if ($coupon && isset($coupon['id'])) {
+                    UserCoupon::firstOrCreate(
+                        [
+                            'user' => $payment->user_id,
+                            'coupon' => $coupon['id'],
+                        ],
+                        [
+                            'order' => $payment->transaction_id,
+                        ]
+                    );
+                }
 
                 Log::info('Payment completed and subscription activated', [
                     'payment_id' => $payment->id,
@@ -221,6 +298,27 @@ class PaymentController extends Controller
     }
 
     /**
+     * Resolve Flutterwave keys with fallback to admin payment settings.
+     */
+    private function resolveFlutterwaveKeys(): array
+    {
+        $settings = MobileAppSetting::first();
+        $publicKey = $settings?->flutterwave_public_key;
+        $secretKey = $settings?->flutterwave_secret_key;
+
+        if (empty($publicKey) || empty($secretKey)) {
+            $adminSettings = Utility::payment_settings();
+            $publicKey = $publicKey ?: ($adminSettings['flutterwave_public_key'] ?? null);
+            $secretKey = $secretKey ?: ($adminSettings['flutterwave_secret_key'] ?? null);
+        }
+
+        return [
+            'public_key' => $publicKey,
+            'secret_key' => $secretKey,
+        ];
+    }
+
+    /**
      * Activate subscription after successful payment
      */
     private function activateSubscription($payment)
@@ -234,7 +332,7 @@ class PaymentController extends Controller
             : Carbon::now()->addYear();
 
         // Create or update subscription
-        MobileAppSubscription::updateOrCreate(
+        return MobileAppSubscription::updateOrCreate(
             ['user_id' => $payment->user_id],
             [
                 'mobile_app_plan_id' => $plan->id,
@@ -252,6 +350,57 @@ class PaymentController extends Controller
                 'quota_reset_at' => Carbon::now()->addMonth(),
             ]
         );
+    }
+
+    /**
+     * Send subscription confirmation email for mobile app users.
+     */
+    private function sendSubscriptionConfirmationEmail(MobileAppPayment $payment, MobileAppSubscription $subscription): void
+    {
+        try {
+            $subscription->loadMissing('user', 'plan');
+            $user = $subscription->user;
+            $plan = $subscription->plan;
+
+            if (!$user || !$user->email || !$plan) {
+                return;
+            }
+
+            $ownerId = $user->creatorId() ?: 1;
+            Utility::getSMTPDetails($ownerId);
+
+            $planPrice = number_format($payment->amount, 0) . ' ' . $payment->currency;
+            $planDuration = ($subscription->billing_cycle === 'annual')
+                ? 'Annuel (12 mois)'
+                : 'Mensuel (1 mois)';
+
+            $emailData = [
+                'userName' => $user->name,
+                'planName' => $plan->name,
+                'planPrice' => $planPrice,
+                'planDuration' => $planDuration,
+                'expirationDate' => optional($subscription->expires_at)->toDateString(),
+                'paymentMethod' => 'Flutterwave',
+                'dashboardUrl' => route('home'),
+            ];
+
+            
+            
+            \Mail::to($user->email)->send(
+                new \App\Mail\SubscriptionConfirmation($user, $plan, $emailData)
+            );
+
+            Log::info('Mobile subscription confirmation email sent', [
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'payment_id' => $payment->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to send mobile subscription confirmation email', [
+                'payment_id' => $payment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
 }

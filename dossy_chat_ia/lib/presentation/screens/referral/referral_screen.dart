@@ -45,11 +45,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
     try {
       final data = await _apiService.getReferralInfo(token);
-      print('DEBUG Referral data: $data'); // Debug log
       if (data['success'] == true) {
         setState(() {
           _referralCode = data['data']['code'] ?? '';
-          print('DEBUG Referral code loaded: $_referralCode'); // Debug log
           _totalReferrals = data['data']['total_referrals'] ?? 0;
           _activeReferrals = data['data']['active_referrals'] ?? 0;
           // Compute free months from rewards list
@@ -366,7 +364,7 @@ Téléchargez l'app : https://dossypro.com
                 )
               else
                 Column(
-                  children: _referralHistory.map((referral) {
+                  children: _referralHistory.take(5).map((referral) {
                     final status = (referral['status'] ?? '').toString();
                     final isCompleted = status == 'completed';
                     final name = referral['referred_user']?['name'] ?? referral['referred_user']?['email'] ?? 'Invité';

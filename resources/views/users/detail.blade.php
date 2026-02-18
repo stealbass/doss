@@ -32,8 +32,22 @@
                 </div>
                 <div class="col-xl-9">
                     <div id="useradd-1" class="card  shadow-none rounded-0 border-bottom">
-                        <div class="card-header">
-                            <h5>{{ __('Company Information') }}</h5>
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">{{ __('Company Information') }}</h5>
+                            @if(Auth::user()->type == 'super admin')
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('users.documents.download', $user->id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="ti ti-download"></i> {{ __('Download All Documents') }}
+                                    </a>
+                                    <form action="{{ route('users.documents.delete', $user->id) }}" method="POST" onsubmit="return confirm('{{ __('This will permanently delete all documents for this subscriber. Continue?') }}');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="ti ti-trash"></i> {{ __('Delete All Documents') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
                         </div>
                         <div class="card-body">
                             <div class=" setting-card">

@@ -502,18 +502,29 @@ class SubscriptionController extends Controller
             ReferralController::completeReferral($user->id);
             
             // Save coupon usage if coupon was applied
+            $couponId = null;
             if ($request->filled('coupon_code')) {
                 $coupon = Coupon::where('code', strtoupper($request->coupon_code))
                     ->where('is_active', 1)
                     ->first();
-                
+
                 if ($coupon) {
-                    UserCoupon::create([
-                        'user' => $user->id,
-                        'coupon' => $coupon->id,
-                        'order' => $request->transaction_id,
-                    ]);
+                    $couponId = $coupon->id;
                 }
+            } elseif (!empty($payment->flutterwave_data['coupon']['id'])) {
+                $couponId = $payment->flutterwave_data['coupon']['id'];
+            }
+
+            if ($couponId) {
+                UserCoupon::firstOrCreate(
+                    [
+                        'user' => $user->id,
+                        'coupon' => $couponId,
+                    ],
+                    [
+                        'order' => $request->transaction_id,
+                    ]
+                );
             }
             
             // Check for referral rewards

@@ -95,7 +95,8 @@ class CouponController extends Controller
     public function show(Coupon $coupon)
     {
         $userCoupons = UserCoupon::where('coupon', $coupon->id)->get();
-        return view('coupon.view', compact('userCoupons'));
+        $usedCount = $userCoupons->count();
+        return view('coupon.view', compact('coupon', 'userCoupons', 'usedCount'));
     }
 
     /**

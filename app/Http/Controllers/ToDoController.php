@@ -293,8 +293,8 @@ class ToDoController extends Controller
             // Load SMTP configuration from database for multi-tenant support
             Utility::getSMTPDetails(Auth::user()->creatorId());
             
-            // Dispatch notification job with BCC support
-            SendTaskCreatedNotification::dispatch($todo);
+            // Dispatch notification job with BCC support immediately
+            SendTaskCreatedNotification::dispatchSync($todo);
 
             return redirect()->route('to-do.index')->with('success', __('To-Do successfully created.'));
         } else {

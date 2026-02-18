@@ -13,55 +13,57 @@ class TemplateApiController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-        $user->load('activeMobileSubscription.plan');
-        $userCountry = $user->country;
-        $userPlan = $user->plan;
-        
-        $page = $request->input('page', 1);
-        $limit = $request->input('limit', 20);
-        $categoryId = $request->input('category_id');
-        $search = $request->input('search');
+        try {
+            $user = $request->user();
+            $user->load('activeMobileSubscription.plan');
+            $userCountry = $user->country;
+            $userPlan = $user->plan;
+            
+            $page = max(1, (int) $request->input('page', 1));
+            $limit = (int) $request->input('limit', 20);
+            $limit = $limit > 0 ? min($limit, 50) : 20;
+            $categoryId = $request->input('category_id');
+            $search = $request->input('search');
 
-        $query = DocumentTemplate::with('category')
-            ->byCountry($userCountry)
-            ->mobileVisible()
-            ->accessibleByPlan($userPlan);
+            $query = DocumentTemplate::with('category')
+                ->mobileVisible();
 
-        // Filtrage par catégorie
-        if ($categoryId) {
-            $query->where('category_id', $categoryId);
-        }
+            // Filtrage par pays seulement si des templates existent pour ce pays
+            if ($userCountry && $userCountry !== 'ALL') {
+                $countWithCountry = DocumentTemplate::where('country', $userCountry)->count();
+                if ($countWithCountry > 0) {
+                    $query->where('country', $userCountry);
+                }
+            }
 
-        // Recherche
-        if ($search) {
-            $searchTerm = strtolower($search);
-            $query->where(function($q) use ($searchTerm) {
-                $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
-                  ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"])
-                  ->orWhereRaw('LOWER(slug) LIKE ?', ["%{$searchTerm}%"]);
-            });
-        }
+            // Filtrage par catégorie
+            if ($categoryId) {
+                $query->where('category_id', $categoryId);
+            }
 
-        $total = $query->count();
-        $totalPages = ceil($total / $limit);
-        $offset = ($page - 1) * $limit;
+            // Recherche
+            if ($search) {
+                $searchTerm = strtolower($search);
+                $query->where(function($q) use ($searchTerm) {
+                    $q->whereRaw('LOWER(name) LIKE ?', ["%{$searchTerm}%"])
+                      ->orWhereRaw('LOWER(description) LIKE ?', ["%{$searchTerm}%"])
+                      ->orWhereRaw('LOWER(slug) LIKE ?', ["%{$searchTerm}%"]);
+                });
+            }
 
-        $templates = $query
-            ->offset($offset)
-            ->limit($limit)
-            ->get()
-            ->map(function($template) {
+            $paginator = $query->orderByDesc('id')->paginate($limit, ['*'], 'page', $page);
+
+            $templates = $paginator->getCollection()->map(function($template) {
                 return [
                     'id' => $template->id,
-                    'title' => $template->name, // name is the actual title field in DB
-                    'name' => $template->name,  // Keep for backward compatibility
+                    'title' => $template->name,
+                    'name' => $template->name,
                     'description' => $template->description,
                     'category_name' => $template->category->name ?? 'Sans catégorie',
                     'category_id' => $template->category_id,
                     'country' => $template->country,
                     'file_type' => $template->file_type,
-                    'file_url' => $template->file_url,
+                    'file_url' => $template->file_path ? $template->file_url : null,
                     'required_plan' => $template->required_plan ?? 'Gratuit',
                     'is_mobile_visible' => $template->is_mobile_visible,
                     'downloads_count' => $template->downloads_count,
@@ -69,14 +71,30 @@ class TemplateApiController extends Controller
                 ];
             });
 
-        return response()->json([
-            'success' => true,
-            'data' => $templates,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $limit,
-            'total_pages' => $totalPages,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $templates,
+                'total' => $paginator->total(),
+                'page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total_pages' => $paginator->lastPage(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Template API list failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'page' => $request->input('page'),
+                'limit' => $request->input('limit'),
+                'category_id' => $request->input('category_id'),
+                'search' => $request->input('search'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load templates',
+            ], 500);
+        }
     }
 
     public function show($id)

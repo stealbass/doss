@@ -222,7 +222,7 @@
                                             <span class="badge bg-secondary">{{ strtoupper($payment->payment_method) }}</span>
                                         </td>
                                         <td>
-                                            @if($payment->status == 'completed')
+                                            @if($payment->status == 'completed' || $payment->status == 'successful')
                                                 <span class="badge bg-success">{{ __('Completed') }}</span>
                                             @elseif($payment->status == 'pending')
                                                 <span class="badge bg-warning">{{ __('Pending') }}</span>

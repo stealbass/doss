@@ -123,8 +123,22 @@ class DocumentTemplate extends Model
     {
         if (!$this->is_premium) return true;
         if (!$this->allowed_plans) return true;
-        
-        return in_array($userPlan, $this->allowed_plans);
+
+        $allowed = $this->allowed_plans;
+        if (is_string($allowed)) {
+            $allowed = [$allowed];
+        }
+
+        if (!is_array($allowed)) {
+            return true;
+        }
+
+        $planCode = self::normalizePlanCode($userPlan);
+        if (empty($planCode)) {
+            return true;
+        }
+
+        return in_array($planCode, $allowed);
     }
 
     /**
@@ -140,7 +154,10 @@ class DocumentTemplate extends Model
      */
     public function scopeMobileVisible($query)
     {
-        return $query->where('is_mobile_visible', true);
+        return $query->where(function($q) {
+            $q->where('is_mobile_visible', true)
+              ->orWhereNull('is_mobile_visible');
+        });
     }
 
     /**
@@ -156,11 +173,41 @@ class DocumentTemplate extends Model
      */
     public function scopeAccessibleByPlan($query, $plan)
     {
-        return $query->where(function($q) use ($plan) {
+        $planCode = self::normalizePlanCode($plan);
+        if (empty($planCode)) {
+            return $query;
+        }
+
+        return $query->where(function($q) use ($planCode) {
             $q->where('is_premium', false)
-              ->orWhereJsonContains('allowed_plans', $plan)
-              ->orWhereNull('allowed_plans');
+              ->orWhereNull('allowed_plans')
+              ->orWhere('allowed_plans', $planCode)
+              ->orWhereJsonContains('allowed_plans', $planCode);
         });
+    }
+
+    private static function normalizePlanCode($plan)
+    {
+        if (!$plan) {
+            return null;
+        }
+
+        $value = trim(mb_strtolower((string) $plan));
+        $map = [
+            'gratuit' => 'free',
+            'free' => 'free',
+            'étudiant' => 'student',
+            'etudiant' => 'student',
+            'student' => 'student',
+            'professionnel' => 'professional',
+            'professional' => 'professional',
+            'cabinet/entreprise' => 'enterprise',
+            'cabinet entreprise' => 'enterprise',
+            'entreprise' => 'enterprise',
+            'enterprise' => 'enterprise',
+        ];
+
+        return $map[$value] ?? $value;
     }
 
     /**

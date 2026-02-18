@@ -130,4 +130,33 @@ class LegalLibraryProvider with ChangeNotifier {
       return null;
     }
   }
+
+  /// Track when user views/opens a document
+  Future<bool> trackDocumentView(int documentId, String token) async {
+    try {
+      if (token.isEmpty) {
+        return false;
+      }
+
+      final endpoint = '${AppConstants.apiBaseUrl}/mobile/documents/legal/$documentId/view';
+      
+      final response = await http.post(
+        Uri.parse(endpoint),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
+      
+      return false;
+    } catch (e) {
+      print('DEBUG: Error tracking document view: $e');
+      return false;
+    }
+  }
 }

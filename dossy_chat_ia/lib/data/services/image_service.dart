@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../../core/utils/app_logger.dart';
 
 /// Service pour charger et cacher les images de façon optimisée
 /// Remplace Image.network() pour une meilleure performance
@@ -32,7 +33,6 @@ class ImageService {
         'dossy_image_cache',
         stalePeriod: const Duration(days: 7),  // Garder 7 jours
         maxNrOfCacheObjects: 200,  // Max 200 images
-        repo: JsonCacheInfoRepository(cacheSize: 10 * 1024 * 1024),  // 10MB max
       ),
     );
   }
@@ -87,8 +87,8 @@ class ImageService {
       errorWidget: (context, url, error) =>
           _buildErrorWidget(errorWidget, width, height),
       
-      // ✅ Durée du cache (peut être overridée)
-      cacheKeyBuilder: (url, cacheManager) => url,
+      // ✅ Cache key stable
+      cacheKey: imageUrl,
       
       // ✅ Transitions douces
       fadeInDuration: const Duration(milliseconds: 500),
@@ -206,7 +206,7 @@ class ImageService {
       final imageProvider = CachedNetworkImageProvider(imageUrl);
       imageProvider.evict();  // Force reload
     } catch (e) {
-      print('⚠️ Error pre-caching image: $e');
+      AppLogger.warn('⚠️ Error pre-caching image: $e');
     }
   }
   
@@ -219,9 +219,9 @@ class ImageService {
   static Future<void> clearCache() async {
     try {
       await ImageService()._cacheManager.emptyCache();
-      print('✅ Image cache cleared');
+      AppLogger.info('✅ Image cache cleared');
     } catch (e) {
-      print('⚠️ Error clearing cache: $e');
+      AppLogger.warn('⚠️ Error clearing cache: $e');
     }
   }
   
@@ -233,13 +233,9 @@ class ImageService {
   /// ```
   static Future<int> getCacheSize() async {
     try {
-      final cacheManager = ImageService()._cacheManager;
-      final files = await cacheManager.store.getAllObjects();
-      int totalSize = 0;
-      for (var file in files) {
-        totalSize += file.validTill?.millisecondsSinceEpoch ?? 0;
-      }
-      return totalSize;
+      // flutter_cache_manager 3.x n'expose pas directement la taille du cache
+      // Retourne 0 pour éviter les erreurs d'API et maintenir la compatibilité.
+      return 0;
     } catch (e) {
       return 0;
     }

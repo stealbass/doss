@@ -86,13 +86,13 @@ class _ResourcesListScreenState extends State<ResourcesListScreen> {
                         labelText: 'Type de ressource',
                         border: OutlineInputBorder(),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('Tous les types')),
+                      items: [
+                        const DropdownMenuItem(value: 'all', child: Text('Tous les types')),
                         DropdownMenuItem(value: 'cgi', child: Text(l10n.taxCodeCGI)),
-                        DropdownMenuItem(value: 'finance_law', child: Text('Loi de Finances')),
+                        const DropdownMenuItem(value: 'finance_law', child: Text('Loi de Finances')),
                         DropdownMenuItem(value: 'lpf', child: Text(l10n.taxCodeLPF)),
-                        DropdownMenuItem(value: 'labor_code', child: Text('Code du Travail')),
-                        DropdownMenuItem(value: 'collective_agreement', child: Text('Convention Collective')),
+                        const DropdownMenuItem(value: 'labor_code', child: Text('Code du Travail')),
+                        const DropdownMenuItem(value: 'collective_agreement', child: Text('Convention Collective')),
                       ],
                       onChanged: (value) {
                         setState(() => _selectedType = value!);
@@ -104,9 +104,9 @@ class _ResourcesListScreenState extends State<ResourcesListScreen> {
                         Expanded(
                           child: DropdownButtonFormField<int>(
                             initialValue: _selectedYear,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: l10n.year,
-                              border: OutlineInputBorder(),
+                              border: const OutlineInputBorder(),
                             ),
                             items: List.generate(6, (index) {
                               final year = DateTime.now().year - index;
@@ -138,10 +138,10 @@ class _ResourcesListScreenState extends State<ResourcesListScreen> {
                 child: Expanded(
                   child: Column(
                     children: [
-                      const TabBar(
+                      TabBar(
                         tabs: [
-                          Tab(text: 'Documents'),
-                          Tab(text: 'Grilles Salariales'),
+                          const Tab(text: 'Documents'),
+                          const Tab(text: 'Grilles Salariales'),
                           Tab(text: l10n.taxParameters),
                         ],
                       ),
@@ -149,11 +149,11 @@ class _ResourcesListScreenState extends State<ResourcesListScreen> {
                         child: TabBarView(
                           children: [
                             // Documents tab
-                            _buildDocumentsList(filteredResources),
+                            _buildDocumentsList(filteredResources, l10n),
                             // Salary grids tab
                             _buildSalaryGridsList(provider.salaryGrids),
                             // Tax parameters tab
-                            _buildTaxParametersList(provider.taxParameters),
+                            _buildTaxParametersList(provider.taxParameters, l10n),
                           ],
                         ),
                       ),
@@ -168,7 +168,7 @@ class _ResourcesListScreenState extends State<ResourcesListScreen> {
     );
   }
 
-  Widget _buildDocumentsList(List<dynamic> resources) {
+  Widget _buildDocumentsList(List<dynamic> resources, AppLocalizations l10n) {
     if (resources.isEmpty) {
       return Center(child: Text(l10n.noDocumentFound));
     }
@@ -230,7 +230,7 @@ class _ResourcesListScreenState extends State<ResourcesListScreen> {
     );
   }
 
-  Widget _buildTaxParametersList(List<dynamic> parameters) {
+  Widget _buildTaxParametersList(List<dynamic> parameters, AppLocalizations l10n) {
     if (parameters.isEmpty) {
       return Center(child: Text(l10n.noTaxParameters));
     }

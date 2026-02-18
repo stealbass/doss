@@ -298,12 +298,12 @@ class _LegalLibraryScreenState extends State<LegalLibraryScreen> {
                               elevation: isHighlighted ? 8 : 2,
                               color: isHighlighted ? Colors.yellow[50] : null,
                               shape: isHighlighted 
-                                ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.amber, width: 2))
+                                ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: Colors.amber, width: 2))
                                 : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                               child: ListTile(
                                 title: Text(doc.title, maxLines: 2, overflow: TextOverflow.ellipsis),
                                 subtitle: Text(doc.category ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-                                trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                                 onTap: () {
                                   Navigator.push(
                                     context,

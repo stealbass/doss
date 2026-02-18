@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
-import 'package:flutter/foundation.dart';
 import '../../../data/providers/auth_provider.dart';
+import '../../../data/providers/chat_provider.dart';
 import '../../../data/providers/subscription_provider.dart';
 import '../../../core/utils/api_helpers.dart';
 import '../../../l10n/app_localizations.dart';
@@ -44,10 +43,18 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Clear any previous user's chat state
+      Provider.of<ChatProvider>(context, listen: false).clearChat();
+
       // Fetch current subscription from API to sync with backend
       if (authProvider.token != null) {
         await subscriptionProvider.fetchCurrentSubscription(
             token: authProvider.token!);
+      }
+
+      if (authProvider.needsProfileCompletion) {
+        await _showProfileCompletionDialog(context, authProvider);
+        return;
       }
 
       Navigator.pushReplacementNamed(context, '/home');
@@ -296,23 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                          // Debug: Show API endpoint (debug only)
-                          if (kDebugMode)
-                            Padding(
-                              padding: EdgeInsets.only(top: 12.h, bottom: 12.h),
-                              child: Container(
-                                padding: EdgeInsets.all(8.w),
-                                decoration: BoxDecoration(
-                                  color: Colors.yellow.shade100,
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Text(
-                                  'API: ${AppConstants.baseUrl}/login',
-                                  style: TextStyle(
-                                      fontSize: 11.sp, color: Colors.black87),
-                                ),
-                              ),
-                            ),
+                          // Debug banner removed
 
                           // Login Button
                           Consumer<AuthProvider>(
@@ -413,6 +404,55 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Debug overlay removed for production view
       ],
+    );
+  }
+
+  Future<void> _showProfileCompletionDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final missingFields = authProvider.missingProfileFields;
+
+    String missingLabel(String field) {
+      if (field == 'jurisdiction') return l10n.jurisdiction;
+      if (field == 'mobile_role') return l10n.role;
+      return field;
+    }
+
+    final missingText = missingFields.isNotEmpty
+        ? missingFields.map(missingLabel).join(', ')
+        : '';
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.completeProfileTitle),
+          content: Text(
+            missingText.isEmpty
+                ? l10n.completeProfileMessage
+                : '${l10n.completeProfileMessage}\n\n${l10n.missingFieldsLabel}: $missingText',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/home');
+              },
+              child: Text(l10n.later),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/profile');
+              },
+              child: Text(l10n.completeNow),
+            ),
+          ],
+        );
+      },
     );
   }
 }

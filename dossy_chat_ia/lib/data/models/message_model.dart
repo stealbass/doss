@@ -9,6 +9,7 @@ class MessageModel {
   final String? audioUrl;
   final Map<String, dynamic>? generatedDocument;  // NEW: Generated document info
   final bool? isDocumentGeneration;  // NEW: Flag for document generation response
+  final List<int>? selectedDocumentIds; // Document IDs used for this message
   
   MessageModel({
     this.id,
@@ -21,6 +22,7 @@ class MessageModel {
     this.audioUrl,
     this.generatedDocument,
     this.isDocumentGeneration,
+    this.selectedDocumentIds,
   });
   
   factory MessageModel.fromJson(Map<String, dynamic> json) {
@@ -54,6 +56,9 @@ class MessageModel {
       audioUrl: json['audio_url'],
       generatedDocument: json['generated_document'],
       isDocumentGeneration: json['is_document_generation'] ?? false,
+      selectedDocumentIds: (json['selected_document_ids'] is List)
+          ? List<int>.from(json['selected_document_ids'])
+          : null,
     );
   }
   
@@ -69,6 +74,7 @@ class MessageModel {
       'audio_url': audioUrl,
       'generated_document': generatedDocument,
       'is_document_generation': isDocumentGeneration,
+      'selected_document_ids': selectedDocumentIds,
     };
   }
   
@@ -83,6 +89,7 @@ class MessageModel {
     String? audioUrl,
     Map<String, dynamic>? generatedDocument,
     bool? isDocumentGeneration,
+    List<int>? selectedDocumentIds,
   }) {
     return MessageModel(
       id: id ?? this.id,
@@ -93,6 +100,9 @@ class MessageModel {
       metadata: metadata ?? this.metadata,
       isAnonymized: isAnonymized ?? this.isAnonymized,
       audioUrl: audioUrl ?? this.audioUrl,
+      generatedDocument: generatedDocument ?? this.generatedDocument,
+      isDocumentGeneration: isDocumentGeneration ?? this.isDocumentGeneration,
+      selectedDocumentIds: selectedDocumentIds ?? this.selectedDocumentIds,
     );
   }
 }

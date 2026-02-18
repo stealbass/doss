@@ -16,6 +16,10 @@ class DocumentModel {
   final DateTime? publishedAt;
   final DateTime? createdAt;
   final String? language;
+  
+  // Statistiques d'utilisation
+  final int viewsCount;
+  final int downloadsCount;
 
   DocumentModel({
     required this.id,
@@ -33,6 +37,8 @@ class DocumentModel {
     this.publishedAt,
     this.createdAt,
     this.language,
+    this.viewsCount = 0,
+    this.downloadsCount = 0,
   });
   
   // Alias pour compatibilité avec search widgets
@@ -64,6 +70,26 @@ class DocumentModel {
       }
     }
     
+    // Safe parsing for viewsCount
+    int viewsCount = 0;
+    if (json['views_count'] != null) {
+      if (json['views_count'] is int) {
+        viewsCount = json['views_count'];
+      } else {
+        viewsCount = int.tryParse(json['views_count'].toString()) ?? 0;
+      }
+    }
+
+    // Safe parsing for downloadsCount
+    int downloadsCount = 0;
+    if (json['downloads_count'] != null) {
+      if (json['downloads_count'] is int) {
+        downloadsCount = json['downloads_count'];
+      } else {
+        downloadsCount = int.tryParse(json['downloads_count'].toString()) ?? 0;
+      }
+    }
+    
     return DocumentModel(
       id: (json['id'] is String) ? int.tryParse(json['id']) ?? 0 : json['id'] ?? 0,
       name: json['name'] ?? json['file_name'] ?? json['title'] ?? 'Document sans titre',
@@ -88,6 +114,8 @@ class DocumentModel {
           ? DateTime.parse(json['created_at'])
           : null,
       language: json['language'] ?? json['lang'],
+      viewsCount: viewsCount,
+      downloadsCount: downloadsCount,
     );
   }
 
@@ -108,6 +136,8 @@ class DocumentModel {
       'published_at': publishedAt?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
       'language': language,
+      'views_count': viewsCount,
+      'downloads_count': downloadsCount,
     };
   }
 
@@ -141,6 +171,8 @@ class DocumentModel {
     DateTime? publishedAt,
     DateTime? createdAt,
     String? language,
+    int? viewsCount,
+    int? downloadsCount,
   }) {
     return DocumentModel(
       id: id ?? this.id,
@@ -158,6 +190,8 @@ class DocumentModel {
       publishedAt: publishedAt ?? this.publishedAt,
       createdAt: createdAt ?? this.createdAt,
       language: language ?? this.language,
+      viewsCount: viewsCount ?? this.viewsCount,
+      downloadsCount: downloadsCount ?? this.downloadsCount,
     );
   }
 }

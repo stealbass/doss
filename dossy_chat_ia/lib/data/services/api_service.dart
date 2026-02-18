@@ -87,6 +87,7 @@ class ApiService {
     required String passwordConfirmation,
     required String phone,
     String? jurisdiction,
+    String? mobileRole,
     String? referralCode,
   }) async {
     // Check internet connection first
@@ -110,6 +111,7 @@ class ApiService {
               'password_confirmation': passwordConfirmation,
               'phone': phone,
               'jurisdiction': jurisdiction,
+              'mobile_role': mobileRole,
               'referral_code': referralCode,
             }),
           )
@@ -324,6 +326,8 @@ class ApiService {
     String? address,
     String? city,
     String? avatar,
+    String? jurisdiction,
+    String? mobileRole,
   }) async {
     try {
       final body = <String, dynamic>{};
@@ -332,6 +336,8 @@ class ApiService {
       if (address != null) body['address'] = address;
       if (city != null) body['city'] = city;
       if (avatar != null) body['avatar'] = avatar;
+      if (jurisdiction != null) body['jurisdiction'] = jurisdiction;
+      if (mobileRole != null) body['mobile_role'] = mobileRole;
 
       print('🔵 UPDATE PROFILE - URL: $baseUrl/profile');
       print('🔵 UPDATE PROFILE - Body: $body');

@@ -216,6 +216,7 @@ void main() {
       final result = await ApiHelpers.retryWithBackoff(
         unreliableOperation,
         maxAttempts: 5,
+        initialDelay: const Duration(milliseconds: 10),
       );
       
       expect(result, 'success after retries');
@@ -231,6 +232,7 @@ void main() {
         () => ApiHelpers.retryWithBackoff(
           alwaysFailOperation,
           maxAttempts: 3,
+          initialDelay: const Duration(milliseconds: 10),
         ),
         throwsA(isA<Exception>()),
       );

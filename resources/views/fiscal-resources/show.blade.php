@@ -132,7 +132,11 @@
 </div>
 
 <!-- Delete Modal -->
-@if(\Auth::user()->type == 'super admin')
+@php
+    $fiscalPermissions = json_decode(\Auth::user()->permission_json ?? '[]', true) ?? [];
+    $canDeleteFiscal = \Auth::user()->type == 'super admin' || (\Auth::user()->type == 'superAdminEmployee' && (in_array('manage fiscal-resources', $fiscalPermissions) || in_array(5, $fiscalPermissions)));
+@endphp
+@if($canDeleteFiscal)
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

@@ -189,7 +189,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
             // Send subscription confirmation emails
             try {
-                Utility::getSMTPDetails(1); // Admin SMTP settings
+                $smtpOwnerId = $user->creatorId() ?: 1;
+                Utility::getSMTPDetails($smtpOwnerId);
                 
                 $planPrice = Utility::getValByName('currency_symbol') . number_format($plan->price, 2);
                 $planDuration = $plan->duration === 'month' ? 'Mensuel (1 mois)' : 'Annuel (12 mois)';

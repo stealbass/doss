@@ -79,12 +79,22 @@ class FiscalSocialResourceController extends Controller
             $query->where('country', $request->country);
         }
 
-        if ($request->has('resource_type') && $request->resource_type) {
-            $query->where('resource_type', $request->resource_type);
+        $resourceType = $request->get('resource_type', $request->get('type'));
+        if (!empty($resourceType)) {
+            $query->where('resource_type', $resourceType);
         }
 
         if ($request->has('year') && $request->year) {
             $query->where('year', $request->year);
+        }
+
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhere('file_name', 'like', '%' . $search . '%');
+            });
         }
 
         $resources = $query->orderBy('created_at', 'desc')->paginate(20);
@@ -94,6 +104,7 @@ class FiscalSocialResourceController extends Controller
             'mobile_visible' => FiscalSocialResource::where('is_mobile_visible', true)->count(),
             'countries' => FiscalSocialResource::distinct('country')->count(),
             'current_year' => FiscalSocialResource::where('year', date('Y'))->count(),
+            'total_views' => FiscalSocialResource::sum('views_count'),
         ];
 
         return view('fiscal-resources.index', compact('resources', 'stats'));
@@ -130,6 +141,118 @@ class FiscalSocialResourceController extends Controller
         $categories = ResourceCategory::active()->get();
 
         return view('fiscal-resources.create', compact('countries', 'years', 'categories'));
+    }
+
+    /**
+     * Show the form for bulk upload fiscal/social resources
+     */
+    public function bulkUploadForm()
+    {
+        if (!$this->canManageFiscalResources()) {
+            return redirect()->route('fiscal-resources.index')->with('error', __('Permission Denied.'));
+        }
+
+        $countries = [
+            'BJ' => 'Bénin',
+            'BF' => 'Burkina Faso',
+            'CM' => 'Cameroun',
+            'CI' => 'Côte d\'Ivoire',
+            'CD' => 'RD Congo',
+            'GA' => 'Gabon',
+            'GW' => 'Guinée-Bissau',
+            'MG' => 'Madagascar',
+            'ML' => 'Mali',
+            'MA' => 'Maroc',
+            'NE' => 'Niger',
+            'SN' => 'Sénégal',
+            'TG' => 'Togo',
+            'TN' => 'Tunisie'
+        ];
+
+        $years = range(date('Y'), date('Y') + 5);
+        $categories = ResourceCategory::active()->get();
+
+        return view('fiscal-resources.bulk-upload', compact('countries', 'years', 'categories'));
+    }
+
+    /**
+     * Store multiple fiscal/social resources at once
+     */
+    public function bulkUploadStore(Request $request)
+    {
+        if (!$this->canManageFiscalResources()) {
+            return redirect()->route('fiscal-resources.index')->with('error', __('Permission Denied.'));
+        }
+
+        $request->merge([
+            'is_mobile_visible' => $request->has('is_mobile_visible'),
+        ]);
+
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'required|exists:resource_categories,id',
+            'resource_type' => 'required|in:cgi,finance_law,tax_procedure,circular,doctrine,convention,labor_code,social_code,collective_agreement,salary_grid,administrative_form,other',
+            'country' => 'required|string',
+            'year' => 'required|integer|min:2020|max:2030',
+            'version' => 'nullable|string|max:50',
+            'description' => 'nullable|string',
+            'is_mobile_visible' => 'boolean',
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|file|max:10240|mimes:pdf,doc,docx,xlsx,xls',
+        ]);
+
+        if ($validator->fails()) {
+            $messages = $validator->getMessageBag();
+            return redirect()->back()->with('error', $messages->first());
+        }
+
+        $uploadedCount = 0;
+        $errors = [];
+
+        if ($request->hasFile('files')) {
+            $disk = $this->getStorageDisk();
+            foreach ($request->file('files') as $file) {
+                try {
+                    $baseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $title = trim($baseName) !== '' ? $baseName : 'resource_' . time();
+                    $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $filePath = $file->storeAs('fiscal_resources', $fileName, $disk);
+
+                    $resource = FiscalSocialResource::create([
+                        'category_id' => $request->category_id,
+                        'title' => $title,
+                        'slug' => Str::slug($title),
+                        'description' => $request->description,
+                        'resource_type' => $request->resource_type,
+                        'country' => $request->country,
+                        'year' => $request->year,
+                        'version' => $request->version ?? '1.0',
+                        'file_path' => $filePath,
+                        'file_name' => $fileName,
+                        'file_type' => $file->getClientOriginalExtension(),
+                        'file_size' => $file->getSize(),
+                        'is_mobile_visible' => $request->boolean('is_mobile_visible'),
+                        'created_by' => auth()->id(),
+                        'extracted_text' => null,
+                    ]);
+
+                    ProcessFiscalResourceForRAG::dispatchSync($resource->id);
+                    $uploadedCount++;
+                } catch (\Exception $e) {
+                    $errors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
+                }
+            }
+        }
+
+        $message = '';
+        if ($uploadedCount > 0) {
+            $message = __('Successfully uploaded :count resource(s).', ['count' => $uploadedCount]);
+        }
+        if (!empty($errors)) {
+            $message .= ' ' . __('Errors: ') . implode(', ', $errors);
+            return redirect()->route('fiscal-resources.index')->with('warning', $message);
+        }
+
+        return redirect()->route('fiscal-resources.index')->with('success', $message);
     }
 
     /**

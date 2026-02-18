@@ -119,6 +119,7 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
         Route::post('/search', [DocumentController::class, 'searchLegalDocuments']);
         Route::get('/categories', [DocumentController::class, 'getLegalCategories']);
         Route::get('/legal/{id}/download', [DocumentController::class, 'downloadLegalDocument']);
+        Route::post('/legal/{id}/view', [DocumentController::class, 'viewLegalDocument']);
     });
     
     // Subscription
@@ -161,6 +162,7 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     Route::prefix('fiscal-resources')->group(function () {
         Route::get('/', [FiscalResourceApiController::class, 'index']);
         Route::get('/{id}/download', [FiscalResourceApiController::class, 'download']);
+        Route::post('/{id}/view', [FiscalResourceApiController::class, 'view']);
         Route::get('/salary-grids', [FiscalResourceApiController::class, 'salaryGrids']);
         Route::get('/tax-parameters', [FiscalResourceApiController::class, 'taxParameters']);
     });

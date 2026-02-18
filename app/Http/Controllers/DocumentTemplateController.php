@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
@@ -148,6 +149,103 @@ class DocumentTemplateController extends Controller
         $countries = config('mobile_countries.supported_countries');
 
         return view('document-templates.create', compact('categories', 'countries'));
+    }
+
+    /**
+     * Show the form for bulk upload templates
+     */
+    public function bulkUploadForm()
+    {
+        if (!$this->canManageDocumentTemplate()) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $categories = TemplateCategory::active()->get();
+        $countries = config('mobile_countries.supported_countries');
+
+        return view('document-templates.bulk-upload', compact('categories', 'countries'));
+    }
+
+    /**
+     * Store multiple templates at once
+     */
+    public function bulkUploadStore(Request $request)
+    {
+        if (!$this->canManageDocumentTemplate()) {
+            return redirect()->back()->with('error', __('Permission Denied.'));
+        }
+
+        $request->merge([
+            'is_mobile_visible' => $request->has('is_mobile_visible'),
+            'is_premium' => $request->has('is_premium'),
+        ]);
+
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'required|exists:template_categories,id',
+            'template_type' => 'required|in:contract,act,form,letter,calculator,checklist',
+            'country' => 'required|string|size:2',
+            'allowed_plans' => 'required|in:free,student,professional,enterprise',
+            'files' => 'required|array|min:1',
+            'files.*' => 'required|file|mimes:doc,docx,pdf,xlsx,xls|max:10240',
+            'description' => 'nullable|string',
+            'is_premium' => 'boolean',
+            'is_mobile_visible' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            $messages = $validator->getMessageBag();
+            return redirect()->back()->with('error', $messages->first());
+        }
+
+        $uploadedCount = 0;
+        $errors = [];
+
+        if ($request->hasFile('files')) {
+            $disk = $this->getStorageDisk();
+            foreach ($request->file('files') as $file) {
+                try {
+                    $baseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $title = trim($baseName) !== '' ? $baseName : 'template_' . time();
+                    $fileName = Str::slug($title) . '_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+                    $filePath = $file->storeAs('templates', $fileName, $disk);
+
+                    $template = DocumentTemplate::create([
+                        'category_id' => $request->category_id,
+                        'name' => $title,
+                        'slug' => Str::slug($title) . '-' . Str::random(6),
+                        'description' => $request->description,
+                        'country' => strtoupper($request->country),
+                        'language' => $request->language ?? 'fr',
+                        'file_path' => $filePath,
+                        'file_name' => $fileName,
+                        'file_type' => $file->getClientOriginalExtension(),
+                        'file_size' => $file->getSize(),
+                        'template_type' => $request->template_type,
+                        'allowed_plans' => $request->allowed_plans ?? null,
+                        'is_premium' => $request->boolean('is_premium'),
+                        'is_mobile_visible' => $request->boolean('is_mobile_visible'),
+                        'created_by' => Auth::id(),
+                        'extracted_text' => null,
+                    ]);
+
+                    ProcessTemplateForRAG::dispatchSync($template->id);
+                    $uploadedCount++;
+                } catch (\Exception $e) {
+                    $errors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
+                }
+            }
+        }
+
+        $message = '';
+        if ($uploadedCount > 0) {
+            $message = __('Successfully uploaded :count template(s).', ['count' => $uploadedCount]);
+        }
+        if (!empty($errors)) {
+            $message .= ' ' . __('Errors: ') . implode(', ', $errors);
+            return redirect()->route('document-templates.index')->with('warning', $message);
+        }
+
+        return redirect()->route('document-templates.index')->with('success', $message);
     }
 
     /**

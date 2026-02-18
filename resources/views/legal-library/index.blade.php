@@ -6,7 +6,7 @@
     @php
         // Allow Super Admin, Company users, and SuperAdmin Employees with permission
         $canManageLegalLibrary = \Auth::user()->type == 'super admin' || \Auth::user()->type == 'company';
-        if (\Auth::user()->type == 'superAdminEmployee') {
+        if (\Auth::user()->type == 'superAdminEmployee' || (int) \Auth::user()->super_admin_employee === 1) {
             $permissions = json_decode(\Auth::user()->permission_json, true) ?? [];
             $canManageLegalLibrary = in_array('manage legal-library', $permissions) || in_array(3, $permissions);
         }
@@ -60,14 +60,14 @@
                                             @php
                                                 // Allow Super Admin, Company users, and SuperAdmin Employees with permission
                                                 $canManageLegalLibrary = \Auth::user()->type == 'super admin' || \Auth::user()->type == 'company';
-                                                if (\Auth::user()->type == 'superAdminEmployee') {
+                                                if (\Auth::user()->type == 'superAdminEmployee' || (int) \Auth::user()->super_admin_employee === 1) {
                                                     $permissions = json_decode(\Auth::user()->permission_json, true) ?? [];
                                                     $canManageLegalLibrary = in_array('manage legal-library', $permissions) || in_array(3, $permissions);
                                                 }
                                                 
                                                 // Check if user can delete (Super Admin OR SuperAdmin Employee with permission)
                                                 $canDelete = \Auth::user()->type == 'super admin';
-                                                if (\Auth::user()->type == 'superAdminEmployee') {
+                                                if (\Auth::user()->type == 'superAdminEmployee' || (int) \Auth::user()->super_admin_employee === 1) {
                                                     $permissions = json_decode(\Auth::user()->permission_json, true) ?? [];
                                                     $canDelete = in_array('manage legal-library', $permissions) || in_array(3, $permissions);
                                                 }

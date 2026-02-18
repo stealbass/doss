@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutterwave_standard/flutterwave.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
+import '../../../core/utils/app_logger.dart';
 import '../../../data/services/payment_service.dart';
 import '../../../data/providers/auth_provider.dart';
 import '../../../data/providers/subscription_provider.dart';
@@ -16,6 +17,7 @@ class FlutterwavePaymentScreen extends StatefulWidget {
   final int amount;
   final String currency;
   final String billingCycle;
+  final String? couponCode;
 
   const FlutterwavePaymentScreen({
     super.key,
@@ -24,6 +26,7 @@ class FlutterwavePaymentScreen extends StatefulWidget {
     required this.amount,
     required this.currency,
     required this.billingCycle,
+    this.couponCode,
   });
 
   @override
@@ -98,6 +101,7 @@ class _FlutterwavePaymentScreenState extends State<FlutterwavePaymentScreen> {
         name: user.name,
         token: token,
         paymentMethod: 'flutterwave',
+        couponCode: widget.couponCode,
       );
 
       if (result['success'] == true) {
@@ -109,7 +113,7 @@ class _FlutterwavePaymentScreenState extends State<FlutterwavePaymentScreen> {
         throw Exception(result['message'] ?? 'Failed to initialize payment');
       }
     } catch (e) {
-      print('🔴 Payment error: $e');
+      AppLogger.error('🔴 Payment error', error: e);
       _showError(e.toString());
     } finally {
       if (mounted) {
@@ -122,6 +126,18 @@ class _FlutterwavePaymentScreenState extends State<FlutterwavePaymentScreen> {
 
   Future<void> _openFlutterwavePayment(Map<String, dynamic> data) async {
     try {
+      final publicKey = (data['public_key'] ?? '').toString();
+      if (publicKey.isEmpty) {
+        _showError('Clé Flutterwave manquante. Vérifiez la configuration.');
+        return;
+      }
+
+      final currency = (data['currency'] ?? 'XAF').toString();
+      final paymentOptions = (currency == 'XAF' || currency == 'XOF')
+          ? 'card,mobilemoneyfranco'
+          : 'card,mobilemoney';
+      final isTestMode = publicKey.startsWith('FLWPUBK_TEST');
+
       final customer = Customer(
         name: data['name'] ?? '',
         phoneNumber: data['phone'] ?? '',
@@ -129,19 +145,19 @@ class _FlutterwavePaymentScreenState extends State<FlutterwavePaymentScreen> {
       );
 
       final flutterwave = Flutterwave(
-        publicKey: data['public_key'] ?? '',
-        currency: data['currency'] ?? 'XAF',
+        publicKey: publicKey,
+        currency: currency,
         redirectUrl: data['redirect_url'] ?? '',
         txRef: data['tx_ref'] ?? '',
         amount: data['amount'].toString(),
         customer: customer,
-        paymentOptions: 'card,mobilemoney',
+        paymentOptions: paymentOptions,
         customization: Customization(
           title: 'DOSSY PRO',
           description: 'Paiement ${widget.planName}',
           logo: 'https://dossypro.com/logo.png',
         ),
-        isTestMode: false,
+        isTestMode: isTestMode,
       );
 
       final ChargeResponse response = await flutterwave.charge(context);
@@ -173,6 +189,7 @@ class _FlutterwavePaymentScreenState extends State<FlutterwavePaymentScreen> {
     final authProvider = context.read<AuthProvider>();
     final token = authProvider.token;
     if (token != null) {
+      await authProvider.refreshUser();
       await context.read<SubscriptionProvider>().fetchCurrentSubscription(token: token);
       
       // Also reload plans to refresh the UI

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../core/constants/app_constants.dart';
+import '../../core/utils/app_logger.dart';
 
 /// Service for Flutterwave payment integration
 class PaymentService {
@@ -103,10 +104,11 @@ class PaymentService {
     required String name,
     required String token,
     String paymentMethod = 'card',
+    String? couponCode,
   }) async {
     try {
-      print('🔵 PAYMENT - Initiating payment');
-      print('🔵 PAYMENT - Plan: $planId, Amount: $amount, Method: $paymentMethod');
+      AppLogger.debug('🔵 PAYMENT - Initiating payment');
+      AppLogger.debug('🔵 PAYMENT - Plan: $planId, Amount: $amount, Method: $paymentMethod');
       
       final response = await _postWithFallback(
         path: '/payment/initiate',
@@ -120,12 +122,13 @@ class PaymentService {
           'billing_cycle': billingCycle,
           'payment_method': paymentMethod,
           'phone_number': phone,
+          if (couponCode != null && couponCode.trim().isNotEmpty)
+            'coupon_code': couponCode.trim(),
         }),
         timeout: const Duration(seconds: 30),
       );
 
-      print('🔵 PAYMENT - Status: ${response.statusCode}');
-      print('🔵 PAYMENT - Response: ${response.body}');
+      AppLogger.debug('🔵 PAYMENT - Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -141,7 +144,7 @@ class PaymentService {
         };
       }
     } catch (e) {
-      print('🔴 PAYMENT - Exception: $e');
+      AppLogger.error('🔴 PAYMENT - Exception', error: e);
       return {
         'success': false,
         'message': 'Erreur de connexion: ${e.toString()}',

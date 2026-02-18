@@ -17,7 +17,6 @@ class AppConstants {
   // Fallback/Development URLs (utilisés si production échoue)
   static const List<String> fallbackBaseUrls = [
     'https://dossypro.com/api/mobile',
-    'https://dossy.alwaysdata.net/api/mobile',
   ];
   
   // Couleur primaire verte (pour les écrans qui l'utilisent)
@@ -25,8 +24,9 @@ class AppConstants {
   static const int primaryColor = 0xFF00A86B; // Alias for compatibility
   
   // Payment Configuration (Flutterwave)
-  static const String flutterwavePublicKey = 'FLWPUBK_TEST-XXXXXXXXXXXXX-X'; // À remplacer par la vraie clé
-  static const bool isTestMode = true; // true pour test, false pour production
+  // Clé production configurée pour la soumission Play Store
+  static const String flutterwavePublicKey = 'FLWPUBK-ca7ecbaf2e8fc698dab92cf909153660-X';
+  static const bool isTestMode = false; // false = Production mode (IMPORTANT pour Play Store)
   
   // Storage Keys
   static const String tokenKey = 'auth_token';
@@ -170,8 +170,8 @@ class AppConstants {
   
   // Chat Prompt Suggestions
   static const List<String> chatPromptSuggestions = [
-    'Expliquez-moi les conditions de validité d\'un contrat OHADA',
-    'Quels sont les délais de prescription en droit civil camerounais ?',
+    'Expliquez-moi les conditions de validité d\'un contrat',
+    'Quels sont les délais de prescription en droit ?',
     'Comment calculer les indemnités de licenciement ?',
     'Quelles sont les obligations fiscales d\'une SARL ?',
     'Rédigez un modèle de contrat de bail commercial',
