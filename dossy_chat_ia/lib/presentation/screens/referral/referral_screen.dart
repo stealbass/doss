@@ -18,8 +18,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
   String _referralCode = '';
   int _totalReferrals = 0;
   int _activeReferrals = 0;
-  int _freeMonthsEarned = 0; // total earned (including redeemed)
-  int _freeMonthsRedeemed = 0; // already applied
+  double _commissionTotal = 0;
+  double _commissionPending = 0;
+  double _commissionPaid = 0;
+  String _commissionCurrency = 'XAF';
+  double _commissionRate = 20;
+  bool _commissionEligible = false;
+  int _completedReferrals = 0;
 
   List<Map<String, dynamic>> _referralHistory = [];
   bool _loading = true;
@@ -50,24 +55,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
           _referralCode = data['data']['code'] ?? '';
           _totalReferrals = data['data']['total_referrals'] ?? 0;
           _activeReferrals = data['data']['active_referrals'] ?? 0;
-          // Compute free months from rewards list
+
+          final commissionData = data['data']['commission'] ?? {};
+          _commissionRate = _parseDouble(commissionData['rate'], defaultValue: 20);
+          _commissionEligible = commissionData['eligible'] == true;
+          _completedReferrals = commissionData['completed_referrals'] ?? _activeReferrals;
+          _commissionCurrency = commissionData['currency'] ?? 'XAF';
+
           final rewardsData = data['data']['rewards'] ?? {};
-          final rewardsList = List<Map<String, dynamic>>.from(rewardsData['rewards'] ?? []);
-          int earned = 0;
-          int redeemed = 0;
-          for (final r in rewardsList) {
-            final type = r['reward_type'];
-            if (type != 'free_month') continue;
-            final int value = ((r['reward_value'] ?? r['value'] ?? 0) as num).toInt();
-            final status = (r['status'] ?? '').toString();
-            if (status == 'redeemed') {
-              redeemed += value;
-            } else {
-              earned += value;
-            }
-          }
-          _freeMonthsEarned = earned + redeemed;
-          _freeMonthsRedeemed = redeemed;
+          final summary = rewardsData['summary'] ?? {};
+          _commissionTotal = _parseDouble(summary['total_commission']);
+          _commissionPending = _parseDouble(summary['pending_commission']);
+          _commissionPaid = _parseDouble(summary['paid_commission']);
+          _commissionCurrency = summary['currency'] ?? _commissionCurrency;
+
           _referralHistory = List<Map<String, dynamic>>.from(
             data['data']['history'] ?? [],
           );
@@ -98,16 +99,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   void _shareReferralCode() {
+    final referrerParam = Uri.encodeComponent('referral_code=$_referralCode');
+    final storeLink =
+        'https://play.google.com/store/apps/details?id=com.dossy.chatia&referrer=$referrerParam';
     final message = '''
 🎓 Rejoignez DOSSY CHAT IA - Votre Assistant Juridique IA !
 
 Utilisez mon code de parrainage : $_referralCode
 
+✅ Bibliothèque OHADA & Nationale : Tous vos Codes à jour dans la poche.
 ✅ Analyse juridique intelligente
 ✅ Outils pour étudiants & professionnels
-✅ 14 pays africains francophones
+✅ 14 pays africains francophones couverts
 
-Téléchargez l'app : https://dossypro.com
+Téléchargez l'app : $storeLink
 
 #DossyChatIA #DroitAfricain
 ''';
@@ -117,8 +122,6 @@ Téléchargez l'app : https://dossypro.com
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
     final colorScheme = Theme.of(context).colorScheme;
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
@@ -154,7 +157,6 @@ Téléchargez l'app : https://dossypro.com
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -190,8 +192,8 @@ Téléchargez l'app : https://dossypro.com
                             const SizedBox(height: 4),
                             Text(
                               isFr
-                                  ? 'Parrainez vos amis et recevez des récompenses'
-                                  : 'Refer your friends and get rewards',
+                                  ? 'Parrainez vos amis et gagnez 20% de commission'
+                                  : 'Refer your friends and earn 20% commission',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.white.withAlpha((0.9 * 255).round()),
@@ -269,7 +271,6 @@ Téléchargez l'app : https://dossypro.com
 
             const SizedBox(height: 24),
 
-            // Stats Cards
             Row(
               children: [
                 Expanded(
@@ -292,18 +293,74 @@ Téléchargez l'app : https://dossypro.com
                 const SizedBox(width: 12),
                 Expanded(
                   child: _StatCard(
-                    icon: Icons.card_giftcard,
-                    value: '$_freeMonthsEarned',
-                    label: isFr ? 'Mois gratuits cumulés' : 'Total free months',
+                    icon: Icons.percent,
+                    value: '${_formatAmount(_commissionPending)} $_commissionCurrency',
+                    label: isFr ? 'Commission à payer' : 'Commission due',
                     color: Colors.orange,
                   ),
                 ),
               ],
             ),
 
+            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colorScheme.outline.withAlpha((0.2 * 255).round())),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.account_balance_wallet, color: AppConstants.primaryGreen),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isFr ? 'Total commissions' : 'Total commissions',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_formatAmount(_commissionTotal)} $_commissionCurrency',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isFr
+                              ? 'Payé: ${_formatAmount(_commissionPaid)} $_commissionCurrency'
+                              : 'Paid: ${_formatAmount(_commissionPaid)} $_commissionCurrency',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _commissionEligible ? Colors.green.shade100 : Colors.orange.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _commissionEligible
+                          ? (isFr ? 'Actif' : 'Active')
+                          : (isFr ? 'Dès 10 parrainages' : 'After 10 referrals'),
+                      style: TextStyle(
+                        color: _commissionEligible ? Colors.green.shade800 : Colors.orange.shade800,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 24),
 
-            // How it works
             Text(
               isFr ? 'Comment ça marche ?' : 'How it works?',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -332,14 +389,13 @@ Téléchargez l'app : https://dossypro.com
               number: '3',
               title: isFr ? 'Vous recevez vos gains' : 'You earn rewards',
               description: isFr
-                  ? '1 mois gratuit de votre plan actuel pour 10 affiliations réussies'
-                  : '1 free month of your current plan for 10 successful referrals',
+                  ? 'Après 10 abonnements réussis, vous gagnez 20% de commission sur les paiements de vos filleuls'
+                  : 'After 10 successful subscriptions, you earn 20% commission on your referrals payments',
               icon: Icons.emoji_events,
             ),
 
             const SizedBox(height: 24),
 
-            // Referral History
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -355,113 +411,114 @@ Téléchargez l'app : https://dossypro.com
             ),
             const SizedBox(height: 12),
 
-              if (_referralHistory.isEmpty)
-                Text(
-                  isFr
-                      ? 'Aucun parrainage pour le moment'
-                      : 'No referrals yet',
-                  style: TextStyle(color: Colors.grey.shade600),
-                )
-              else
-                Column(
-                  children: _referralHistory.take(5).map((referral) {
-                    final status = (referral['status'] ?? '').toString();
-                    final isCompleted = status == 'completed';
-                    final name = referral['referred_user']?['name'] ?? referral['referred_user']?['email'] ?? 'Invité';
-                    final createdAt = referral['created_at'] ?? '';
-                    final completedAt = referral['completed_at'];
-                    final statusLabel = isCompleted
-                        ? (isFr ? 'Terminé' : 'Completed')
-                        : (status == 'pending'
-                            ? (isFr ? 'En attente' : 'Pending')
-                            : (isFr ? 'Enregistré' : 'Registered'));
+            if (_referralHistory.isEmpty)
+              Text(
+                isFr ? 'Aucun parrainage pour le moment' : 'No referrals yet',
+                style: TextStyle(color: Colors.grey.shade600),
+              )
+            else
+              Column(
+                children: _referralHistory.take(5).map((referral) {
+                  final status = (referral['status'] ?? '').toString();
+                  final isCompleted = status == 'completed';
+                  final name = referral['referred_user']?['name'] ??
+                      referral['referred_user']?['email'] ??
+                      'Invité';
+                  final createdAt = referral['created_at'] ?? '';
+                  final completedAt = referral['completed_at'];
+                  final statusLabel = isCompleted
+                      ? (isFr ? 'Terminé' : 'Completed')
+                      : (status == 'pending'
+                          ? (isFr ? 'En attente' : 'Pending')
+                          : (isFr ? 'Enregistré' : 'Registered'));
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isCompleted
-                              ? AppConstants.primaryGreen.withAlpha((0.3 * 255).round())
-                              : colorScheme.outline.withAlpha((0.2 * 255).round()),
-                        ),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isCompleted
+                            ? AppConstants.primaryGreen.withAlpha((0.3 * 255).round())
+                            : colorScheme.outline.withAlpha((0.2 * 255).round()),
                       ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: isCompleted
-                                ? AppConstants.primaryGreen.withAlpha((0.1 * 255).round())
-                                : Colors.grey.shade200,
-                            child: Icon(
-                              Icons.person,
-                              color: isCompleted ? AppConstants.primaryGreen : Colors.grey,
-                            ),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: isCompleted
+                              ? AppConstants.primaryGreen.withAlpha((0.1 * 255).round())
+                              : Colors.grey.shade200,
+                          child: Icon(
+                            Icons.person,
+                            color: isCompleted ? AppConstants.primaryGreen : Colors.grey,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today,
-                                      size: 12,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    completedAt ?? createdAt,
+                                    style: TextStyle(
+                                      fontSize: 12,
                                       color: Colors.grey.shade600,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      completedAt ?? createdAt,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isCompleted
+                                          ? Colors.green.shade100
+                                          : Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      statusLabel,
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
                                         color: isCompleted
-                                            ? Colors.green.shade100
-                                            : Colors.grey.shade200,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        statusLabel,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: isCompleted ? Colors.green.shade800 : Colors.grey.shade700,
-                                        ),
+                                            ? Colors.green.shade800
+                                            : Colors.grey.shade700,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
 
             const SizedBox(height: 24),
 
-            // Terms (simplified & accurate)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -488,12 +545,12 @@ Téléchargez l'app : https://dossypro.com
                   const SizedBox(height: 12),
                   Text(
                     isFr
-                        ? '• 10 parrainages complétés = 1 mois gratuit appliqué automatiquement sur votre abonnement payant actif\n'
-                            '• Les parrainages sont comptés lorsqu\'un filleul a un abonnement actif et payant\n'
-                            '• Pas de limite mensuelle actuellement'
-                        : '• 10 completed referrals = 1 free month auto-applied to your active paid subscription\n'
-                            '• Referrals count when the invitee has an active paid subscription\n'
-                            '• No monthly cap at this time',
+                        ? '• La commission est de 20% sur chaque paiement réussi de vos filleuls\n'
+                            '• Les commissions s\'activent après 10 abonnements réussis\n'
+                            '• Le montant total à payer est cumulé dans votre espace parrainage'
+                        : '• Commission is 20% on each successful payment by your referrals\n'
+                            '• Commissions start after 10 successful subscriptions\n'
+                            '• The total payable amount is tracked in your referral space',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.blue.shade800,
@@ -507,6 +564,19 @@ Téléchargez l'app : https://dossypro.com
         ),
       ),
     );
+  }
+
+  double _parseDouble(dynamic value, {double defaultValue = 0}) {
+    if (value == null) return defaultValue;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? defaultValue;
+  }
+
+  String _formatAmount(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(2);
   }
 
   void _showFullHistory() {
@@ -546,7 +616,9 @@ Téléchargez l'app : https://dossypro.com
                         final referral = _referralHistory[index];
                         final status = (referral['status'] ?? '').toString();
                         final isCompleted = status == 'completed';
-                        final name = referral['referred_user']?['name'] ?? referral['referred_user']?['email'] ?? 'Invité';
+                        final name = referral['referred_user']?['name'] ??
+                            referral['referred_user']?['email'] ??
+                            'Invité';
                         final createdAt = referral['created_at'] ?? '';
                         final completedAt = referral['completed_at'];
                         final statusLabel = isCompleted
@@ -580,7 +652,9 @@ Téléchargez l'app : https://dossypro.com
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: isCompleted ? Colors.green.shade100 : Colors.grey.shade200,
+                                      color: isCompleted
+                                          ? Colors.green.shade100
+                                          : Colors.grey.shade200,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -588,7 +662,9 @@ Téléchargez l'app : https://dossypro.com
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                        color: isCompleted ? Colors.green.shade800 : Colors.grey.shade700,
+                                        color: isCompleted
+                                            ? Colors.green.shade800
+                                            : Colors.grey.shade700,
                                       ),
                                     ),
                                   )
@@ -621,7 +697,6 @@ Téléchargez l'app : https://dossypro.com
   }
 }
 
-// Stat Card Widget
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String value;
@@ -656,6 +731,7 @@ class _StatCard extends StatelessWidget {
               color: color,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
@@ -669,7 +745,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// How It Works Card
 class _HowItWorksCard extends StatelessWidget {
   final String number;
   final String title;

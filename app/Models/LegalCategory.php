@@ -34,13 +34,15 @@ class LegalCategory extends Model
 
         static::creating(function ($category) {
             if (empty($category->slug)) {
-                $category->slug = Str::slug($category->name);
+                $countrySuffix = !empty($category->country) ? '-' . Str::slug((string) $category->country) : '';
+                $category->slug = Str::slug($category->name) . $countrySuffix;
             }
         });
 
         static::updating(function ($category) {
-            if ($category->isDirty('name')) {
-                $category->slug = Str::slug($category->name);
+            if ($category->isDirty('name') || $category->isDirty('country')) {
+                $countrySuffix = !empty($category->country) ? '-' . Str::slug((string) $category->country) : '';
+                $category->slug = Str::slug($category->name) . $countrySuffix;
             }
         });
     }

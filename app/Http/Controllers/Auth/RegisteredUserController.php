@@ -6,6 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Utility;
+use App\Models\Advocate;
+use App\Models\CaseType;
+use App\Models\Court;
+use App\Models\DocType;
+use App\Models\Motion;
+use App\Models\Tax;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -151,6 +157,8 @@ class RegisteredUserController extends Controller
                 $role_r = Role::findByName('company');
                 $user->assignRole($role_r);
                 $user->MakeRole($user->id);
+                $this->seedCompanyDefaults($user);
+                $this->createDefaultJuriste($user);
 
             } catch (\Exception $e) {
 
@@ -167,9 +175,145 @@ class RegisteredUserController extends Controller
             $role_r = Role::findByName('company');
             $user->assignRole($role_r);
             $user->MakeRole($user->id);
+            $this->seedCompanyDefaults($user);
+            $this->createDefaultJuriste($user);
 
             return redirect(RouteServiceProvider::HOME);
         }
 
+    }
+
+    private function seedCompanyDefaults(User $companyUser)
+    {
+        $companyId = $companyUser->id;
+
+        if (Court::where('created_by', $companyId)->count() === 0) {
+            $courts = [
+                "La Cour d'Appel",
+                'La Cour Supreme',
+                'La Haute Cour de Justice',
+                'Tribunal de grande instance',
+                'Tribunal de première instance',
+            ];
+
+            foreach ($courts as $courtName) {
+                $court = new Court();
+                $court->name = $courtName;
+                $court->created_by = $companyId;
+                $court->save();
+            }
+        }
+
+        if (Motion::where('created_by', $companyId)->count() === 0) {
+            $motions = [
+                'civile',
+                "contentieux de l'execution",
+                'contentieux du travail',
+                'criminelle',
+                'droit local',
+                'homologation',
+                'infraction penale',
+                'litige commercial',
+                'litige familial',
+                "refere d'heure a heure",
+                'refere ordinaire',
+                'sociale',
+                'taxation',
+            ];
+
+            foreach ($motions as $motionType) {
+                $motion = new Motion();
+                $motion->type = $motionType;
+                $motion->created_by = $companyId;
+                $motion->save();
+            }
+        }
+
+        if (CaseType::where('created_by', $companyId)->count() === 0) {
+            $caseTypes = [
+                'civile',
+                "contentieux de l'execution",
+                'contentieux du travail',
+                'criminelle',
+                'droit local',
+                'homologation',
+                'infraction penale',
+                'litige commercial',
+                'litige familial',
+                "refere d'heure a heure",
+                'refere ordinaire',
+                'sociale',
+                'taxation',
+            ];
+
+            foreach ($caseTypes as $caseTypeName) {
+                $caseType = new CaseType();
+                $caseType->name = $caseTypeName;
+                $caseType->created_by = (string) $companyId;
+                $caseType->save();
+            }
+        }
+
+        if (DocType::where('created_by', $companyId)->count() === 0) {
+            $docTypes = ['pdf', 'word', 'exel', 'image', 'video'];
+
+            foreach ($docTypes as $docTypeName) {
+                $docType = new DocType();
+                $docType->name = $docTypeName;
+                $docType->created_by = $companyId;
+                $docType->save();
+            }
+        }
+
+        if (Tax::where('created_by', $companyId)->count() === 0) {
+            $tax = new Tax();
+            $tax->name = 'NO TAXE';
+            $tax->rate = '0';
+            $tax->created_by = $companyId;
+            $tax->save();
+        }
+    }
+
+    private function createDefaultJuriste(User $companyUser)
+    {
+        $companyId = $companyUser->id;
+
+        if (User::where('created_by', $companyId)->where('type', 'advocate')->exists()) {
+            return;
+        }
+
+        $placeholderEmail = 'advocate+' . uniqid() . '@placeholder.local';
+
+        $juristeUser = User::create([
+            'name' => $companyUser->name,
+            'email' => $placeholderEmail,
+            'password' => null,
+            'type' => 'advocate',
+            'lang' => $companyUser->lang ?? Utility::getValByName('default_language'),
+            'avatar' => '',
+            'created_by' => $companyId,
+            'email_verified_at' => now(),
+            'is_enable_login' => 0,
+        ]);
+
+        $role = Role::where('name', 'advocate')
+            ->where('created_by', $companyId)
+            ->first();
+
+        if ($role) {
+            $juristeUser->assignRole($role);
+        } else {
+            $juristeUser->assignRole('advocate');
+        }
+
+        $advocate = new Advocate();
+        $advocate->user_id = $juristeUser->id;
+        $advocate->company_name = $companyUser->name;
+        $advocate->created_by = $companyId;
+        $advocate->save();
+
+        $detail = new UserDetail();
+        $detail->user_id = $juristeUser->id;
+        $detail->save();
     }
 }

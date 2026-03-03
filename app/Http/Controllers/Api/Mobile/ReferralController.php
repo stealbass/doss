@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\Mobile;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Referral;
-use App\Models\ReferralReward;
-use App\Models\MobileAppSubscription;
+use App\Models\ReferralCommission;
+use App\Models\MobileAppPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -44,25 +44,40 @@ class ReferralController extends Controller
             \Log::debug('DEBUG getReferralCode - Generated new code: "' . $user->referral_code . '"');
         }
 
-        $referralsCount = Referral::where('referrer_user_id', $user->id)
+        $completedReferrals = Referral::where('referrer_user_id', $user->id)
             ->where('status', 'completed')
             ->count();
 
-        $rewardsEarned = floor($referralsCount / 10);
-        $nextRewardAt = (floor($referralsCount / 10) + 1) * 10;
-        $progressToNextReward = $referralsCount % 10;
+        $commissionRate = 20.0;
+        $isEligible = $completedReferrals >= 10;
+        $pendingCommission = ReferralCommission::where('referrer_user_id', $user->id)
+            ->where('status', 'pending')
+            ->sum('commission_amount');
+        $paidCommission = ReferralCommission::where('referrer_user_id', $user->id)
+            ->where('status', 'paid')
+            ->sum('commission_amount');
+        $currency = ReferralCommission::where('referrer_user_id', $user->id)
+            ->orderByDesc('id')
+            ->value('currency') ?? 'XAF';
         
-        \Log::debug('DEBUG getReferralCode - Referrals count: ' . $referralsCount . ', Rewards earned: ' . $rewardsEarned);
+        \Log::debug('DEBUG getReferralCode - Completed referrals: ' . $completedReferrals . ', Commission eligible: ' . ($isEligible ? 'yes' : 'no'));
 
         return response()->json([
             'success' => true,
             'data' => [
                 'referral_code' => $user->referral_code ?? '',
-                'total_referrals' => $referralsCount,
-                'rewards_earned' => $rewardsEarned,
-                'next_reward_at' => $nextRewardAt,
-                'progress_to_next' => $progressToNextReward,
-                'share_message' => "Rejoignez Dossy IA, l'assistant juridique intelligent ! Utilisez mon code de parrainage {$user->referral_code} pour vous inscrire. 10 parrainages = 1 mois gratuit !",
+                'total_referrals' => $completedReferrals,
+                'commission' => [
+                    'rate' => $commissionRate,
+                    'eligible' => $isEligible,
+                    'threshold' => 10,
+                    'completed_referrals' => $completedReferrals,
+                    'pending_commission' => (float) $pendingCommission,
+                    'paid_commission' => (float) $paidCommission,
+                    'total_commission' => (float) ($pendingCommission + $paidCommission),
+                    'currency' => $currency,
+                ],
+                'share_message' => "Rejoignez Dossy IA, l'assistant juridique intelligent ! Utilisez mon code de parrainage {$user->referral_code} pour vous inscrire. Après 10 abonnements réussis, gagnez 20% de commission sur les paiements de vos filleuls.",
             ],
         ], 200);
     }
@@ -110,31 +125,54 @@ class ReferralController extends Controller
     {
         $user = $request->user();
 
-        $rewards = ReferralReward::where('user_id', $user->id)
+        $commissions = ReferralCommission::where('referrer_user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($reward) {
+            ->map(function ($commission) {
                 return [
-                    'id' => $reward->id,
-                    'reward_type' => $reward->reward_type,
-                    'reward_value' => $reward->value,
-                    'status' => $reward->status,
-                    'description' => $this->getRewardDescription($reward),
-                    'created_at' => $reward->created_at->format('Y-m-d H:i:s'),
-                    'claimed_at' => $reward->claimed_at?->format('Y-m-d H:i:s'),
+                    'id' => $commission->id,
+                    'referred_user_id' => $commission->referred_user_id,
+                    'payment_id' => $commission->mobile_app_payment_id,
+                    'payment_amount' => (float) $commission->payment_amount,
+                    'commission_amount' => (float) $commission->commission_amount,
+                    'commission_rate' => (float) $commission->commission_rate,
+                    'currency' => $commission->currency,
+                    'status' => $commission->status,
+                    'created_at' => $commission->created_at->format('Y-m-d H:i:s'),
+                    'paid_at' => $commission->paid_at?->format('Y-m-d H:i:s'),
                 ];
             });
 
+        $completedReferrals = Referral::where('referrer_user_id', $user->id)
+            ->where('status', 'completed')
+            ->count();
+        $commissionRate = 20.0;
+        $pendingCommission = ReferralCommission::where('referrer_user_id', $user->id)
+            ->where('status', 'pending')
+            ->sum('commission_amount');
+        $paidCommission = ReferralCommission::where('referrer_user_id', $user->id)
+            ->where('status', 'paid')
+            ->sum('commission_amount');
+        $currency = ReferralCommission::where('referrer_user_id', $user->id)
+            ->orderByDesc('id')
+            ->value('currency') ?? 'XAF';
+
         $summary = [
-            'total_rewards' => $rewards->count(),
-            'pending_rewards' => $rewards->where('status', 'pending')->count(),
-            'claimed_rewards' => $rewards->where('status', 'claimed')->count(),
+            'commission_rate' => $commissionRate,
+            'eligible' => $completedReferrals >= 10,
+            'threshold' => 10,
+            'completed_referrals' => $completedReferrals,
+            'pending_commission' => (float) $pendingCommission,
+            'paid_commission' => (float) $paidCommission,
+            'total_commission' => (float) ($pendingCommission + $paidCommission),
+            'currency' => $currency,
+            'total_commissions' => $commissions->count(),
         ];
 
         return response()->json([
             'success' => true,
             'data' => [
-                'rewards' => $rewards,
+                'commissions' => $commissions,
                 'summary' => $summary,
             ],
         ], 200);
@@ -247,80 +285,52 @@ class ReferralController extends Controller
     }
 
     /**
-     * Get reward description
-     * 
-     * @param ReferralReward $reward
-     * @return string
-     */
-    private function getRewardDescription(ReferralReward $reward): string
-    {
-        if ($reward->reward_type === 'free_month') {
-            $months = $reward->value;
-            return "{$months} mois d'abonnement gratuit";
-        }
-
-        return 'Récompense de parrainage';
-    }
-
-    /**
-     * Grant reward and auto-apply free month to active paid subscription if threshold reached
+     * Legacy hook (free-month rewards removed). Commission logic handled per payment.
      */
     public static function grantRewardIfEligible(int $referrerId): void
     {
-        $completedCount = Referral::where('referrer_user_id', $referrerId)
-            ->where('status', 'completed')
-            ->count();
+        return;
+    }
 
-        // One free month every 10 completed referrals
-        $rewardsEarned = intdiv($completedCount, 10);
-        $rewardsCreated = ReferralReward::where('user_id', $referrerId)
-            ->where('reward_type', 'free_month')
-            ->count();
-
-        if ($rewardsEarned <= $rewardsCreated) {
+    /**
+     * Create a 20% commission for a successful payment by a referred user.
+     */
+    public static function createCommissionForPayment(MobileAppPayment $payment): void
+    {
+        if ($payment->status !== 'successful') {
             return;
         }
 
-        $toCreate = $rewardsEarned - $rewardsCreated;
-        for ($i = 0; $i < $toCreate; $i++) {
-            \Log::info('Referral reward triggered', [
-                'referrer_user_id' => $referrerId,
-                'completed_referrals' => $completedCount,
-                'creating_reward_index' => $i + 1,
-            ]);
+        $referral = Referral::where('referred_user_id', $payment->user_id)
+            ->where('status', 'completed')
+            ->first();
 
-            $reward = ReferralReward::create([
-                'user_id' => $referrerId,
-                'reward_type' => 'free_month',
-                'value' => 1,
-                'description' => '1 mois gratuit offert pour 10 parrainages complétés.',
-                'referrals_required' => 10,
-                'referrals_completed' => 10,
-                'status' => 'earned',
-                'earned_at' => now(),
-                'expires_at' => now()->addYear(),
-            ]);
-
-            // Auto-apply to active paid subscription
-            $subscription = MobileAppSubscription::where('user_id', $referrerId)
-                ->where('status', 'active')
-                ->orderByDesc('expires_at')
-                ->first();
-
-            if ($subscription && $subscription->plan && $subscription->plan->price_monthly > 0) {
-                $newExpiry = ($subscription->expires_at ?? now())->copy()->addMonth();
-                $subscription->update(['expires_at' => $newExpiry]);
-                \Log::info('Referral reward applied to subscription', [
-                    'referrer_user_id' => $referrerId,
-                    'subscription_id' => $subscription->id,
-                    'new_expires_at' => $newExpiry,
-                ]);
-                $reward->update([
-                    'status' => 'redeemed',
-                    'redeemed_at' => now(),
-                    'mobile_app_subscription_id' => $subscription->id,
-                ]);
-            }
+        if (!$referral) {
+            return;
         }
+
+        $completedReferrals = Referral::where('referrer_user_id', $referral->referrer_user_id)
+            ->where('status', 'completed')
+            ->count();
+
+        if ($completedReferrals < 10) {
+            return;
+        }
+
+        $rate = 20.0;
+        $commissionAmount = round(((float) $payment->amount) * 0.20, 2);
+
+        ReferralCommission::firstOrCreate(
+            ['mobile_app_payment_id' => $payment->id],
+            [
+                'referrer_user_id' => $referral->referrer_user_id,
+                'referred_user_id' => $payment->user_id,
+                'payment_amount' => $payment->amount,
+                'commission_rate' => $rate,
+                'commission_amount' => $commissionAmount,
+                'currency' => $payment->currency ?? 'XAF',
+                'status' => 'pending',
+            ]
+        );
     }
 }

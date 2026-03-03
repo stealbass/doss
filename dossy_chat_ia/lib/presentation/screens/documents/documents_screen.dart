@@ -234,6 +234,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                             color: AppColors.textSecondary,
                           ),
                         ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          "Astuce : indiquez le titre exact du document dans votre message pour que l'IA comprenne de quel fichier vous parlez.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
                       ],
                     ),
                   );

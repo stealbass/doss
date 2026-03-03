@@ -236,10 +236,19 @@ class _ChatScreenState extends State<ChatScreen> {
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         if (chatProvider.messages.isEmpty) {
-          return Center(
-            child: Text(
-              'Aucun message pour le moment',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp),
+          return Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Aucun message pour le moment',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp),
+                ),
+                SizedBox(height: 12.h),
+                _buildPromptSuggestions(),
+              ],
             ),
           );
         }
@@ -253,6 +262,41 @@ class _ChatScreenState extends State<ChatScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildPromptSuggestions() {
+    final suggestions = AppConstants.chatPromptSuggestions.take(3).toList();
+    if (suggestions.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.suggestions,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: suggestions
+              .map(
+                (prompt) => PromptSuggestionChip(
+                  prompt: prompt,
+                  onTap: () {
+                    _messageController.text = prompt;
+                    _sendMessage();
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      ],
     );
   }
 

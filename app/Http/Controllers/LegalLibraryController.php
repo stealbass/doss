@@ -84,16 +84,41 @@ class LegalLibraryController extends Controller
     /**
      * Display a listing of categories
      */
-    public function index()
+    public function index(Request $request)
     {
         // Restrict to Super Admin only - global library management
         if ($this->canManageLegalLibrary()) {
-            $categories = LegalCategory::withCount('documents')
-                ->get();
-            return view('legal-library.index', compact('categories'));
+            $countryFilter = $request->get('country');
+            $normalizedCountry = $countryFilter ? (string) $countryFilter : null;
+
+            $categoriesQuery = LegalCategory::withCount('documents');
+            if (!empty($normalizedCountry)) {
+                $categoriesQuery->where('country', $normalizedCountry);
+            }
+
+            $categories = $categoriesQuery->get();
+            $countries = $this->legalCategoryCountries();
+
+            return view('legal-library.index', compact('categories', 'countries', 'normalizedCountry'));
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
+    }
+
+    private function legalCategoryCountries(): array
+    {
+        return [
+            'benin' => __('Benin'),
+            'burkina-faso' => __('Burkina Faso'),
+            'cote-divoire' => __('Côte d\'Ivoire'),
+            'mali' => __('Mali'),
+            'niger' => __('Niger'),
+            'senegal' => __('Sénégal'),
+            'togo' => __('Togo'),
+            'gabon' => __('Gabon'),
+            'congo' => __('Congo'),
+            'cameroun' => __('Cameroun'),
+        ];
     }
 
     /**
@@ -125,6 +150,20 @@ class LegalLibraryController extends Controller
             if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
                 return redirect()->back()->with('error', $messages->first());
+            }
+
+            $duplicate = LegalCategory::where('name', $request->name)
+                ->where(function ($query) use ($request) {
+                    if (filled($request->country)) {
+                        $query->where('country', $request->country);
+                    } else {
+                        $query->whereNull('country');
+                    }
+                })
+                ->exists();
+
+            if ($duplicate) {
+                return redirect()->back()->with('error', __('A category with this name already exists for the selected country.'));
             }
 
             LegalCategory::create([
@@ -182,6 +221,21 @@ class LegalLibraryController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
+            $duplicate = LegalCategory::where('id', '!=', $category->id)
+                ->where('name', $request->name)
+                ->where(function ($query) use ($request) {
+                    if (filled($request->country)) {
+                        $query->where('country', $request->country);
+                    } else {
+                        $query->whereNull('country');
+                    }
+                })
+                ->exists();
+
+            if ($duplicate) {
+                return redirect()->back()->with('error', __('A category with this name already exists for the selected country.'));
+            }
+
             $category->update([
                 'name' => $request->name,
                 'description' => $request->description,
@@ -235,14 +289,12 @@ class LegalLibraryController extends Controller
             if (!$category) {
                 return redirect()->back()->with('error', __('Category not found.'));
             }
-
             // Get all documents for this category (global library)
             $documents = LegalDocument::where('category_id', $categoryId)
                 ->get();
 
             $totalDocuments = LegalDocument::count();
             $totalCategories = LegalCategory::count();
-
             return view('legal-library.documents', compact('category', 'documents', 'totalDocuments', 'totalCategories'));
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));

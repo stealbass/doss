@@ -37,7 +37,7 @@
                                     <strong>{{ __('Instructions:') }}</strong>
                                     <ul class="mb-0 mt-2">
                                         <li>{{ __('You can select multiple files at once') }}</li>
-                                        <li>{{ __('Maximum file size: 10MB per file') }}</li>
+                                        <li>{{ __('Maximum file size: 150MB per file') }}</li>
                                         <li>{{ __('Accepted formats: PDF, Word, Excel') }}</li>
                                         <li>{{ __('The resource title will be the filename (without extension)') }}</li>
                                         <li>{{ __('You can edit titles and descriptions later') }}</li>

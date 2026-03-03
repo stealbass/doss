@@ -59,13 +59,13 @@ Route::prefix('mobile')->group(function () {
     Route::get('/config', [ConfigController::class, 'getConfig']);
     
     // Authentication
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     // Forgot password (send reset link to email)
-    Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
+    Route::post('/password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:10,1');
     
     // Referral validation (for registration)
-    Route::post('/referral/validate', [ReferralController::class, 'validateReferralCode']);
+    Route::post('/referral/validate', [ReferralController::class, 'validateReferralCode'])->middleware('throttle:10,1');
     
     // Plans (viewable without auth)
     Route::get('/subscriptions/plans', [SubscriptionController::class, 'getPlans']);

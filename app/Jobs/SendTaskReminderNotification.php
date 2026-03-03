@@ -6,6 +6,7 @@ use App\Models\ToDo;
 use App\Models\Cases;
 use App\Models\User;
 use App\Mail\TaskReminderMail;
+use App\Models\Utility;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -38,14 +39,32 @@ class SendTaskReminderNotification implements ShouldQueue
     public function handle()
     {
         try {
+            Utility::getSMTPDetails($this->task->created_by);
+
             // Get all users to notify
             $usersToNotify = collect();
             
-            // Add task assignee if exists
-            if ($this->task->assign_to) {
-                $assignee = User::find($this->task->assign_to);
-                if ($assignee) {
-                    $usersToNotify->push($assignee);
+            // Add task assignees (handle CSV/JSON/single value)
+            if (!empty($this->task->assign_to)) {
+                $assignedIds = $this->task->assign_to;
+
+                if (is_string($assignedIds)) {
+                    if (str_contains($assignedIds, ',')) {
+                        $assignedIds = array_map('trim', explode(',', $assignedIds));
+                    } elseif (str_contains($assignedIds, '[')) {
+                        $assignedIds = json_decode($assignedIds, true);
+                    } else {
+                        $assignedIds = [$assignedIds];
+                    }
+                }
+
+                if (is_numeric($assignedIds)) {
+                    $assignedIds = [$assignedIds];
+                }
+
+                if (is_array($assignedIds) && !empty($assignedIds)) {
+                    $assignedUsers = User::whereIn('id', $assignedIds)->get();
+                    $usersToNotify = $usersToNotify->merge($assignedUsers);
                 }
             }
 
@@ -61,8 +80,23 @@ class SendTaskReminderNotification implements ShouldQueue
                 if ($case) {
                     // Add advocates
                     if (!empty($case->advocates)) {
-                        $advocateIds = is_array($case->advocates) ? $case->advocates : json_decode($case->advocates, true);
-                        if ($advocateIds) {
+                        $advocateIds = $case->advocates;
+
+                        if (is_string($advocateIds)) {
+                            if (str_contains($advocateIds, ',')) {
+                                $advocateIds = array_map('trim', explode(',', $advocateIds));
+                            } elseif (str_contains($advocateIds, '[')) {
+                                $advocateIds = json_decode($advocateIds, true);
+                            } else {
+                                $advocateIds = [$advocateIds];
+                            }
+                        }
+
+                        if (is_numeric($advocateIds)) {
+                            $advocateIds = [$advocateIds];
+                        }
+
+                        if (is_array($advocateIds) && !empty($advocateIds)) {
                             $advocates = User::whereIn('id', $advocateIds)->get();
                             $usersToNotify = $usersToNotify->merge($advocates);
                         }
@@ -70,8 +104,12 @@ class SendTaskReminderNotification implements ShouldQueue
                 }
             }
 
-            // Remove duplicates
-            $usersToNotify = $usersToNotify->unique('id');
+            // Remove duplicates and users without email
+            $usersToNotify = $usersToNotify
+                ->filter(function ($user) {
+                    return $user && !empty($user->email);
+                })
+                ->unique('id');
 
             // Calculate days remaining
             $dueDate = \Carbon\Carbon::parse($this->task->due_date);
@@ -79,10 +117,8 @@ class SendTaskReminderNotification implements ShouldQueue
 
             // Send email to each user
             foreach ($usersToNotify as $user) {
-                if (!empty($user->email)) {
-                    Mail::to($user->email)->send(new TaskReminderMail($this->task, $user, $daysRemaining));
-                    Log::info("Task reminder sent to: {$user->email} ({$daysRemaining} days before due date)");
-                }
+                Mail::to($user->email)->send(new TaskReminderMail($this->task, $user, $daysRemaining));
+                Log::info("Task reminder sent to: {$user->email} ({$daysRemaining} days before due date)");
             }
 
         } catch (\Exception $e) {

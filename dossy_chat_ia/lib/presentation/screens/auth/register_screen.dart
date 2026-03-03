@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:play_install_referrer/play_install_referrer.dart';
+import 'dart:io';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/providers/auth_provider.dart';
@@ -38,6 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
+    _prefillReferralCode();
   }
 
   @override
@@ -94,6 +97,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _prefillReferralCode() async {
+    if (!Platform.isAndroid) return;
+    if (_referralCodeController.text.trim().isNotEmpty) return;
+
+    try {
+      final details = await PlayInstallReferrer.installReferrer;
+      final rawReferrer = details.installReferrer;
+      if (rawReferrer == null || rawReferrer.isEmpty) return;
+
+      final referralCode = _extractReferralCode(rawReferrer);
+      if (referralCode == null || referralCode.isEmpty) return;
+
+      if (!mounted) return;
+      _referralCodeController.text = referralCode;
+    } catch (_) {
+      // Ignore referrer errors silently
+    }
+  }
+
+  String? _extractReferralCode(String rawReferrer) {
+    String referrer = Uri.decodeFull(rawReferrer);
+    if (referrer.startsWith('referrer=')) {
+      referrer = referrer.substring('referrer='.length);
+    }
+
+    String query = referrer;
+    if (referrer.contains('?')) {
+      try {
+        query = Uri.parse(referrer).query;
+      } catch (_) {
+        query = referrer;
+      }
+    }
+
+    Map<String, String> params;
+    try {
+      params = Uri.splitQueryString(query);
+    } catch (_) {
+      return null;
+    }
+
+    return params['referral_code'] ?? params['ref'] ?? params['referral'];
   }
 
   // Build country dropdown items with error handling

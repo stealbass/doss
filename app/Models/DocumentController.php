@@ -32,73 +32,40 @@ class DocumentController extends Controller
      */
     public function upload(Request $request)
     {
-        Log::debug('🔵 [UPLOAD] Starting document upload process');
-        
-        // 🔧 MAX_FILE_SIZE = 30MB (30 * 1024 = 30720 KB)
-        $maxFileSizeKb = 30 * 1024;
-        
-        Log::debug('🔵 [UPLOAD] Validating file with max size: ' . $maxFileSizeKb . ' KB');
-        
         $validator = Validator::make($request->all(), [
-            'file' => "required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif,bmp,webp|max:{$maxFileSizeKb}", // 30MB max + images with OCR
+            'file' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt|max:51200', // 50MB
             'title' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            Log::warning('❌ [UPLOAD] Validation failed:', $validator->errors()->toArray());
-            
-            // 🔧 User-friendly error messages for file size
-            $errors = $validator->errors()->toArray();
-            if (isset($errors['file'])) {
-                foreach ($errors['file'] as $i => $msg) {
-                    if (str_contains($msg, 'may not be greater than')) {
-                        $fileSize = $request->file('file') ? round($request->file('file')->getSize() / 1024 / 1024, 2) : '?';
-                        $errors['file'][$i] = "Fichier trop volumineux. Maximum : 30 MB. Fichier fourni : {$fileSize} MB";
-                    }
-                }
-            }
             return response()->json([
                 'success' => false,
-                'errors' => $errors,
+                'errors' => $validator->errors(),
             ], 422);
         }
 
-        Log::debug('✅ [UPLOAD] File validation passed');
-        
         $user = $request->user();
-        Log::debug('🔵 [UPLOAD] User ID: ' . ($user ? $user->id : 'NULL'));
 
         // Check quota - get active subscription
-        Log::debug('🔵 [UPLOAD] Checking subscription quota');
         $subscription = $user->getActiveMobileAppSubscription();
         
         if (!$subscription || !$subscription->plan) {
-            Log::error('❌ [UPLOAD] No active subscription', ['user_id' => $user->id]);
             return $this->quotaErrorResponse('ai_analysis', $subscription, 'Abonnement actif requis pour analyser des documents.', 'subscription_required');
         }
 
         if (!$subscription->canUseAIAnalysis()) {
-            Log::warning('❌ [UPLOAD] AI analysis quota exceeded', ['user_id' => $user->id]);
             return $this->quotaErrorResponse('ai_analysis', $subscription, 'Quota d\'analyse IA dépassé. Veuillez mettre à niveau votre plan.');
         }
-
-        Log::debug('✅ [UPLOAD] Subscription quota OK');
 
         try {
             $file = $request->file('file');
             $fileName = time() . '_' . $file->getClientOriginalName();
-            Log::debug('🔵 [UPLOAD] File info:', [
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-            ]);
             
             // Configure storage disk - Use the configured disk (r2, s3, wasabi, or public)
             $settings = Utility::settings();
             $storageSetting = $settings['storage_setting'] ?? 'local';
-            
-            Log::debug('🔵 [UPLOAD] Storage setting: ' . $storageSetting);
             
             // Map storage_setting to Laravel disk name (same as Utility::get_file() uses)
             $diskMap = [
@@ -109,11 +76,8 @@ class DocumentController extends Controller
             ];
             $disk = $diskMap[$storageSetting] ?? 'public';
             
-            Log::debug('🔵 [UPLOAD] Using disk: ' . $disk);
-            
             // Configure the selected disk dynamically (R2, S3, Wasabi)
             if ($storageSetting === 'r2') {
-                Log::debug('🔵 [UPLOAD] Configuring R2 disk');
                 config([
                     'filesystems.disks.r2.key' => $settings['r2_key'],
                     'filesystems.disks.r2.secret' => $settings['r2_secret'],
@@ -123,7 +87,6 @@ class DocumentController extends Controller
                     'filesystems.disks.r2.url' => $settings['r2_url'],
                 ]);
             } elseif ($storageSetting === 's3') {
-                Log::debug('🔵 [UPLOAD] Configuring S3 disk');
                 config([
                     'filesystems.disks.s3.key' => $settings['s3_key'],
                     'filesystems.disks.s3.secret' => $settings['s3_secret'],
@@ -132,7 +95,6 @@ class DocumentController extends Controller
                     'filesystems.disks.s3.endpoint' => $settings['s3_endpoint'] ?? null,
                 ]);
             } elseif ($storageSetting === 'wasabi') {
-                Log::debug('🔵 [UPLOAD] Configuring Wasabi disk');
                 config([
                     'filesystems.disks.wasabi.key' => $settings['wasabi_key'],
                     'filesystems.disks.wasabi.secret' => $settings['wasabi_secret'],
@@ -144,12 +106,9 @@ class DocumentController extends Controller
 
             // Upload file to the configured disk
             // Store in 'documents/' folder (same structure as legal_documents/, templates/, fiscal_resources/)
-            Log::debug('🔵 [UPLOAD] Uploading file to storage...');
             $filePath = $file->storeAs('documents', $fileName, $disk);
-            Log::debug('✅ [UPLOAD] File uploaded successfully', ['path' => $filePath]);
 
             // Create document record with pending status
-            Log::debug('🔵 [UPLOAD] Creating database record');
             $document = SubmittedDocument::create([
                 'user_id' => $user->id,
                 'original_filename' => $file->getClientOriginalName(),
@@ -161,29 +120,18 @@ class DocumentController extends Controller
                 'extracted_text' => null,
                 'extracted_text_length' => 0,
             ]);
-            Log::debug('✅ [UPLOAD] Document record created', ['document_id' => $document->id]);
 
-            // Execute IMMEDIATE synchronous extraction + indexing (NOT queued)
-            // This ensures users can query the document RIGHT AWAY after upload
-            Log::debug('🔵 [UPLOAD] Starting IMMEDIATE document processing (sync)');
-            try {
-                ProcessDocumentForRAG::dispatchSync($document->id);
-                Log::debug('✅ [UPLOAD] Document processed IMMEDIATELY');
-            } catch (\Exception $e) {
-                Log::error('❌ [UPLOAD] Immediate processing failed: ' . $e->getMessage());
-                // Continue - document is uploaded, just not processed yet
-            }
+            // Dispatch background job for text extraction + embedding + Pinecone indexing
+            ProcessDocumentForRAG::dispatch($document->id);
 
-            Log::info('Document uploaded and processed immediately', [
+            Log::info('Document uploaded, queued for RAG processing', [
                 'document_id' => $document->id,
                 'user_id' => $user->id,
             ]);
 
             // Increment AI usage
-            Log::debug('🔵 [UPLOAD] Incrementing AI usage quota');
             $alerts = $subscription->incrementAIAnalysis();
             $subscription->refresh(); // Refresh to avoid stale data
-            Log::debug('✅ [UPLOAD] AI usage incremented');
             
             // Generate file URL using Utility::get_file() (same as DocumentTemplate, LegalDocument)
             $fileUrl = Utility::get_file($filePath);
@@ -208,32 +156,11 @@ class DocumentController extends Controller
                     'alerts' => $alerts,
                 ],
             ], 201);
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('❌ [UPLOAD] Database error', [
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Database error: ' . $e->getMessage(),
-                'error_type' => 'database_error',
-            ], 500);
         } catch (\Exception $e) {
-            Log::error('❌ [UPLOAD] Unexpected error', [
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'exception' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Document upload failed: ' . $e->getMessage(),
+                'message' => 'Document upload failed',
                 'error' => $e->getMessage(),
-                'error_type' => get_class($e),
             ], 500);
         }
     }
@@ -331,7 +258,6 @@ class DocumentController extends Controller
                     'legal_documents.file_name',
                     'legal_documents.file_size',
                     'legal_documents.downloads_count',
-                    'legal_documents.views_count',
                     'legal_documents.created_at',
                 ])
                 ->with('category:id,name');
@@ -378,7 +304,6 @@ class DocumentController extends Controller
                         'file_name' => $doc->file_name,
                         'file_size' => $doc->formatted_file_size,
                         'downloads_count' => $doc->downloads_count ?? 0,
-                        'views_count' => $doc->views_count ?? 0,
                         'created_at' => $doc->created_at->format('Y-m-d'),
                     ];
                 });
@@ -521,9 +446,6 @@ class DocumentController extends Controller
             'url_scheme' => parse_url($url, PHP_URL_SCHEME),
         ]);
 
-        // Increment document downloads_count
-        $document->incrementDownloads();
-
         // Record download
         DocumentDownload::create([
             'user_id' => $user->id,
@@ -610,32 +532,24 @@ class DocumentController extends Controller
         // Determine stored path (new field `storage_path`, fallback to legacy `file_path`)
         $path = $document->storage_path ?: $document->file_path;
 
-        // Guard against null/empty path to avoid Flysystem errors
-        if ($path && is_string($path) && !empty(trim($path))) {
+        // Guard against null path to avoid Flysystem errors
+        if (!empty($path)) {
             try {
                 // Delete quietly if exists; ignore return value
-                if (Storage::disk($disk)->exists($path)) {
-                    Storage::disk($disk)->delete($path);
-                    Log::info('Document file deleted from storage', [
-                        'document_id' => $document->id,
-                        'disk' => $disk,
-                        'path' => $path,
-                    ]);
-                }
+                Storage::disk($disk)->delete($path);
             } catch (\Throwable $e) {
-                Log::warning('Storage delete failed (non-blocking)', [
+                Log::warning('Storage delete failed', [
                     'document_id' => $document->id,
                     'disk' => $disk,
                     'path' => $path,
                     'error' => $e->getMessage(),
                 ]);
-                // Continue execution even if file deletion fails
             }
         } else {
-            Log::warning('No valid storage path on document; skipping file delete', [
+            Log::warning('No storage path on document; skipping file delete', [
                 'document_id' => $document->id,
-                'storage_path' => $document->storage_path ?? 'NULL',
-                'file_path' => $document->file_path ?? 'NULL',
+                'storage_path' => $document->storage_path,
+                'file_path' => $document->file_path,
             ]);
         }
 
@@ -832,49 +746,5 @@ class DocumentController extends Controller
                 : 0,
             'reset_at' => $subscription->quota_reset_at?->toIso8601String(),
         ];
-    }
-
-    /**
-     * Track when user views/opens a legal document
-     * 
-     * @param Request $request
-     * @param int $documentId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function viewLegalDocument(Request $request, $documentId)
-    {
-        $user = $request->user();
-        
-        Log::info('Legal document view request', [
-            'user_id' => $user->id,
-            'document_id' => $documentId,
-        ]);
-
-        $document = LegalDocument::find($documentId);
-
-        if (!$document) {
-            Log::warning('Legal document not found', ['document_id' => $documentId]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Document introuvable',
-            ], 404);
-        }
-
-        // Increment document views_count
-        $document->incrementViews();
-
-        Log::info('Legal document view tracked', [
-            'document_id' => $documentId,
-            'new_views_count' => $document->views_count,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Vue enregistrée',
-            'data' => [
-                'views_count' => $document->views_count,
-                'downloads_count' => $document->downloads_count,
-            ],
-        ], 200);
     }
 }

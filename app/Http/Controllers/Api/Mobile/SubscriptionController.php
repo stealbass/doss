@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\MobileAppPlan;
 use App\Models\MobileAppSubscription;
 use App\Models\MobileAppPayment;
-use App\Models\ReferralReward;
 use App\Models\UserCoupon;
 use App\Models\Coupon;
 use Illuminate\Http\Request;
@@ -498,8 +497,13 @@ class SubscriptionController extends Controller
                 'is_trial' => false,
             ]);
 
+            $payment->update([
+                'mobile_app_subscription_id' => $subscription->id,
+            ]);
+
             // Mark referral as completed if user was referred
             ReferralController::completeReferral($user->id);
+            ReferralController::createCommissionForPayment($payment);
             
             // Save coupon usage if coupon was applied
             $couponId = null;

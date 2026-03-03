@@ -535,6 +535,13 @@
                                 </a>
                             </li>
 
+                            <li class="dash-item {{ request()->is('mobile-app-subscriptions*') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('mobile-app-subscriptions.index') }}">
+                                    <span class="dash-micon"><i class="ti ti-receipt-2"></i></span>
+                                    <span class="dash-mtext">{{ __('Subscriptions') }}</span>
+                                </a>
+                            </li>
+
                             <li class="dash-item {{ request()->is('mobile-app-plans*') ? 'active' : '' }}">
                                 <a class="dash-link" href="{{ route('mobile-app-plans.index') }}">
                                     <span class="dash-micon"><i class="ti ti-credit-card"></i></span>

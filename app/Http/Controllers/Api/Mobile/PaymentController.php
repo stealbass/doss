@@ -8,6 +8,7 @@ use App\Models\MobileAppPayment;
 use App\Models\MobileAppSetting;
 use App\Models\Utility;
 use App\Models\MobileAppSubscription;
+use App\Http\Controllers\Api\Mobile\ReferralController;
 use App\Models\UserCoupon;
 use App\Models\Coupon;
 use Illuminate\Http\Request;
@@ -120,6 +121,12 @@ class PaymentController extends Controller
             ], 400);
         }
 
+        // Determine country and currency for Flutterwave
+        $countryCode = strtoupper((string) ($user->country ?? 'CM'));
+        $cemac = ['CM', 'GA', 'GQ', 'TD', 'CF', 'CG'];
+        $uemoa = ['BJ', 'BF', 'CI', 'GW', 'ML', 'NE', 'SN', 'TG'];
+        $currency = in_array($countryCode, $uemoa, true) ? 'XOF' : 'XAF';
+
         try {
             // Generate unique transaction reference (same format as SaaS)
             $txRef = 'DOSSY-MOBILE-' . $user->id . '-' . time() . '-' . rand(1000, 9999);
@@ -139,7 +146,7 @@ class PaymentController extends Controller
                 'user_id' => $user->id,
                 'mobile_app_plan_id' => $plan->id,
                 'amount' => $amount,
-                'currency' => 'XAF',
+                'currency' => $currency,
                 'payment_method' => 'flutterwave',
                 'status' => 'pending',
                 'transaction_id' => $txRef,
@@ -155,7 +162,8 @@ class PaymentController extends Controller
                     'payment_id' => $payment->id,
                     'tx_ref' => $txRef,
                     'amount' => $amount,
-                    'currency' => 'XAF',
+                    'currency' => $currency,
+                    'country' => $countryCode,
                     'email' => $user->email,
                     'name' => $user->name,
                     'phone' => $user->phone ?? '',
@@ -255,6 +263,10 @@ class PaymentController extends Controller
                 // Activate subscription (same logic as SaaS)
                 $subscription = $this->activateSubscription($payment);
 
+                // Mark referral completed and create commission if eligible
+                ReferralController::completeReferral($payment->user_id);
+                ReferralController::createCommissionForPayment($payment);
+
                 if ($subscription) {
                     $this->sendSubscriptionConfirmationEmail($payment, $subscription);
                 }
@@ -332,7 +344,7 @@ class PaymentController extends Controller
             : Carbon::now()->addYear();
 
         // Create or update subscription
-        return MobileAppSubscription::updateOrCreate(
+        $subscription = MobileAppSubscription::updateOrCreate(
             ['user_id' => $payment->user_id],
             [
                 'mobile_app_plan_id' => $plan->id,
@@ -350,6 +362,12 @@ class PaymentController extends Controller
                 'quota_reset_at' => Carbon::now()->addMonth(),
             ]
         );
+
+        $payment->update([
+            'mobile_app_subscription_id' => $subscription->id,
+        ]);
+
+        return $subscription;
     }
 
     /**

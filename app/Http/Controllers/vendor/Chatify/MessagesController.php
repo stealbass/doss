@@ -128,31 +128,10 @@ class MessagesController extends Controller
      */
     public function download($fileName)
     {
-        try {
-            // Get storage settings
-            $settings = Utility::getStorageSetting();
-            $storageType = $settings['storage_setting'] ?? 'local';
-            
-            // Build the file path
-            $filePath = config('chatify.attachments.folder') . '/' . $fileName;
-            
-            // Check if file exists in storage
-            if (\Storage::disk($storageType)->exists($filePath)) {
-                // Get file content
-                $fileContent = \Storage::disk($storageType)->get($filePath);
-                
-                // Get mime type
-                $mimeType = \Storage::disk($storageType)->mimeType($filePath);
-                
-                // Return file download response
-                return Response::make($fileContent, 200, [
-                    'Content-Type' => $mimeType,
-                    'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
-                ]);
-            } else {
-                return abort(404, "Sorry, File does not exist in our server or may have been deleted!");
-            }
-        } catch (\Exception $e) {
+        $path = storage_path() . '/' . config('chatify.attachments.folder') . '/' . $fileName;
+        if (file_exists($path)) {
+            return Response::download($path, $fileName);
+        } else {
             return abort(404, "Sorry, File does not exist in our server or may have been deleted!");
         }
     }
@@ -179,9 +158,7 @@ class MessagesController extends Controller
             // allowed extensions
             $allowed_images = Chatify::getAllowedImages();
             $allowed_files = Chatify::getAllowedFiles();
-            // Add common document types: PDF, Word, Excel, PowerPoint, Text
-            $document_types = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
-            $allowed = array_merge($allowed_images, $allowed_files, $document_types);
+            $allowed = array_merge($allowed_images, $allowed_files);
 
             $file = $request->file('file');
             // if size less than 150MB

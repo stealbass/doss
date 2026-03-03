@@ -96,6 +96,7 @@ class _FlutterwavePaymentScreenState extends State<FlutterwavePaymentScreen> {
         billingCycle: widget.billingCycle,
         amount: widget.amount.toDouble(),
         currency: widget.currency,
+        country: user.jurisdiction,
         email: user.email,
         phone: user.phone ?? '',
         name: user.name,

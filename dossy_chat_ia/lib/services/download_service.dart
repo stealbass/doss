@@ -25,19 +25,20 @@ class DownloadService {
       // Demander la permission de stockage
       final hasPermission = await _requestStoragePermission();
       if (!hasPermission) {
-        throw Exception('Permission de stockage refusée');
+        print('DEBUG DownloadService: Storage permission denied, using app storage');
       }
 
       // Obtenir le dossier de téléchargement
-      final directory = await _getDownloadDirectory();
+      final directory = await _getDownloadDirectory(preferPublic: hasPermission);
       if (directory == null) {
         throw Exception('Impossible d\'accéder au dossier de téléchargement');
       }
 
       print('DEBUG DownloadService: Download directory = ${directory.path}');
       
+      final safeFileName = _sanitizeFileName(fileName);
       // Créer le chemin complet du fichier
-      final filePath = '${directory.path}/$fileName';
+      final filePath = '${directory.path}/$safeFileName';
       print('DEBUG DownloadService: Full file path = $filePath');
       
       // Préparer les headers - IMPORTANT: accepter tous les types de fichiers
@@ -142,25 +143,27 @@ class DownloadService {
   }
 
   /// Obtient le dossier de téléchargement approprié
-  Future<Directory?> _getDownloadDirectory() async {
+  Future<Directory?> _getDownloadDirectory({required bool preferPublic}) async {
     if (Platform.isAndroid) {
-      // Essayer plusieurs chemins possibles pour le dossier Downloads
-      final possiblePaths = [
-        '/storage/emulated/0/Download',   // Ancien chemin
-        '/storage/emulated/0/Downloads',  // Chemin standard avec S
-        '/sdcard/Download',
-        '/sdcard/Downloads',
-      ];
+      if (preferPublic) {
+        // Essayer plusieurs chemins possibles pour le dossier Downloads
+        final possiblePaths = [
+          '/storage/emulated/0/Download',
+          '/storage/emulated/0/Downloads',
+          '/sdcard/Download',
+          '/sdcard/Downloads',
+        ];
 
-      for (final path in possiblePaths) {
-        try {
-          final directory = Directory(path);
-          if (await directory.exists()) {
-            print('DEBUG: Using Downloads directory: $path');
-            return directory;
+        for (final path in possiblePaths) {
+          try {
+            final directory = Directory(path);
+            if (await directory.exists() && await _isDirectoryWritable(directory)) {
+              print('DEBUG: Using Downloads directory: $path');
+              return directory;
+            }
+          } catch (e) {
+            print('DEBUG: Cannot access $path: $e');
           }
-        } catch (e) {
-          print('DEBUG: Cannot access $path: $e');
         }
       }
 
@@ -172,6 +175,35 @@ class DownloadService {
       // iOS - utiliser le dossier documents de l'application
       return await getApplicationDocumentsDirectory();
     }
+  }
+
+  Future<bool> _isDirectoryWritable(Directory directory) async {
+    try {
+      final testFile = File('${directory.path}/.dossy_write_test');
+      await testFile.writeAsString('test');
+      await testFile.delete();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String _sanitizeFileName(String fileName) {
+    final trimmed = fileName.trim();
+    final lastDot = trimmed.lastIndexOf('.');
+    if (lastDot <= 0) return trimmed;
+
+    final ext = trimmed.substring(lastDot + 1).toLowerCase();
+    final before = trimmed.substring(0, lastDot);
+    final secondDot = before.lastIndexOf('.');
+    if (secondDot <= 0) return trimmed;
+
+    final prevExt = before.substring(secondDot + 1).toLowerCase();
+    if (prevExt == ext) {
+      return before;
+    }
+
+    return trimmed;
   }
 
   /// Montre une notification de téléchargement (optionnel)

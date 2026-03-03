@@ -50,6 +50,23 @@
         $filing_date = date('d-m-Y', strtotime($case->filing_date));
     }
     $documentsfile = \App\Models\Utility::get_file('uploads/documents/');
+    $court_ids = !empty($case->court) ? array_filter(explode(',', $case->court)) : [];
+    $court_names = !empty($court_ids)
+        ? array_values(array_filter(array_map(function ($court_id) {
+            return App\Models\CauseList::getCourtById($court_id);
+        }, $court_ids)))
+        : [];
+    $case_types = !empty($case->casenumber) ? array_filter(explode(',', $case->casenumber)) : [];
+    $your_party_label = '-';
+    if (!is_null($case->your_party) && $case->your_party !== '') {
+        if ($case->your_party == 0) {
+            $your_party_label = 'Petitioner/Plaintiff';
+        } elseif ($case->your_party == 1) {
+            $your_party_label = 'Respondent/Defendant';
+        } else {
+            $your_party_label = $case->your_party;
+        }
+    }
 @endphp
 
 @php
@@ -82,8 +99,15 @@
                             <dl class="row col-md-6 p-5 py-2">
                                 <dt class="col-md-5"><span class="h6 text-md mb-0">{{ __('Courts/Tribunal:') }}</span></dt>
                                 <dd class="col-md-7">
-                                    <span
-                                        class="text-md">{{ App\Models\CauseList::getCourtById($case->court) ?? '-' }}</span>
+                                    @if (!empty($court_names))
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach ($court_names as $court_name)
+                                                <span class="badge bg-primary">{{ $court_name }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-md">-</span>
+                                    @endif
                                 </dd>
 
                                 <dt class="col-md-5"><span class="h6 text-md mb-0">{{ __('Case no.:') }}</span></dt>
@@ -93,7 +117,15 @@
 
                                 <dt class="col-md-5"><span class="h6 text-md mb-0">{{ __('Case Type:') }}</span></dt>
                                 <dd class="col-md-7">
-                                    <span class="text-md">{{ !empty($case->casenumber) ? $case->casenumber : '-' }}</span>
+                                    @if (!empty($case_types))
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach ($case_types as $case_type)
+                                                <span class="badge bg-secondary">{{ $case_type }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-md">-</span>
+                                    @endif
                                 </dd>
 
                                 <dt class="col-md-5"><span class="h6 text-md mb-0">{{ __('Year:') }}</span></dt>
@@ -132,7 +164,7 @@
 
                                 <dt class="col-md-5"><span class="h6 text-md mb-0">{{ __('Your Party:') }}</span></dt>
                                 <dd class="col-md-7"><span
-                                        class="text-md">{{ $case->your_party == 0 ? 'Petitioner/Plaintiff' : 'Respondent/Defendant' }}</span>
+                                    class="text-md">{{ $your_party_label }}</span>
                                 </dd>
 
                                 <dt class="col-md-5"><span class="h6 text-md mb-0">{{ __('Advocates:') }}</span></dt>
@@ -371,6 +403,18 @@
                                                             title="{{ __('Télécharger') }}">
                                                             <i class="ti ti-download"></i>
                                                         </a>
+                                                        @can('edit document')
+                                                            <a href="#"
+                                                                class="btn btn-sm btn-warning"
+                                                                data-url="{{ route('documents.edit', $document->id) }}"
+                                                                data-ajax-popup="true"
+                                                                data-size="lg"
+                                                                data-title="{{ __('Update Document') }}"
+                                                                data-bs-toggle="tooltip"
+                                                                title="{{ __('Edit') }}">
+                                                                <i class="ti ti-pencil"></i>
+                                                            </a>
+                                                        @endcan
                                                         @if (Auth::user()->type != 'client')
                                                             <a href="#"
                                                                 class="btn btn-sm btn-danger bs-pass-para"
