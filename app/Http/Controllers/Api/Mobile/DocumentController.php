@@ -7,6 +7,8 @@ use App\Jobs\ProcessDocumentForRAG;
 use App\Models\SubmittedDocument;
 use App\Models\DocumentDownload;
 use App\Models\LegalDocument;
+use App\Models\MobileAppPlan;
+use App\Models\MobileAppSubscription;
 use App\Models\Utility;
 use App\Services\AdvancedRagService;
 use Illuminate\Http\Request;
@@ -302,8 +304,34 @@ class DocumentController extends Controller
         }
 
         $user = $request->user();
-        $user->load('activeMobileSubscription.plan');
-        $subscription = $user->activeMobileSubscription;
+
+        // Avoid relation caching issues and ensure a free plan exists if missing.
+        $subscription = MobileAppSubscription::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->where(function($query) {
+                $query->whereNull('expires_at')
+                      ->orWhere('expires_at', '>', now());
+            })
+            ->latest('created_at')
+            ->first();
+
+        if (!$subscription || !$subscription->plan) {
+            $freePlan = MobileAppPlan::where('price_monthly', 0)->first();
+            if ($freePlan) {
+                $subscription = MobileAppSubscription::create([
+                    'user_id' => $user->id,
+                    'mobile_app_plan_id' => $freePlan->id,
+                    'status' => 'active',
+                    'started_at' => now(),
+                    'expires_at' => null,
+                    'auto_renew' => false,
+                    'searches_used' => 0,
+                    'ai_analyses_used' => 0,
+                    'pdf_downloads_used' => 0,
+                ]);
+                $subscription->load('plan');
+            }
+        }
 
         if (!$subscription || !$subscription->plan) {
             return $this->quotaErrorResponse('search', $subscription, 'Abonnement actif requis pour rechercher dans la bibliothèque.', 'subscription_required');

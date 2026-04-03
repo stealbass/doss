@@ -170,11 +170,15 @@ class AppConstants {
   
   // Chat Prompt Suggestions
   static const List<String> chatPromptSuggestions = [
-    'Expliquez-moi les conditions de validité d\'un contrat',
-    'Quels sont les délais de prescription en droit ?',
-    'Comment calculer les indemnités de licenciement ?',
-    'Quelles sont les obligations fiscales d\'une SARL ?',
-    'Rédigez un modèle de contrat de bail commercial',
+    'Envoie-moi un texte d\'arrêt, je te génère la fiche en 10 secondes.',
+    'Charge un document, je te donne un résumé et je réponds à tes questions.',
+    'Indique le salaire et la date d\'embauche, je calcule les indemnités de licenciement.',
+  ];
+
+  static const List<String> chatPromptSuggestionsEn = [
+    'Send me a court ruling text, and I will generate a summary sheet in 10 seconds.',
+    'Upload a document, and I will provide a summary and answer your questions.',
+    'Provide the salary and hiring date, and I will calculate the severance compensation.',
   ];
   
   // Subscription Plan Pricing (FCFA)

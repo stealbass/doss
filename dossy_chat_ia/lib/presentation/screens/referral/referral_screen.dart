@@ -99,25 +99,47 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 
   void _shareReferralCode() {
-    final referrerParam = Uri.encodeComponent('referral_code=$_referralCode');
-    final storeLink =
-        'https://play.google.com/store/apps/details?id=com.dossy.chatia&referrer=$referrerParam';
-    final message = '''
-🎓 Rejoignez DOSSY CHAT IA - Votre Assistant Juridique IA !
+    final hasReferralCode = _referralCode.trim().isNotEmpty;
+    final storeLink = hasReferralCode
+        ? 'https://play.google.com/store/apps/details?id=com.dossy.chatia&referrer=${Uri.encodeComponent('referral_code=$_referralCode')}'
+        : 'https://play.google.com/store/apps/details?id=com.dossy.chatia';
 
-Utilisez mon code de parrainage : $_referralCode
+    final isFr = Localizations.localeOf(context).languageCode == 'fr';
 
-✅ Bibliothèque OHADA & Nationale : Tous vos Codes à jour dans la poche.
+    final message = isFr
+        ? '''
+🎓 Rejoins DOSSY CHAT IA - Ton assistant juridique IA !
+
+Clique sur le lien en dessous pour avoir gratuitement accès à ces fonctionnalités :
+
+✅ Bibliothèque OHADA & nationale : tous tes codes à jour dans la poche
 ✅ Analyse juridique intelligente
-✅ Outils pour étudiants & professionnels
-✅ 14 pays africains francophones couverts
+✅ Outils pour étudiants et professionnels
+✅ Couverture de 14 pays africains francophones
 
-Téléchargez l'app : $storeLink
+Télécharge l'app ici : $storeLink
 
 #DossyChatIA #DroitAfricain
+'''
+        : '''
+🎓 Join DOSSY CHAT IA - Your AI legal assistant!
+
+Click the link below to get free access to these features:
+
+✅ OHADA & national law library: keep all your legal codes up to date
+✅ Smart legal analysis
+✅ Tools for students and professionals
+✅ Coverage across 14 French-speaking African countries
+
+Download the app here: $storeLink
+
+#DossyChatIA #AfricanLaw
 ''';
 
-    Share.share(message, subject: 'Invitation DOSSY CHAT IA');
+    Share.share(
+      message,
+      subject: isFr ? 'Invitation DOSSY CHAT IA' : 'DOSSY CHAT IA Invitation',
+    );
   }
 
   @override

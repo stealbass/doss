@@ -112,6 +112,7 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\GoogleAuthenticationController;
 use App\Http\Controllers\PayUPaymentController;
 use App\Http\Controllers\PowerTranzController;
+use App\Http\Controllers\PublicAccountDeletionController;
 
 
 /*
@@ -756,6 +757,10 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
 });
 
 Route::group(['middleware' => ['XSS']], function () {
+
+    // Public endpoint for account deletion form on /pages/suppression_de_compte
+    Route::post('/pages/suppression_de_compte', [PublicAccountDeletionController::class, 'submit'])->name('pages.suppression_de_compte.submit');
+    Route::post('/pages/suppression_de_compte/contact', [PublicAccountDeletionController::class, 'submit'])->name('pages.suppression_de_compte.contact');
 
     Route::any('/cookie-consent', [SettingController::class, 'CookieConsent'])->name('cookie-consent');
 

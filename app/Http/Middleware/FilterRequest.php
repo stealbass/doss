@@ -21,7 +21,10 @@ class FilterRequest
             if (is_string($value)) {
                 $value = htmlspecialchars_decode($value);
                 $value = preg_replace('/<\s*script\b[^>]*>(.*?)<\s*\/\s*script\s*>/is', '', $value);
-                $value = str_replace(['&lt;', '&gt;', 'javascript', 'alert'], '', $value);
+                // Keep legitimate words like "alert" (used by push notification type),
+                // only strip suspicious protocol/pattern usage.
+                $value = str_replace(['&lt;', '&gt;'], '', $value);
+                $value = preg_replace('/javascript\s*:/i', '', $value);
             }
         });
         $request->merge($input);

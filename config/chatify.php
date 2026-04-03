@@ -1,5 +1,10 @@
 <?php
 
+$chatifyNamespace = env('CHATIFY_ROUTES_NAMESPACE');
+if (empty($chatifyNamespace)) {
+    $chatifyNamespace = 'App\\Http\\Controllers\\vendor\\Chatify';
+}
+
 return [
     /*
     |-------------------------------------
@@ -31,7 +36,7 @@ return [
                 'pusher',
             ]
         ),
-        'namespace' => env('CHATIFY_ROUTES_NAMESPACE', 'App\Http\Controllers\vendor\Chatify'),
+        'namespace' => $chatifyNamespace,
     ],
 
     /*

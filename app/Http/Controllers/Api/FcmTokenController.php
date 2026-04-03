@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\FcmToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Contrôleur de gestion des tokens FCM (Firebase Cloud Messaging)
@@ -19,6 +20,35 @@ use Illuminate\Support\Facades\Validator;
 class FcmTokenController extends Controller
 {
     /**
+     * Endpoint de secours pour synchroniser le token FCM.
+     *
+     * Accepte un bearer token via header Authorization ou champ auth_token.
+     * Utile si certains proxys/serveurs filtrent le header Authorization.
+     */
+    public function sync(Request $request)
+    {
+        [$user, $authContext] = $this->resolveUserFromRequest($request);
+
+        $request = $this->normalizeTokenRequest($request);
+
+        if (!$user) {
+            \Log::warning('FCM sync unauthorized', [
+                'has_authorization_header' => $request->header('Authorization') ? true : false,
+                'has_auth_token_field' => $request->filled('auth_token'),
+                'has_fcm_token' => $request->filled('fcm_token'),
+                'token_length' => strlen((string) $request->input('fcm_token', '')),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Utilisateur non authentifié pour la synchronisation FCM',
+            ], 401);
+        }
+
+        return $this->saveTokenForUser($request, $user, $authContext);
+    }
+
+    /**
      * Enregistrer ou mettre à jour le token FCM de l'utilisateur
      * 
      * @param Request $request
@@ -26,12 +56,112 @@ class FcmTokenController extends Controller
      */
     public function store(Request $request)
     {
+        $request = $this->normalizeTokenRequest($request);
+
+        $user = auth()->user();
+        if (!$user) {
+            \Log::warning('FCM token store reached without authenticated user', [
+                'has_authorization_header' => $request->header('Authorization') ? true : false,
+                'has_auth_token_field' => $request->filled('auth_token'),
+                'has_fcm_token' => $request->filled('fcm_token'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Utilisateur non authentifié',
+            ], 401);
+        }
+
+        return $this->saveTokenForUser($request, $user, 'sanctum_guard');
+    }
+
+    private function normalizeTokenRequest(Request $request): Request
+    {
+        $rawToken = (string) ($request->input('fcm_token') ?? $request->input('token') ?? '');
+        $platform = strtolower((string) $request->input('platform', ''));
+
+        // Fallback plateforme depuis User-Agent si non fournie.
+        if ($platform === '') {
+            $ua = strtolower((string) $request->userAgent());
+            if (str_contains($ua, 'android')) {
+                $platform = 'android';
+            } elseif (str_contains($ua, 'iphone') || str_contains($ua, 'ios')) {
+                $platform = 'ios';
+            }
+        }
+
+        if (!in_array($platform, ['android', 'ios'], true)) {
+            $platform = 'android';
+        }
+
+        $request->merge([
+            'fcm_token' => trim($rawToken),
+            'platform' => $platform,
+        ]);
+
+        return $request;
+    }
+
+    private function resolveUserFromRequest(Request $request): array
+    {
+        $authUser = auth()->user();
+        if ($authUser) {
+            return [$authUser, 'sanctum_guard'];
+        }
+
+        $rawAuth = (string) ($request->header('Authorization') ?? '');
+        if ($rawAuth === '') {
+            $rawAuth = (string) ($request->input('auth_token') ?? $request->input('api_token') ?? '');
+        }
+
+        $rawAuth = trim($rawAuth);
+        if ($rawAuth !== '' && str_starts_with(strtolower($rawAuth), 'bearer ')) {
+            $rawAuth = trim(substr($rawAuth, 7));
+        }
+
+        if ($rawAuth === '') {
+            return [null, 'missing_token'];
+        }
+
+        try {
+            $accessToken = PersonalAccessToken::findToken($rawAuth);
+            $tokenable = $accessToken?->tokenable;
+            if ($tokenable instanceof User) {
+                return [$tokenable, 'manual_token_lookup'];
+            }
+
+            return [null, 'invalid_token'];
+        } catch (\Throwable $e) {
+            \Log::warning('FCM sync token lookup failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return [null, 'lookup_exception'];
+        }
+    }
+
+    private function saveTokenForUser(Request $request, User $user, string $authContext)
+    {
+
+        \Log::info('FCM token store request received', [
+            'user_id' => $user->id,
+            'has_fcm_token' => $request->filled('fcm_token'),
+            'token_length' => strlen((string) $request->input('fcm_token', '')),
+            'platform' => $request->input('platform'),
+            'has_authorization_header' => $request->header('Authorization') ? true : false,
+            'auth_context' => $authContext,
+        ]);
+
         $validator = Validator::make($request->all(), [
             'fcm_token' => 'required|string|max:500',
             'platform' => 'required|string|in:android,ios',
         ]);
 
         if ($validator->fails()) {
+            \Log::warning('FCM token validation failed', [
+                'user_id' => $user->id,
+                'errors' => $validator->errors()->toArray(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation échouée',
@@ -40,8 +170,6 @@ class FcmTokenController extends Controller
         }
 
         try {
-            $user = auth()->user();
-            
             // Vérifier si le token existe déjà pour cet utilisateur
             $fcmToken = FcmToken::where('user_id', $user->id)
                 ->where('platform', $request->platform)
@@ -66,10 +194,17 @@ class FcmTokenController extends Controller
                 $message = 'Token FCM enregistré avec succès';
             }
 
+            // Redondance: conserver aussi le dernier token sur la table users.
+            // Cela permet un fallback si la table fcm_tokens est vide/incomplète.
+            $user->fcm_token = $request->fcm_token;
+            $user->push_notifications_enabled = true;
+            $user->save();
+
             \Log::info('FCM Token saved', [
                 'user_id' => $user->id,
                 'platform' => $request->platform,
                 'action' => $fcmToken->wasRecentlyCreated ? 'created' : 'updated',
+                'auth_context' => $authContext,
             ]);
 
             return response()->json([
@@ -86,7 +221,8 @@ class FcmTokenController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error saving FCM token', [
                 'error' => $e->getMessage(),
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
+                'auth_context' => $authContext,
             ]);
 
             return response()->json([

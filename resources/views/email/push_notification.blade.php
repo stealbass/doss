@@ -24,7 +24,7 @@
             <!-- Message principal -->
             <div style="margin-bottom: 30px; padding: 25px; background: linear-gradient(to right, #f5fff8, #ffffff); border-radius: 8px;">
                 <div style="margin: 0; font-size: 16px; color: #333; line-height: 1.8;">
-                    {!! $notification->body !!}
+                    {!! $renderedBody !!}
                 </div>
             </div>
             

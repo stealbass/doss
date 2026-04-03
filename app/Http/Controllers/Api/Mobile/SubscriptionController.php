@@ -3,14 +3,19 @@
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminSubscriptionNotification;
+use App\Models\MobileAppSetting;
 use App\Models\MobileAppPlan;
 use App\Models\MobileAppSubscription;
 use App\Models\MobileAppPayment;
 use App\Models\UserCoupon;
 use App\Models\Coupon;
+use App\Models\Utility;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 
 class SubscriptionController extends Controller
@@ -534,6 +539,9 @@ class SubscriptionController extends Controller
             // Check for referral rewards
             $this->checkReferralRewards($user);
 
+            // Notify admin for successful subscription payment
+            $this->sendAdminSubscriptionNotificationEmail($payment, $subscription);
+
             DB::commit();
 
             return response()->json([
@@ -645,5 +653,65 @@ class SubscriptionController extends Controller
     private function checkReferralRewards($user)
     {
         \App\Http\Controllers\Api\Mobile\ReferralController::grantRewardIfEligible($user->id);
+    }
+
+    /**
+     * Send admin notification email when a mobile subscription payment succeeds.
+     */
+    private function sendAdminSubscriptionNotificationEmail(MobileAppPayment $payment, MobileAppSubscription $subscription): void
+    {
+        try {
+            $subscription->loadMissing('user', 'plan');
+            $user = $subscription->user;
+            $plan = $subscription->plan;
+
+            if (!$user || !$plan) {
+                return;
+            }
+
+            $ownerId = $user->creatorId() ?: 1;
+            Utility::getSMTPDetails($ownerId);
+
+            $mobileSettings = MobileAppSetting::first();
+            $adminEmail = $mobileSettings?->support_email
+                ?: Utility::getValByName('mail_from_address')
+                ?: config('mail.from.address');
+            if (empty($adminEmail)) {
+                Log::warning('Admin subscription notification skipped: no admin email configured', [
+                    'payment_id' => $payment->id,
+                    'user_id' => $user->id,
+                ]);
+                return;
+            }
+
+            $planPrice = number_format($payment->amount, 0) . ' ' . $payment->currency;
+            $paymentMethod = ucfirst((string) $payment->payment_method);
+
+            $adminEmailData = [
+                'type' => 'new',
+                'userName' => $user->name,
+                'userEmail' => $user->email,
+                'planName' => $plan->name,
+                'planPrice' => $planPrice,
+                'expirationDate' => optional($subscription->expires_at)->toDateString(),
+                'paymentMethod' => $paymentMethod,
+                'adminUrl' => route('users.index'),
+            ];
+
+            Mail::to($adminEmail)->send(
+                new AdminSubscriptionNotification($user, $plan, $adminEmailData, 'new')
+            );
+
+            Log::info('Mobile admin subscription notification sent (legacy flow)', [
+                'payment_id' => $payment->id,
+                'user_id' => $user->id,
+                'admin_email' => $adminEmail,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to send mobile admin subscription notification (legacy flow)', [
+                'payment_id' => $payment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

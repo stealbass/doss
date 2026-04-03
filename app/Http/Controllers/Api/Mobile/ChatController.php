@@ -290,7 +290,7 @@ class ChatController extends Controller
             $history = Message::where('conversation_id', $conversation->id)
                 ->where('id', '<', $userMessage->id)
                 ->orderBy('created_at', 'desc')
-                ->limit(10)
+                ->limit(6)
                 ->get()
                 ->reverse()
                 ->map(function ($msg) {
@@ -312,6 +312,53 @@ class ChatController extends Controller
             // Get user country for AI context
             $userCountry = $user->country ?? 'Sénégal';
             $countryContext = $this->getCountryAIContext($userCountry);
+
+            // Réponse instantanée pour salutations simples afin d'éviter les délais inutiles.
+            if ($this->isQuickGreeting($request->message)) {
+                $assistantText = $this->quickGreetingResponse($request->message, $userCountry);
+                $assistantMessage = Message::create([
+                    'conversation_id' => $conversation->id,
+                    'role' => 'assistant',
+                    'content' => $assistantText,
+                    'tokens_used' => 0,
+                ]);
+
+                if ($conversation->messages()->count() == 2) {
+                    $title = mb_substr($request->message, 0, 50);
+                    $conversation->update(['title' => $title]);
+                }
+
+                $alerts = $subscription->incrementAIAnalysis();
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'conversation_id' => $conversation->id,
+                        'user_message' => [
+                            'id' => $userMessage->id,
+                            'content' => $userMessage->content,
+                            'created_at' => $userMessage->created_at->format('Y-m-d H:i:s'),
+                        ],
+                        'assistant_message' => [
+                            'id' => $assistantMessage->id,
+                            'content' => $assistantMessage->content,
+                            'created_at' => $assistantMessage->created_at->format('Y-m-d H:i:s'),
+                        ],
+                        'response' => $assistantMessage->content,
+                        'metadata' => [],
+                        'is_anonymized' => false,
+                        'tokens_used' => [
+                            'prompt' => 0,
+                            'completion' => 0,
+                            'total' => 0,
+                        ],
+                        'model' => 'quick-greeting',
+                        'quotas' => $this->quotaPayload($subscription, 'ai_analysis'),
+                        'alerts' => $alerts,
+                    ],
+                ], 200);
+            }
 
             // ✅ OPTIMISÉ : Recherche sémantique complète via Pinecone pour documents utilisateur
             $userDocumentContent = '';
@@ -340,7 +387,7 @@ class ChatController extends Controller
                             $request->message,
                             $user->id,
                             $request->document_ids,
-                            10 // Top 10 chunks les plus pertinents
+                            6 // Limiter le volume pour réduire la latence
                         );
                         
                         if (!empty($ragResults)) {
@@ -661,6 +708,11 @@ class ChatController extends Controller
             // ✅ ÉTAPE 3: INJECTER LE PROFIL UTILISATEUR DANS LE PROMPT
             $context .= "\n\n" . $userContext;
 
+            // Limite la taille du contexte pour accélérer l'appel OpenAI.
+            $context = $this->limitContextLength($context, count($history) === 0 ? 5500 : 7500);
+
+            $responseLanguage = $this->resolvePreferredResponseLanguage($user, $request);
+
 
             // Get AI model from subscription plan
             $aiModel = $subscription->plan->ai_model ?? 'gpt-3.5-turbo';
@@ -672,6 +724,7 @@ class ChatController extends Controller
                 'history_count' => count($history),
                 'sources_count' => count($sources),
                 'query' => $request->message,
+                'response_language' => $responseLanguage,
                 'has_user_profile' => true,
                 'danger_check' => $dangerCheck['is_dangerous'] ?? false,
                 'sensitive_check' => $dangerCheck['is_sensitive'] ?? false,
@@ -688,7 +741,8 @@ class ChatController extends Controller
                 $request->message,
                 $context,
                 $history,
-                $aiModel
+                $aiModel,
+                $responseLanguage
             );
 
             Log::info('Mobile chat: OpenAI response received', [
@@ -903,6 +957,120 @@ class ChatController extends Controller
         }
         
         return false; // Default: no RAG for general chat
+    }
+
+    private function isQuickGreeting(string $message): bool
+    {
+        $text = mb_strtolower(trim($message));
+
+        // Salutations/courts messages sans intention juridique explicite.
+        $quickGreetings = [
+            'salut', 'bonjour', 'bonsoir', 'hello', 'hi', 'hey',
+            'cc', 'coucou', 'yo', 'ça va', 'ca va', 'slt',
+        ];
+
+        if (in_array($text, $quickGreetings, true)) {
+            return true;
+        }
+
+        // Messages très courts sans mots-clés juridiques.
+        if (mb_strlen($text) <= 12) {
+            $legalHints = ['contrat', 'loi', 'code', 'article', 'ohada', 'fiscal', 'impot', 'impôt'];
+            foreach ($legalHints as $hint) {
+                if (str_contains($text, $hint)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    private function quickGreetingResponse(string $message, string $userCountry): string
+    {
+        $text = mb_strtolower(trim($message));
+        $isEnglish = in_array($text, ['hello', 'hi', 'hey'], true);
+
+        if ($isEnglish) {
+            return "Hello! I am ready to help you with legal questions for {$userCountry} and OHADA law. "
+                . "You can ask for contract drafting, legal analysis, or tax guidance.";
+        }
+
+        return "Bonjour! Je suis prêt à vous aider pour vos questions juridiques en {$userCountry} et en droit OHADA. "
+            . "Vous pouvez me demander une rédaction de contrat, une analyse juridique ou une question fiscale.";
+    }
+
+    private function limitContextLength(string $context, int $maxChars): string
+    {
+        if (mb_strlen($context) <= $maxChars) {
+            return $context;
+        }
+
+        $headSize = (int) floor($maxChars * 0.75);
+        $tailSize = $maxChars - $headSize;
+
+        return mb_substr($context, 0, $headSize)
+            . "\n\n[... contexte tronqué pour optimisation de latence ...]\n\n"
+            . mb_substr($context, -$tailSize);
+    }
+
+    private function resolvePreferredResponseLanguage($user, Request $request): string
+    {
+        $messageLang = $this->detectMessageLanguage($request->message ?? '');
+        if ($messageLang !== null) {
+            return $messageLang;
+        }
+
+        $userLang = strtolower((string) ($user->lang ?? ''));
+        if (in_array($userLang, ['fr', 'en'], true)) {
+            return $userLang;
+        }
+
+        $headerLang = strtolower(substr((string) $request->header('Accept-Language', ''), 0, 2));
+        if (in_array($headerLang, ['fr', 'en'], true)) {
+            return $headerLang;
+        }
+
+        return 'fr';
+    }
+
+    private function detectMessageLanguage(string $message): ?string
+    {
+        $text = mb_strtolower(trim($message));
+        if ($text === '') {
+            return null;
+        }
+
+        $englishHints = [
+            'the ', ' and ', ' with ', 'for ', 'please', 'can you', 'could you', 'draft',
+            'contract', 'agreement', 'hello', 'hi', 'what', 'how', 'where', 'when', 'why',
+        ];
+        $frenchHints = [
+            ' le ', ' la ', ' les ', ' des ', 'avec ', 'pour ', 'bonjour', 'salut', 'rédige',
+            'contrat', 'accord', 's il vous plaît', 'merci', 'comment', 'pourquoi', 'où',
+            'é', 'è', 'ê', 'à', 'ù',
+        ];
+
+        $enScore = 0;
+        foreach ($englishHints as $hint) {
+            if (str_contains($text, $hint)) {
+                $enScore++;
+            }
+        }
+
+        $frScore = 0;
+        foreach ($frenchHints as $hint) {
+            if (str_contains($text, $hint)) {
+                $frScore++;
+            }
+        }
+
+        if ($enScore === 0 && $frScore === 0) {
+            return null;
+        }
+
+        return $enScore > $frScore ? 'en' : 'fr';
     }
 
     /**

@@ -218,15 +218,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          AppLocalizations.of(context)!.uploadDocumentsForAdvancedRAG,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
                           AppLocalizations.of(context)!.uploadDocumentsAndAskChat,
                           textAlign: TextAlign.center,
                           style: TextStyle(

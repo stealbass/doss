@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../../core/utils/api_helpers.dart';
+import '../../core/services/push_notification_service.dart';
 
 class AuthProvider with ChangeNotifier {
   UserModel? _user;
@@ -45,6 +46,15 @@ class AuthProvider with ChangeNotifier {
         
         // Verify token is still valid
         await refreshUser();
+
+        // Re-synchroniser le token/topic push au démarrage si session restaurée.
+        try {
+          final pushService = PushNotificationService();
+          await pushService.initialize();
+          await pushService.syncAfterAuth();
+        } catch (e) {
+          debugPrint('Push init after session restore failed: $e');
+        }
       }
     } catch (e) {
       _error = e.toString();
@@ -108,6 +118,16 @@ class AuthProvider with ChangeNotifier {
         // Garder aussi SharedPreferences pour les préférences non-sensibles
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('is_logged_in', true);
+        await prefs.setString('api_token', _token!);
+
+        // Initialiser/synchroniser les notifications push après login.
+        try {
+          final pushService = PushNotificationService();
+          await pushService.initialize();
+          await pushService.syncAfterAuth();
+        } catch (e) {
+          debugPrint('Push init after login failed: $e');
+        }
         
         _isLoading = false;
         notifyListeners();
@@ -219,6 +239,16 @@ class AuthProvider with ChangeNotifier {
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('is_logged_in', true);
+        await prefs.setString('api_token', _token!);
+
+        // Initialiser/synchroniser les notifications push après inscription.
+        try {
+          final pushService = PushNotificationService();
+          await pushService.initialize();
+          await pushService.syncAfterAuth();
+        } catch (e) {
+          debugPrint('Push init after register failed: $e');
+        }
         
         _isLoading = false;
         notifyListeners();
@@ -266,6 +296,7 @@ class AuthProvider with ChangeNotifier {
     // Clear non-sensitive data
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('is_logged_in');
+    await prefs.remove('api_token');
     await prefs.remove('chat_user_id');
     
     // CRITICAL: Clear Hive cache to prevent data leakage between users

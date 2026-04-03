@@ -20,6 +20,8 @@ class VerifyCsrfToken extends Middleware
         // '/yookassa/*',
         // 'plan-payhere-status',
         // '*',
+        'pages/suppression_de_compte',
+        'pages/suppression_de_compte/contact',
 
     ];
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/in_app_review_service.dart';
 import '../../../data/providers/theme_provider.dart';
 import '../../../data/providers/locale_provider.dart';
 import '../../../data/providers/auth_provider.dart';
@@ -20,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final StorageService _storageService = StorageService();
+  final InAppReviewService _inAppReviewService = InAppReviewService();
 
   bool _notificationsEnabled = true;
   bool _emailNotifications = true;
@@ -142,6 +144,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Navigator.of(context).pushReplacementNamed('/login');
       }
     }
+  }
+
+  Future<void> _requestReview() async {
+    await _inAppReviewService.requestReview();
   }
 
   @override
@@ -298,6 +304,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: 'Version',
             subtitle: AppConstants.appVersion,
             leading: const Icon(Icons.info),
+          ),
+          _buildListTile(
+            title: 'Laisser un avis',
+            subtitle: 'Donnez votre avis sur le Play Store',
+            leading: const Icon(Icons.star_rate),
+            onTap: _requestReview,
+            trailing: const Icon(Icons.chevron_right),
           ),
           _buildListTile(
             title: 'Conditions d\'utilisation',

@@ -69,6 +69,13 @@ class UserModel {
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final planValue = _parseString(json['plan']) ?? 'Gratuit';
+    final parsedDownloadsLimit = _parseInt(json['downloads_limit'], 0);
+    final planLower = planValue.toLowerCase();
+    final effectiveDownloadsLimit = (planLower == 'free' || planLower == 'gratuit')
+        ? (parsedDownloadsLimit > 0 ? parsedDownloadsLimit : 3)
+        : parsedDownloadsLimit;
+
     return UserModel(
       id: _parseInt(json['id'], 0),
       name: _parseString(json['name']) ?? '',
@@ -76,7 +83,7 @@ class UserModel {
       phone: _parseString(json['phone']),
       avatar: _parseString(json['avatar']),
       role: _parseString(json['role']) ?? 'student',
-      plan: _parseString(json['plan']) ?? 'Gratuit',
+      plan: planValue,
       jurisdiction: _parseString(json['jurisdiction']),
       address: _parseString(json['address']),
       city: _parseString(json['city']),
@@ -88,7 +95,7 @@ class UserModel {
       analysesUsed: _parseInt(json['analyses_used'], 0),
       analysesLimit: _parseInt(json['analyses_limit'], 2),
       downloadsUsed: _parseInt(json['downloads_used'], 0),
-      downloadsLimit: _parseInt(json['downloads_limit'], 0),
+      downloadsLimit: effectiveDownloadsLimit,
       referralCount: _parseInt(json['referral_count'], 0),
       referralCode: _parseString(json['referral_code']),
       summariesGenerated: _parseInt(json['summaries_generated'], 0),
