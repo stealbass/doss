@@ -229,7 +229,9 @@ ${content.isEmpty ? '' : 'Contenu du cours:\n"""\n$content\n"""'}''';
     final locale = Localizations.localeOf(context);
     final isFr = locale.languageCode == 'fr';
 
-    final hasAccess = user?.plan != 'free';
+    final plan = (user?.plan ?? '').toLowerCase();
+    final isFree = plan == 'free' || plan == 'gratuit';
+    final hasAccess = !isFree || (user?.canAnalyze ?? false);
 
     return Scaffold(
       appBar: AppBar(

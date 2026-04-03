@@ -218,20 +218,21 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          AppLocalizations.of(context)!.uploadDocumentsForAdvancedRAG,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
                           AppLocalizations.of(context)!.uploadDocumentsAndAskChat,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: AppColors.textSecondary,
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          "Astuce : indiquez le titre exact du document dans votre message pour que l'IA comprenne de quel fichier vous parlez.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textSecondary,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],

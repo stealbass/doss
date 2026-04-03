@@ -49,7 +49,7 @@ class SendTaskReminders extends Command
         
         $count = 0;
         foreach ($tasks as $task) {
-            SendTaskReminderNotification::dispatch($task);
+            SendTaskReminderNotification::dispatchSync($task);
             $count++;
             $this->info("Reminder scheduled for task ID: {$task->id}");
         }

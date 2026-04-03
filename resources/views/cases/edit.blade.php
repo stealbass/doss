@@ -35,10 +35,22 @@
             <div class="card shadow-none rounded-0 border">
                 <div class="card-body">
                     <div class="row">
+                        @php
+                            $selectedCourts = !empty($case->court) ? explode(',', $case->court) : [];
+                            $selectedCaseTypes = !empty($case->casenumber) ? explode(',', $case->casenumber) : [];
+                        @endphp
+
                         <div class="col-md-12">
                             <div class="form-group">
                                 {!! Form::label('court', __('Courts/Tribunal'), ['class' => 'form-label']) !!}<x-required></x-required>
-                                {{ Form::select('court', $courts, $case->court, ['class' => 'form-control  item multi-select', 'id' => 'court', 'required' => 'required']) }}
+                                <select class="form-control item multi-select" name="court[]" id="court" multiple required>
+                                    @foreach ($courts as $key => $court)
+                                        <option value="{{ $key }}"
+                                            {{ in_array((string) $key, $selectedCourts, true) ? 'selected' : '' }}>
+                                            {{ $court }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 <div class="text-xs mt-1">
                                     Crée un type de Dossier/Tribunal. <a class="dash-link" href="{{ route('courts.index') }}"><b>Clique ici</b></a>
                                 </div> 
@@ -54,11 +66,10 @@
                         <div class="col-md-12">
                             <div class="form-group" id="casenumber_div">
                                 {!! Form::label('casenumber', __('Case Type'), ['class' => 'form-label']) !!}
-                                <select id="casenumber" class="form-control  item multi-select" name="casenumber">
-                                    <option value="">{{ __('Please select') }}</option>
+                                <select id="casenumber" class="form-control item multi-select" name="casenumber[]" multiple>
                                     @foreach ($case_typ as $case_tp)
                                         <option value="{{ $case_tp }}"
-                                            {{ $case->casenumber == $case_tp ? 'selected' : '' }}>{{ $case_tp }}
+                                            {{ in_array($case_tp, $selectedCaseTypes, true) ? 'selected' : '' }}>{{ $case_tp }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -198,14 +209,14 @@
                         <div class="col-md-4 col-sm-12 col-xs-12">
                             <div class="form-group">
                                 {{ Form::label('your_party', __('Your Party'), ['class' => 'col-form-label']) }}
-                                <select name="your_party" id="your_party" class="form-control multi-select" >
-                                    <option value="" disabled selected>{{ __('Please select') }}</option>
-                                    <option value="0" {{ $case->your_party == 0 ? ' selected' : '' }}>
-                                        {{ __('Petitioner/Plaintiff') }}
-                                    </option>
-                                    <option value="1" {{ $case->your_party == 1 ? 'selected' : '' }}>
-                                        {{ __('Respondent/Defendant') }}
-                                    </option>
+                                <select name="your_party" id="your_party" class="form-control multi-select">
+                                    <option value="" disabled>{{ __('Please select') }}</option>
+                                    <option value="Accusé" {{ $case->your_party === 'Accusé' ? 'selected' : '' }}>Accusé</option>
+                                    <option value="Défendeur" {{ $case->your_party === 'Défendeur' ? 'selected' : '' }}>Défendeur</option>
+                                    <option value="Demandeur" {{ $case->your_party === 'Demandeur' ? 'selected' : '' }}>Demandeur</option>
+                                    <option value="Plaignant" {{ $case->your_party === 'Plaignant' ? 'selected' : '' }}>Plaignant</option>
+                                    <option value="Prévenu" {{ $case->your_party === 'Prévenu' ? 'selected' : '' }}>Prévenu</option>
+                                    <option value="Victime" {{ $case->your_party === 'Victime' ? 'selected' : '' }}>Victime</option>
                                 </select>
                             </div>
                         </div>

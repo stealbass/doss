@@ -449,7 +449,9 @@ ${_generatedFiche!['portee']}
     final l10n = AppLocalizations.of(context)!;
 
     // Check if user has access
-    final hasAccess = user?.plan != 'free';
+    final plan = (user?.plan ?? '').toLowerCase();
+    final isFree = plan == 'free' || plan == 'gratuit';
+    final hasAccess = !isFree || (user?.canAnalyze ?? false);
 
     return Scaffold(
       appBar: AppBar(

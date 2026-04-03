@@ -28,6 +28,13 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+def requiredSigningKeys = ['storeFile', 'storePassword', 'keyAlias', 'keyPassword']
+def missingSigningKeys = requiredSigningKeys.findAll {
+    !keystoreProperties[it] || keystoreProperties[it].toString().trim().isEmpty()
+}
+def releaseKeystoreFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+def hasReleaseSigningConfig = keystorePropertiesFile.exists() && missingSigningKeys.isEmpty() && releaseKeystoreFile != null && releaseKeystoreFile.exists()
+
 android {
     namespace "com.dossy.chatia"
     compileSdk 36
@@ -60,10 +67,10 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (hasReleaseSigningConfig) {
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
-                storeFile file(keystoreProperties['storeFile'])
+                storeFile releaseKeystoreFile
                 storePassword keystoreProperties['storePassword']
             }
         }
@@ -71,6 +78,19 @@ android {
 
     buildTypes {
         release {
+            if (!hasReleaseSigningConfig) {
+                def reason = []
+                if (!keystorePropertiesFile.exists()) {
+                    reason << "android/key.properties introuvable"
+                }
+                if (!missingSigningKeys.isEmpty()) {
+                    reason << "cles manquantes: ${missingSigningKeys.join(', ')}"
+                }
+                if (releaseKeystoreFile == null || !releaseKeystoreFile.exists()) {
+                    reason << "keystore introuvable: ${keystoreProperties['storeFile'] ?: 'non defini'}"
+                }
+                throw new Exception("Configuration release incomplete. ${reason.join(' | ')}")
+            }
             signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false

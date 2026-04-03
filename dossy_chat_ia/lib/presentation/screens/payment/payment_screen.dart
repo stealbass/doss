@@ -96,6 +96,7 @@ class PaymentScreen extends StatelessWidget {
         billingCycle: widget.billingCycle,
         amount: _finalAmount.toDouble(),
         currency: widget.currency,
+        country: user.jurisdiction,
         email: user.email,
         phone: user.phone ?? _phoneNumber,
         name: user.name,

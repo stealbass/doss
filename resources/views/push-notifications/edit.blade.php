@@ -356,6 +356,10 @@
         updateRecipientCount();
     });
 
+    document.getElementById('targetPlan').addEventListener('change', function() {
+        updateRecipientCount();
+    });
+
     // Select/Deselect all users
     function selectAllUsers() {
         document.querySelectorAll('.user-checkbox').forEach(checkbox => {

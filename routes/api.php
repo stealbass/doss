@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Mobile\EnterpriseApiController;
 use App\Http\Controllers\Api\Mobile\DiagnosticController;
 use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\Mobile\CouponApiController;
+use App\Http\Controllers\Api\Mobile\PushNotificationApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,16 +60,19 @@ Route::prefix('mobile')->group(function () {
     Route::get('/config', [ConfigController::class, 'getConfig']);
     
     // Authentication
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     // Forgot password (send reset link to email)
-    Route::post('/password/forgot', [AuthController::class, 'forgotPassword']);
+    Route::post('/password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:10,1');
     
     // Referral validation (for registration)
-    Route::post('/referral/validate', [ReferralController::class, 'validateReferralCode']);
+    Route::post('/referral/validate', [ReferralController::class, 'validateReferralCode'])->middleware('throttle:10,1');
     
     // Plans (viewable without auth)
     Route::get('/subscriptions/plans', [SubscriptionController::class, 'getPlans']);
+
+    // FCM Token sync fallback (auth token may be passed in header or body)
+    Route::post('/fcm-token/sync', [FcmTokenController::class, 'sync'])->middleware('throttle:30,1');
 });
 
 // Protected routes (require authentication) - SUBSCRIPTION ENDPOINTS
@@ -200,6 +204,8 @@ Route::prefix('mobile')->middleware('auth:sanctum')->group(function () {
     Route::post('/fcm-token', [FcmTokenController::class, 'store']);
     Route::delete('/fcm-token', [FcmTokenController::class, 'destroy']);
     Route::get('/fcm-token', [FcmTokenController::class, 'show']);
+    Route::get('/push-notifications/{id}', [PushNotificationApiController::class, 'show']);
+    Route::post('/push-notifications/{id}/opened', [PushNotificationApiController::class, 'trackOpened']);
     
     // Coupons - Codes promo pour abonnements
     Route::prefix('coupons')->group(function () {

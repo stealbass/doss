@@ -15,7 +15,8 @@ class FiscalResourceApiController extends Controller
     {
         $user = $request->user();
         $user->load('activeMobileSubscription.plan');
-        $userCountry = $user->country;
+        $requestedCountry = $request->input('country');
+        $userCountry = $requestedCountry ?: $user->country;
         $currentYear = date('Y');
         
         $page = $request->input('page', 1);
@@ -24,8 +25,18 @@ class FiscalResourceApiController extends Controller
         $search = $request->input('search');
 
         $query = FiscalSocialResource::with('category')
-            ->where('country', $userCountry)
             ->where('is_mobile_visible', true);
+
+        $hasCountryResources = false;
+        if (!empty($userCountry)) {
+            $hasCountryResources = FiscalSocialResource::where('country', $userCountry)
+                ->where('is_mobile_visible', true)
+                ->exists();
+        }
+
+        if ($hasCountryResources) {
+            $query->where('country', $userCountry);
+        }
 
         // Filtre par année - si l'année demandée a des données, les utiliser
         // Sinon, récupérer l'année la plus récente disponible

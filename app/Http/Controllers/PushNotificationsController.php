@@ -156,12 +156,20 @@ class PushNotificationsController extends Controller
      */
     public function store(Request $request)
     {
+        // Réduire le HTML Summernote trop verbeux avant validation (styles/classes inutiles).
+        $request->merge([
+            'body' => $this->normalizeNotificationBody((string) $request->input('body', '')),
+            'type' => strtolower((string) $request->input('type', 'general')),
+        ]);
+
         // Récupérer les limites d'upload depuis la base de données
         $maxUploadSize = $this->getUploadLimit();
         
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'body' => 'required|string', // Removed max length for HTML content
+            // Summernote stocke du HTML, ce qui peut dépasser 5000 caractères
+            // même pour un texte visuel raisonnable.
+            'body' => 'required|string|max:100000',
             'type' => 'required|in:general,promotion,alert,update',
             'target_audience' => 'required|in:all,students,lawyers,enterprises,plan_specific,specific_users',
             'target_plan' => 'required_if:target_audience,plan_specific|nullable|exists:mobile_app_plans,id',
@@ -207,9 +215,35 @@ class PushNotificationsController extends Controller
 
         // Si envoi immédiat
         if ($request->has('send_now')) {
-            $this->sendNotification($notification);
+            $sendResult = $this->sendNotification($notification);
+
+            if ($sendResult['ok']) {
+                if (($sendResult['push_success'] ?? 0) === 0 && ($sendResult['email_success'] ?? 0) > 0) {
+                    $warning = 'Email envoyé, mais aucun push n\'a été délivré.';
+                    if (!empty($sendResult['message'])) {
+                        $warning .= ' Détail: ' . $sendResult['message'];
+                    }
+
+                    return redirect()->route('push-notifications.index')->with('error', $warning);
+                }
+
+                $message = 'Notification envoyée.';
+
+                if (($sendResult['push_success'] ?? 0) > 0) {
+                    $message .= ' Push: ' . ($sendResult['push_success'] ?? 0) . ' succès';
+                }
+                if (($sendResult['push_failed'] ?? 0) > 0) {
+                    $message .= ', ' . ($sendResult['push_failed'] ?? 0) . ' échec(s)';
+                }
+                if (($sendResult['email_success'] ?? 0) > 0) {
+                    $message .= ' | Email: ' . ($sendResult['email_success'] ?? 0) . ' succès';
+                }
+
+                return redirect()->route('push-notifications.index')->with('success', $message);
+            }
+
             return redirect()->route('push-notifications.index')
-                ->with('success', 'Notification envoyée avec succès !');
+                ->with('error', $sendResult['message'] ?? 'Échec de l\'envoi de la notification.');
         }
 
         return redirect()->route('push-notifications.index')
@@ -266,6 +300,12 @@ class PushNotificationsController extends Controller
     {
         $notification = PushNotification::findOrFail($id);
 
+        // Réduire le HTML Summernote trop verbeux avant validation (styles/classes inutiles).
+        $request->merge([
+            'body' => $this->normalizeNotificationBody((string) $request->input('body', '')),
+            'type' => strtolower((string) $request->input('type', 'general')),
+        ]);
+
         if (!in_array($notification->status, ['draft', 'scheduled'])) {
             return redirect()->route('push-notifications.index')
                 ->with('error', 'Cette notification ne peut pas être modifiée.');
@@ -273,7 +313,9 @@ class PushNotificationsController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'body' => 'required|string|max:1000',
+            // Summernote stocke du HTML, ce qui peut dépasser 5000 caractères
+            // même pour un texte visuel raisonnable.
+            'body' => 'required|string|max:100000',
             'type' => 'required|in:general,promotion,alert,update',
             'target_audience' => 'required|in:all,students,lawyers,enterprises,plan_specific,specific_users',
             'target_plan' => 'required_if:target_audience,plan_specific|nullable|exists:mobile_app_plans,id',
@@ -309,10 +351,35 @@ class PushNotificationsController extends Controller
                 ->with('error', 'Cette notification ne peut pas être envoyée.');
         }
 
-        $this->sendNotification($notification);
+        $sendResult = $this->sendNotification($notification);
+
+        if ($sendResult['ok']) {
+            if (($sendResult['push_success'] ?? 0) === 0 && ($sendResult['email_success'] ?? 0) > 0) {
+                $warning = 'Email envoyé, mais aucun push n\'a été délivré.';
+                if (!empty($sendResult['message'])) {
+                    $warning .= ' Détail: ' . $sendResult['message'];
+                }
+
+                return redirect()->route('push-notifications.index')->with('error', $warning);
+            }
+
+            $message = 'Notification envoyée.';
+
+            if (($sendResult['push_success'] ?? 0) > 0) {
+                $message .= ' Push: ' . ($sendResult['push_success'] ?? 0) . ' succès';
+            }
+            if (($sendResult['push_failed'] ?? 0) > 0) {
+                $message .= ', ' . ($sendResult['push_failed'] ?? 0) . ' échec(s)';
+            }
+            if (($sendResult['email_success'] ?? 0) > 0) {
+                $message .= ' | Email: ' . ($sendResult['email_success'] ?? 0) . ' succès';
+            }
+
+            return redirect()->route('push-notifications.index')->with('success', $message);
+        }
 
         return redirect()->route('push-notifications.index')
-            ->with('success', 'Notification envoyée avec succès !');
+            ->with('error', $sendResult['message'] ?? 'Échec de l\'envoi de la notification.');
     }
 
     /**
@@ -333,7 +400,14 @@ class PushNotificationsController extends Controller
                     'status' => 'failed',
                     'total_recipients' => 0,
                 ]);
-                return false;
+                return [
+                    'ok' => false,
+                    'message' => 'Aucun destinataire trouvé pour cette notification.',
+                    'push_success' => 0,
+                    'push_failed' => 0,
+                    'email_success' => 0,
+                    'email_failed' => 0,
+                ];
             }
 
             $notification->update([
@@ -352,15 +426,25 @@ class PushNotificationsController extends Controller
                 $data['notification_id'] = $notification->id;
             }
 
+            $htmlBody = (string) $notification->body;
+            // FCM (surtout HTTP v1 Android) impose une taille stricte de message.
+            // On garde un texte court pour la notification push.
+            $pushBody = $this->htmlToPushText($htmlBody, 260);
+
+            // Données minimales pour éviter l'erreur "Android message is too big".
+            $data['plain_body'] = mb_substr($pushBody, 0, 260);
+
             // Envoyer les notifications par FCM
             $result = $pushService->sendToUsers(
                 $recipients->toArray(),
                 $notification->title,
-                $notification->body,
+                $pushBody,
                 $data
             );
 
-            // Compter les envois réussis et échoués par email
+            // Compter les envois réussis et échoués par push/email
+            $pushSuccessful = (int) ($result['success_count'] ?? 0);
+            $pushFailed = (int) ($result['failed_count'] ?? max(0, $totalRecipients - $pushSuccessful));
             $emailSuccessful = 0;
             $emailFailed = 0;
 
@@ -396,23 +480,35 @@ class PushNotificationsController extends Controller
                 \Log::error('Erreur configuration SMTP pour notifications: ' . $e->getMessage());
             }
 
-            if ($result['success'] || $emailSuccessful > 0) {
+            if ($pushSuccessful > 0 || $emailSuccessful > 0) {
                 // Mise à jour des statistiques avec résultats réels
                 $notification->update([
                     'status' => 'sent',
                     'sent_at' => now(),
-                    'successful_sends' => ($result['success_count'] ?? $totalRecipients) + $emailSuccessful,
-                    'failed_sends' => ($result['failed_count'] ?? 0) + $emailFailed,
+                    'successful_sends' => $pushSuccessful + $emailSuccessful,
+                    'failed_sends' => $pushFailed + $emailFailed,
                 ]);
                 
                 \Log::info('Notification envoyée avec succès', [
                     'notification_id' => $notification->id,
-                    'fcm_success' => $result['success'] ?? false,
+                    'fcm_success' => $pushSuccessful > 0,
+                    'fcm_success_count' => $pushSuccessful,
+                    'fcm_failed_count' => $pushFailed,
                     'email_sent' => $emailSuccessful,
-                    'email_failed' => $emailFailed
+                    'email_failed' => $emailFailed,
+                    'type' => $notification->type,
                 ]);
                 
-                return true;
+                return [
+                    'ok' => true,
+                    'message' => $pushSuccessful > 0
+                        ? 'Notification envoyée.'
+                        : ($result['message'] ?? 'Aucune notification push délivrée.'),
+                    'push_success' => $pushSuccessful,
+                    'push_failed' => $pushFailed,
+                    'email_success' => $emailSuccessful,
+                    'email_failed' => $emailFailed,
+                ];
             } else {
                 // Envoi échoué
                 $notification->update([
@@ -420,7 +516,14 @@ class PushNotificationsController extends Controller
                     'failed_sends' => $totalRecipients,
                 ]);
                 \Log::error('Erreur envoi notification FCM et Email: ' . ($result['message'] ?? 'Erreur inconnue'));
-                return false;
+                return [
+                    'ok' => false,
+                    'message' => $result['message'] ?? 'Échec d\'envoi push et email.',
+                    'push_success' => $pushSuccessful,
+                    'push_failed' => $pushFailed,
+                    'email_success' => $emailSuccessful,
+                    'email_failed' => $emailFailed,
+                ];
             }
 
         } catch (\Exception $e) {
@@ -429,7 +532,14 @@ class PushNotificationsController extends Controller
             ]);
 
             \Log::error('Erreur envoi notification push: ' . $e->getMessage());
-            return false;
+            return [
+                'ok' => false,
+                'message' => 'Erreur technique lors de l\'envoi: ' . $e->getMessage(),
+                'push_success' => 0,
+                'push_failed' => 0,
+                'email_success' => 0,
+                'email_failed' => 0,
+            ];
         }
     }
 
@@ -575,7 +685,7 @@ class PushNotificationsController extends Controller
             case 'plan_specific':
                 if ($planId) {
                     $query->whereHas('activeMobileSubscription', function($q) use ($planId) {
-                        $q->where('plan_id', $planId);
+                        $q->where('mobile_app_plan_id', $planId);
                     });
                 }
                 break;
@@ -764,5 +874,64 @@ class PushNotificationsController extends Controller
                 'message' => 'Erreur lors de l\'upload: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Nettoie le HTML de Summernote pour réduire sa taille sans perdre le contenu utile.
+     */
+    private function normalizeNotificationBody(string $body): string
+    {
+        $body = trim($body);
+
+        if ($body === '') {
+            return $body;
+        }
+
+        // Supprimer scripts/styles dangereux ou inutiles.
+        $body = preg_replace('/<(script|style)\b[^>]*>.*?<\/\1>/is', '', $body) ?? $body;
+
+        // Supprimer commentaires HTML.
+        $body = preg_replace('/<!--.*?-->/s', '', $body) ?? $body;
+
+        // Conserver les styles inline pour le rendu email.
+        // Retirer seulement les attributs data/aria générés par l'éditeur si présents.
+        $body = preg_replace('/\s(?:data-[\w-]+|aria-[\w-]+)="[^"]*"/i', '', $body) ?? $body;
+        $body = preg_replace('/\s(?:data-[\w-]+|aria-[\w-]+)=\'[^\']*\'/i', '', $body) ?? $body;
+
+        // Nettoyer les espaces redondants entre balises.
+        $body = preg_replace('/>\s+</', '><', $body) ?? $body;
+
+        return trim($body);
+    }
+
+    /**
+     * Convertit un HTML Summernote en texte lisible pour la notification push.
+     */
+    private function htmlToPushText(string $html, int $maxLength = 1000): string
+    {
+        $text = trim($html);
+
+        if ($text === '') {
+            return $text;
+        }
+
+        // Préserver une structure lisible avant suppression des balises.
+        $text = preg_replace('/<\s*br\s*\/?>/i', "\n", $text) ?? $text;
+        $text = preg_replace('/<\s*\/\s*(p|div|h[1-6]|li)\s*>/i', "\n", $text) ?? $text;
+        $text = preg_replace('/<\s*li\b[^>]*>/i', "- ", $text) ?? $text;
+
+        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Nettoyer les espaces tout en conservant les retours ligne utiles.
+        $text = preg_replace('/\r\n?|\n/u', "\n", $text) ?? $text;
+        $text = preg_replace('/[\t ]+/u', ' ', $text) ?? $text;
+        $text = preg_replace('/\n{3,}/u', "\n\n", $text) ?? $text;
+        $text = trim($text);
+
+        if ($text === '') {
+            return '';
+        }
+
+        return mb_substr($text, 0, $maxLength);
     }
 }

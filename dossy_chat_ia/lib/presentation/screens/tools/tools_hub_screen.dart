@@ -49,6 +49,9 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
+    final plan = (user?.plan ?? '').toLowerCase();
+    final isFree = plan == 'free' || plan == 'gratuit';
+    final canUseTools = !isFree || (user?.canAnalyze ?? false);
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
@@ -127,7 +130,7 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with WidgetsBindingObse
               onTap: () {
                 Navigator.pushNamed(context, '/tools/fiche-arret');
               },
-              isPremium: user?.plan == 'free',
+              isPremium: !canUseTools,
             ),
 
             const SizedBox(height: 12),
@@ -141,7 +144,7 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with WidgetsBindingObse
               onTap: () {
                 Navigator.pushNamed(context, '/tools/qcm');
               },
-              isPremium: user?.plan == 'free',
+              isPremium: !canUseTools,
             ),
 
             const SizedBox(height: 12),
@@ -155,7 +158,7 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with WidgetsBindingObse
               onTap: () {
                 Navigator.pushNamed(context, '/tools/revision');
               },
-              isPremium: user?.plan == 'free',
+              isPremium: !canUseTools,
             ),
 
             const SizedBox(height: 12),
@@ -175,7 +178,7 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with WidgetsBindingObse
             const SizedBox(height: 24),
 
             // Usage Stats
-            if (user?.plan != 'free')
+            if (!isFree)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -229,7 +232,7 @@ class _ToolsHubScreenState extends State<ToolsHubScreen> with WidgetsBindingObse
             const SizedBox(height: 16),
 
             // Upgrade CTA for Free Users
-            if (user?.plan == 'free')
+            if (isFree && !canUseTools)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(

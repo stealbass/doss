@@ -135,6 +135,7 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -163,6 +164,15 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
           if (user == null) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          final planLower = user.plan.toLowerCase();
+          final isFreePlan = planLower == 'free' || planLower == 'gratuit';
+          final remainingDownloads = isFreePlan
+              ? user.downloadsLimit - user.downloadsUsed
+              : null;
+          final safeRemaining = remainingDownloads != null && remainingDownloads > 0
+              ? remainingDownloads
+              : 0;
 
           return SingleChildScrollView(
             child: Column(
@@ -520,6 +530,27 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                               user.downloadsUsed,
                               user.downloadsLimit,
                             ),
+                            if (isFreePlan) ...[
+                              SizedBox(height: 6.h),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.download,
+                                    size: 16.sp,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    '$safeRemaining telechargements gratuits restants',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             if (user.subscriptionEnd != null) ...[
                               SizedBox(height: 12.h),
                               Text(

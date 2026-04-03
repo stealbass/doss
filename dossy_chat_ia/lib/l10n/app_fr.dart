@@ -623,8 +623,8 @@ class AppLocalizations_fr {
   static const String myDocuments = 'Mes Documents';
   static const String uploads = 'Uploads:';
   static const String noDocuments = 'Aucun document';
-  static const String uploadDocumentsForAdvancedRAG = 'Uploadez vos documents pour\nutiliser le RAG avancé';
-  static const String uploadDocumentsAndAskChat = 'Chargez vos documents et interrogez le chat sur leur contenu';
+  static const String uploadDocumentsForAdvancedRAG = 'Chargez vos documents et interrogez le chat sur leur contenu';
+  static const String uploadDocumentsAndAskChat = 'Chargez vos documents et posez vos questions au chat';
   static const String uploading = 'Upload...';
   static const String deleteDocument = 'Supprimer le document';
   static const String confirmDeleteDocument = 'Êtes-vous sûr de vouloir supprimer ce document ?';

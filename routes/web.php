@@ -17,6 +17,7 @@ use App\Http\Controllers\MobileUsersController;
 use App\Http\Controllers\MobileAppPlansController;
 use App\Http\Controllers\MobileAnalyticsController;
 use App\Http\Controllers\MobileDashboardController;
+use App\Http\Controllers\MobileAppSubscriptionsController;
 use App\Http\Controllers\OpenAIDiagnosticsController;
 use App\Http\Controllers\PushNotificationsController;
 use App\Http\Controllers\MobileLegalLibraryController;
@@ -111,6 +112,7 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\GoogleAuthenticationController;
 use App\Http\Controllers\PayUPaymentController;
 use App\Http\Controllers\PowerTranzController;
+use App\Http\Controllers\PublicAccountDeletionController;
 
 
 /*
@@ -377,6 +379,11 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
     Route::post('mobile-users/{id}/reset-password', [MobileUsersController::class, 'resetPassword'])->name('mobile-users.reset-password');
     Route::get('mobile-users/export/csv', [MobileUsersController::class, 'export'])->name('mobile-users.export');
     Route::get('mobile-users/statistics/ajax', [MobileUsersController::class, 'statistics'])->name('mobile-users.statistics');
+
+    // Mobile App Subscriptions Routes
+    Route::get('mobile-app-subscriptions', [MobileAppSubscriptionsController::class, 'index'])->name('mobile-app-subscriptions.index');
+    Route::get('mobile-app-subscriptions/export/csv', [MobileAppSubscriptionsController::class, 'exportCsv'])->name('mobile-app-subscriptions.export.csv');
+    Route::get('mobile-app-subscriptions/export/excel', [MobileAppSubscriptionsController::class, 'exportExcel'])->name('mobile-app-subscriptions.export.excel');
 
     // Mobile App Plans Management Routes
     Route::get('mobile-app-plans', [MobileAppPlansController::class, 'index'])->name('mobile-app-plans.index');
@@ -750,6 +757,10 @@ Route::group(['middleware' => ['auth', 'XSS', 'verified']], function () {
 });
 
 Route::group(['middleware' => ['XSS']], function () {
+
+    // Public endpoint for account deletion form on /pages/suppression_de_compte
+    Route::post('/pages/suppression_de_compte', [PublicAccountDeletionController::class, 'submit'])->name('pages.suppression_de_compte.submit');
+    Route::post('/pages/suppression_de_compte/contact', [PublicAccountDeletionController::class, 'submit'])->name('pages.suppression_de_compte.contact');
 
     Route::any('/cookie-consent', [SettingController::class, 'CookieConsent'])->name('cookie-consent');
 

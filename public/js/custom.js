@@ -570,3 +570,51 @@ document.addEventListener('DOMContentLoaded', function() {
     initCalculator();
     initFaqToggle();
 });
+
+document.querySelectorAll('.faq-question').forEach(item => {
+            item.addEventListener('click', () => {
+                const answer = item.nextElementSibling;
+                const icon = item.querySelector('i');
+                answer.classList.toggle('open');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+            });
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Card Hover Effects
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseover', () => {
+                card.querySelector('div:first-child')?.classList.add('scale-110');
+            });
+            card.addEventListener('mouseout', () => {
+                card.querySelector('div:first-child')?.classList.remove('scale-110');
+            });
+        });
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dossy: {
+                            light: '#4CAF50',
+                            DEFAULT: '#0F9D58',
+                            dark: '#0B7842',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }

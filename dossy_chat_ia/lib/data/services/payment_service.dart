@@ -99,6 +99,7 @@ class PaymentService {
     required String billingCycle,
     required double amount,
     String currency = 'XAF',
+    String? country,
     required String email,
     required String phone,
     required String name,
@@ -122,6 +123,9 @@ class PaymentService {
           'billing_cycle': billingCycle,
           'payment_method': paymentMethod,
           'phone_number': phone,
+          'currency': currency,
+          if (country != null && country.trim().isNotEmpty)
+            'country': country.trim(),
           if (couponCode != null && couponCode.trim().isNotEmpty)
             'coupon_code': couponCode.trim(),
         }),

@@ -197,7 +197,7 @@ class FiscalSocialResourceController extends Controller
             'description' => 'nullable|string',
             'is_mobile_visible' => 'boolean',
             'files' => 'required|array|min:1',
-            'files.*' => 'required|file|max:10240|mimes:pdf,doc,docx,xlsx,xls',
+            'files.*' => 'required|file|max:153600|mimes:pdf,doc,docx,xlsx,xls',
         ]);
 
         if ($validator->fails()) {
@@ -319,7 +319,7 @@ class FiscalSocialResourceController extends Controller
             'country' => 'required|string',
             'year' => 'required|integer|min:2020|max:2030',
             'version' => 'nullable|string|max:50',
-            'file' => 'required|file|max:10240|mimes:pdf,doc,docx,xlsx,xls',
+            'file' => 'required|file|max:153600|mimes:pdf,doc,docx,xlsx,xls',
             'description' => 'nullable|string',
             'is_mobile_visible' => 'boolean'
         ]);
@@ -389,7 +389,7 @@ class FiscalSocialResourceController extends Controller
             'country' => 'required|string',
             'year' => 'required|integer|min:2020|max:2030',
             'version' => 'nullable|string|max:50',
-            'file' => 'nullable|file|max:10240|mimes:pdf,doc,docx,xlsx,xls',
+            'file' => 'nullable|file|max:153600|mimes:pdf,doc,docx,xlsx,xls',
             'description' => 'nullable|string',
             'is_mobile_visible' => 'boolean'
         ]);

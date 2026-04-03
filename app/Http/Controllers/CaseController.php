@@ -188,11 +188,11 @@ class CaseController extends Controller
             }
 
             $case = new Cases();
-            $case['court'] = $request->court;
+            $case['court'] = is_array($request->court) ? implode(',', $request->court) : $request->court;
             $case['highcourt'] = $request->highcourt;
             $case['bench'] = $request->bench;
             $case['casetype'] = $request->casetype;
-            $case['casenumber'] = $request->casenumber;
+            $case['casenumber'] = is_array($request->casenumber) ? implode(',', $request->casenumber) : $request->casenumber;
             $case['diarybumber'] = !empty($request->diarybumber) ? $request->diarybumber : null;
             $case['year'] = $request->year;
             $case['case_number'] = $request->case_number;
@@ -383,11 +383,11 @@ class CaseController extends Controller
             }
 
             $case = Cases::find($id);
-            $case['court'] = $request->court;
+            $case['court'] = is_array($request->court) ? implode(',', $request->court) : $request->court;
             $case['highcourt'] = $request->highcourt;
             $case['bench'] = $request->bench;
             $case['casetype'] = $request->casetype;
-            $case['casenumber'] = $request->casenumber;
+            $case['casenumber'] = is_array($request->casenumber) ? implode(',', $request->casenumber) : $request->casenumber;
             $case['diarybumber'] = !empty($request->diarybumber) ? $request->diarybumber : null;
             $case['year'] = $request->year;
             $case['case_number'] = $request->case_number;

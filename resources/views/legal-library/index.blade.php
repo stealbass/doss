@@ -33,6 +33,27 @@
         <div class="col-xl-12">
             <div class="card shadow-none">
                 <div class="card-body table-border-style">
+                    <form method="GET" action="{{ route('legal-library.index') }}" class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">{{ __('Country') }}</label>
+                            <select name="country" class="form-select">
+                                <option value="">{{ __('All Countries') }}</option>
+                                @foreach($countries ?? [] as $code => $country)
+                                    <option value="{{ $code }}" {{ ($normalizedCountry ?? '') === $code ? 'selected' : '' }}>
+                                        {{ $country }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="ti ti-filter me-1"></i>{{ __('Filter') }}
+                            </button>
+                            <a href="{{ route('legal-library.index') }}" class="btn btn-outline-secondary">
+                                <i class="ti ti-x me-1"></i>{{ __('Reset') }}
+                            </a>
+                        </div>
+                    </form>
                     <div class="table-responsive">
                         <table class="table dataTable data-table">
                             <thead>

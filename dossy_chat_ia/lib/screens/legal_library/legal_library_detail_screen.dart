@@ -43,10 +43,28 @@ class _LegalLibraryDetailScreenState extends State<LegalLibraryDetailScreen> {
   }
 
   Future<void> _downloadDocument() async {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.user;
+    final plan = (user?.plan ?? '').toLowerCase();
+    final isFree = plan == 'free' || plan == 'gratuit';
+
+    if (isFree && !(user?.canDownload ?? false)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Vous avez atteint la limite de 3 téléchargements du plan gratuit. Passez a un plan superieur pour continuer.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isDownloading = true);
 
     try {
-      final authProvider = context.read<AuthProvider>();
       final provider = context.read<LegalLibraryProvider>();
       
       await DownloadHelpers.downloadLegalDocument(
@@ -57,6 +75,8 @@ class _LegalLibraryDetailScreenState extends State<LegalLibraryDetailScreen> {
         token: authProvider.token,
         fetchDownloadUrl: provider.getDocumentDownloadUrl,
       );
+
+      await authProvider.refreshUser();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

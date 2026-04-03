@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../l10n/app_localizations.dart';
@@ -8,17 +9,9 @@ import '../../../data/providers/auth_provider.dart';
 import '../../../data/providers/chat_provider.dart';
 import '../../../data/providers/document_provider.dart';
 import '../../../data/services/storage_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../widgets/chat/chat_bubble.dart';
 import '../../widgets/chat/prompt_suggestion_chip.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../l10n/app_localizations.dart';
-import '../../../data/providers/auth_provider.dart';
-import '../../../data/providers/chat_provider.dart';
-import '../../../data/providers/document_provider.dart';
-import '../../widgets/chat/chat_bubble.dart';
 import 'conversations_list_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -32,19 +25,231 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Set<int> _selectedDocumentIds = {};
+  final PushNotificationService _pushNotificationService =
+      PushNotificationService();
+
+  StreamSubscription? _pushStreamSubscription;
+
   bool _showDocumentSelector = false;
+  int _unreadPushCount = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    _refreshUnreadPushCount();
+    _pushStreamSubscription =
+        _pushNotificationService.onMessageReceived.listen((_) {
+      _refreshUnreadPushCount();
+    });
   }
 
   @override
   void dispose() {
+    _pushStreamSubscription?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _refreshUnreadPushCount() async {
+    final count = await _pushNotificationService.getUnreadInboxCount();
+    if (!mounted) return;
+    setState(() {
+      _unreadPushCount = count;
+    });
+  }
+
+  Future<void> _openPushInbox() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messages = await _pushNotificationService.getInboxMessages();
+
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+      ),
+      builder: (context) {
+        if (messages.isEmpty) {
+          return SizedBox(
+            height: 260.h,
+            child: Center(
+              child: Text(
+                Localizations.localeOf(context).languageCode == 'en'
+                    ? 'No recent push messages'
+                    : 'Aucun message push recent',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: SizedBox(
+            height: 460.h,
+            child: Column(
+              children: [
+                SizedBox(height: 8.h),
+                Container(
+                  width: 42.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  child: Row(
+                    children: [
+                      Icon(Icons.notifications_active_outlined,
+                          size: 20.sp, color: AppColors.primary),
+                      SizedBox(width: 8.w),
+                      Text(
+                        l10n.pushNotifications,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: messages.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = messages[index];
+                      return ListTile(
+                        leading: Icon(
+                          item.isRead
+                              ? Icons.notifications_none_outlined
+                              : Icons.notifications_active,
+                          color: item.isRead
+                              ? AppColors.textSecondary
+                              : AppColors.primary,
+                        ),
+                        title: Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight:
+                                item.isRead ? FontWeight.w500 : FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 4.h),
+                            Text(
+                              item.body,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12.sp),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              _formatPushDate(item.receivedAt),
+                              style: TextStyle(
+                                fontSize: 10.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showPushMessageDialog(item);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    await _pushNotificationService.markAllInboxAsRead();
+    await _refreshUnreadPushCount();
+  }
+
+  Future<void> _showPushMessageDialog(PushInboxItem item) async {
+    if (!mounted) return;
+
+    final String notificationId = (item.notificationId ?? '').trim();
+    if (notificationId.isNotEmpty) {
+      await _pushNotificationService.trackNotificationOpened(notificationId);
+    }
+
+    if (!mounted) return;
+
+    final DateTime displayDate = item.receivedAt;
+    final bool isEnglish = Localizations.localeOf(context).languageCode == 'en';
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(item.title),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _formatPushDate(displayDate),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  isEnglish
+                      ? 'To view the full message content, please open it in your email inbox.'
+                      : 'Pour voir le contenu complet du message, veuillez l\'ouvrir dans votre boite email.',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    height: 1.45,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(isEnglish ? 'Close' : 'Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatPushDate(DateTime dateTime) {
+    final dt = dateTime.toLocal();
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year.toString();
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+
+    return '$day/$month/$year $hour:$minute';
   }
 
   void _scrollToBottom() {
@@ -134,8 +339,9 @@ class _ChatScreenState extends State<ChatScreen> {
       return field;
     }
 
-    final missingText =
-        missingFields.isNotEmpty ? missingFields.map(missingLabel).join(', ') : '';
+    final missingText = missingFields.isNotEmpty
+        ? missingFields.map(missingLabel).join(', ')
+        : '';
 
     return Center(
       child: Padding(
@@ -236,10 +442,20 @@ class _ChatScreenState extends State<ChatScreen> {
     return Consumer<ChatProvider>(
       builder: (context, chatProvider, child) {
         if (chatProvider.messages.isEmpty) {
-          return Center(
-            child: Text(
-              'Aucun message pour le moment',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp),
+          return Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Aucun message pour le moment',
+                  style: TextStyle(
+                      color: AppColors.textSecondary, fontSize: 12.sp),
+                ),
+                SizedBox(height: 12.h),
+                _buildPromptSuggestions(),
+              ],
             ),
           );
         }
@@ -253,6 +469,123 @@ class _ChatScreenState extends State<ChatScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildPromptSuggestions() {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+
+    Widget strategicSuggestion({
+      required String role,
+      required String message,
+      required Color accent,
+      String? actionLabel,
+      VoidCallback? onAction,
+    }) {
+      return Container(
+        width: double.infinity,
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: accent.withAlpha((0.08 * 255).round()),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: accent.withAlpha((0.35 * 255).round())),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              role,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+                color: accent,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            GestureDetector(
+              onTap: () {
+                _messageController.text = message;
+                _sendMessage();
+              },
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textPrimary,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              SizedBox(height: 8.h),
+              OutlinedButton(
+                onPressed: onAction,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: accent,
+                  side: BorderSide(color: accent),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  textStyle:
+                      TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600),
+                ),
+                child: Text(actionLabel),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.suggestions,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        strategicSuggestion(
+          role: isEnglish ? 'Student' : 'Étudiant',
+          message: isEnglish
+              ? 'Send me a court ruling text, and I will generate a summary sheet in 10 seconds.'
+              : 'Envoie-moi un texte d\'arrêt, je te génère la fiche en 10 secondes.',
+          accent: AppColors.planEtudiant,
+          actionLabel:
+              isEnglish ? 'Boost your learning' : 'Boostez votre apprentissage',
+          onAction: () => Navigator.pushNamed(context, '/tools'),
+        ),
+        strategicSuggestion(
+          role: isEnglish ? 'Lawyer' : 'Avocat',
+          message: isEnglish
+              ? 'Upload a document, and I will provide a summary and answer your questions.'
+              : 'Charge un document, je te donne un résumé et je réponds à tes questions.',
+          accent: AppColors.primary,
+          actionLabel: isEnglish ? 'Go to Documents' : 'Aller aux Documents',
+          onAction: () => Navigator.pushNamed(context, '/documents'),
+        ),
+        strategicSuggestion(
+          role: isEnglish ? 'Pro Library' : 'Bibliothèque Pro',
+          message: isEnglish
+              ? 'What recent OHADA text can help me draft a commercial contract?'
+              : 'Quel texte OHADA récent peut m\'aider à rédiger un contrat commercial ?',
+          accent: const Color(0xFF00796B),
+          actionLabel:
+              isEnglish ? 'Open Pro Library' : 'Ouvrir la Bibliothèque Pro',
+          onAction: () => Navigator.pushNamed(context, '/library'),
+        ),
+        strategicSuggestion(
+          role: isEnglish ? 'HR Manager' : 'DRH',
+          message: isEnglish
+              ? 'Provide the salary and hiring date, and I will calculate the severance compensation.'
+              : 'Comment calculer les indemnités de licenciement ?',
+          accent: AppColors.warning,
+        ),
+      ],
     );
   }
 
@@ -448,7 +781,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           onPressed: hasDocuments
                               ? () {
                                   setState(() {
-                                    _showDocumentSelector = !_showDocumentSelector;
+                                    _showDocumentSelector =
+                                        !_showDocumentSelector;
                                   });
                                 }
                               : null,
@@ -504,6 +838,41 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: Text(l10n.navChat),
         actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                tooltip: l10n.pushNotifications,
+                onPressed: _openPushInbox,
+              ),
+              if (_unreadPushCount > 0)
+                Positioned(
+                  right: 10.w,
+                  top: 8.h,
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    constraints:
+                        BoxConstraints(minWidth: 16.w, minHeight: 16.h),
+                    child: Text(
+                      _unreadPushCount > 99
+                          ? '99+'
+                          : _unreadPushCount.toString(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.add_comment_outlined),
             tooltip: 'Nouveau chat',

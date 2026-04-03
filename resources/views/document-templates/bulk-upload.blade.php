@@ -252,10 +252,50 @@
     document.addEventListener('DOMContentLoaded', function() {
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
+        const bulkUploadForm = document.getElementById('bulkUploadForm');
         const fileListContainer = document.getElementById('fileListContainer');
         const fileList = document.getElementById('fileList');
         const fileCount = document.getElementById('fileCount');
         const uploadBtn = document.getElementById('uploadBtn');
+        let selectedFiles = [];
+        let customTitles = {};
+
+        function getFileKey(file) {
+            return `${file.name}__${file.size}__${file.lastModified}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function syncInputFiles() {
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        }
+
+        function appendUniqueFiles(filesToAdd) {
+            Array.from(filesToAdd).forEach((newFile) => {
+                const exists = selectedFiles.some((existingFile) => {
+                    return existingFile.name === newFile.name &&
+                           existingFile.size === newFile.size &&
+                           existingFile.lastModified === newFile.lastModified;
+                });
+                if (!exists) {
+                    selectedFiles.push(newFile);
+                    const key = getFileKey(newFile);
+                    const baseTitle = newFile.name.replace(/\.[^/.]+$/, '');
+                    customTitles[key] = baseTitle;
+                }
+            });
+            syncInputFiles();
+            updateFileList();
+        }
 
         dropZone.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -269,35 +309,46 @@
         dropZone.addEventListener('drop', function(e) {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
-            fileInput.files = e.dataTransfer.files;
-            updateFileList();
+            appendUniqueFiles(e.dataTransfer.files);
         });
 
         dropZone.addEventListener('click', function() {
             fileInput.click();
         });
 
-        fileInput.addEventListener('change', updateFileList);
+        fileInput.addEventListener('change', function() {
+            appendUniqueFiles(fileInput.files);
+        });
 
         function updateFileList() {
-            const files = fileInput.files;
             fileList.innerHTML = '';
 
-            if (files.length > 0) {
+            if (selectedFiles.length > 0) {
                 fileListContainer.style.display = 'block';
                 uploadBtn.disabled = false;
-                fileCount.textContent = files.length + ' {{ __('file(s) selected') }}';
+                fileCount.textContent = selectedFiles.length + ' {{ __('file(s) selected') }}';
 
-                Array.from(files).forEach((file, index) => {
+                selectedFiles.forEach((file, index) => {
                     const row = document.createElement('tr');
                     row.classList.add('file-item');
-                    const title = file.name.replace(/\.[^/.]+$/, '');
+                    const fileKey = getFileKey(file);
+                    const title = customTitles[fileKey] || file.name.replace(/\.[^/.]+$/, '');
 
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${file.name}</td>
                         <td class="file-size">${formatFileSize(file.size)}</td>
-                        <td class="file-title">${title}</td>
+                        <td>
+                            <input
+                                type="text"
+                                class="form-control form-control-sm template-title-input"
+                                name="titles[${index}]"
+                                data-file-key="${escapeHtml(fileKey)}"
+                                value="${escapeHtml(title)}"
+                                maxlength="500"
+                                required
+                            >
+                        </td>
                         <td>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
                                 <i class="ti ti-x"></i>
@@ -314,13 +365,33 @@
         }
 
         window.removeFile = function(index) {
-            const files = Array.from(fileInput.files);
-            files.splice(index, 1);
-            const dataTransfer = new DataTransfer();
-            files.forEach(file => dataTransfer.items.add(file));
-            fileInput.files = dataTransfer.files;
+            const removedFile = selectedFiles[index];
+            selectedFiles.splice(index, 1);
+            if (removedFile) {
+                delete customTitles[getFileKey(removedFile)];
+            }
+            syncInputFiles();
             updateFileList();
         }
+
+        fileList.addEventListener('input', function(e) {
+            if (e.target && e.target.classList.contains('template-title-input')) {
+                const fileKey = e.target.getAttribute('data-file-key');
+                customTitles[fileKey] = e.target.value;
+            }
+        });
+
+        bulkUploadForm.addEventListener('submit', function(e) {
+            if (selectedFiles.length === 0) {
+                e.preventDefault();
+                uploadBtn.disabled = true;
+                fileCount.textContent = '0 {{ __('file(s) selected') }}';
+                return;
+            }
+            syncInputFiles();
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="ti ti-loader"></i> {{ __('Uploading...') }}';
+        });
 
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';

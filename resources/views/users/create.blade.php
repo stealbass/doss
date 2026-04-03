@@ -7,7 +7,7 @@
         </div>
         <div class="form-group col-md-6">
             {{ Form::label('Email', __('Email'), ['class' => 'form-label']) }}
-            {!! Form::email('email', null, ['class' => 'form-control', 'placeholder' => __('Enter User Email'), 'id' => 'email_field']) !!}
+            {!! Form::email('email', null, ['class' => 'form-control', 'placeholder' => __('Enter User Email'), 'id' => 'email_field', 'required' => 'required']) !!}
             <small class="text-muted" id="email_note"></small>
         </div>
 
@@ -50,9 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const emailField = document.getElementById('email_field');
     const emailNote = document.getElementById('email_note');
 
-    function updateEmailRequired() {
-        if (roleSelect) {
-            const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+    if (roleSelect) {
+        roleSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
             const selectedText = selectedOption.text.toLowerCase();
 
             // Check if "advocate" or "juriste" is selected
@@ -63,13 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 emailField.setAttribute('required', 'required');
                 emailNote.textContent = '';
             }
-        }
-    }
-
-    if (roleSelect) {
-        roleSelect.addEventListener('change', updateEmailRequired);
-        // Initial check on page load
-        updateEmailRequired();
+        });
     }
 });
 </script>

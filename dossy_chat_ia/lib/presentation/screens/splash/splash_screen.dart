@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/in_app_update_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../data/providers/auth_provider.dart';
 import '../../../data/providers/locale_provider.dart';
 
@@ -18,6 +20,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  final InAppUpdateService _inAppUpdateService = InAppUpdateService();
+  final PushNotificationService _pushNotificationService = PushNotificationService();
 
   @override
   void initState() {
@@ -54,6 +58,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       // If initialization fails or times out, log and continue; app should still navigate.
       debugPrint('Auth initialization failed or timed out: $e');
     }
+
+    // Initialiser les notifications push (permissions, token FCM, sync backend).
+    await _pushNotificationService.initialize();
+
+    await _inAppUpdateService.checkForUpdate();
     
     // Check onboarding status
     final prefs = await SharedPreferences.getInstance();

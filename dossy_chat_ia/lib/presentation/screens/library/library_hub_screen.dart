@@ -24,9 +24,12 @@ class LibraryHubScreen extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         final user = authProvider.user;
+        final plan = (user?.plan ?? '').toLowerCase();
+        final isFree = plan == 'free' || plan == 'gratuit';
         final hasPro = _hasProAccess(user?.plan);
         final hasCabinet = _hasCabinetAccess(user?.plan);
         final isFr = Localizations.localeOf(context).languageCode == 'fr';
+        final canUseLibrary = !isFree || (user?.canSearch ?? false);
 
         // Debug print to check plan value
         print('DEBUG LibraryHub: user plan = ${user?.plan}, hasPro=$hasPro, hasCabinet=$hasCabinet');
@@ -116,7 +119,7 @@ class LibraryHubScreen extends StatelessWidget {
                 ? 'Recherchez dans la base juridique.'
                 : 'Search the legal knowledge base.',
             icon: Icons.menu_book,
-            locked: !hasPro,
+            locked: !canUseLibrary,
             onTap: () => Navigator.pushNamed(context, '/legal-library'),
           ),
 

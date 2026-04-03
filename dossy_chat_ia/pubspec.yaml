@@ -1,7 +1,7 @@
 name: dossy_chat_ia
 description: "Analyse et Assistant Juridique, Fiscal & Social - Application Flutter pour l'Afrique Francophone"
 publish_to: 'none'
-version: 1.0.2+8
+version: 1.0.8+16
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -58,6 +58,11 @@ dependencies:
   # Payment Integration
   flutterwave_standard: ^1.0.8
   app_links: ^3.4.5
+  play_install_referrer: ^0.5.0
+
+  # Play Store Update
+  in_app_update: ^4.2.3
+  in_app_review: ^2.0.9
 
   # Internationalization
   intl: 0.20.2

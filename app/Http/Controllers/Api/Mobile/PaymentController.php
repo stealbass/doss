@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\Mobile;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminSubscriptionNotification;
 use App\Models\MobileAppPlan;
 use App\Models\MobileAppPayment;
 use App\Models\MobileAppSetting;
 use App\Models\Utility;
 use App\Models\MobileAppSubscription;
+use App\Http\Controllers\Api\Mobile\ReferralController;
 use App\Models\UserCoupon;
 use App\Models\Coupon;
 use Illuminate\Http\Request;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 
 class PaymentController extends Controller
@@ -120,6 +123,12 @@ class PaymentController extends Controller
             ], 400);
         }
 
+        // Determine country and currency for Flutterwave
+        $countryCode = strtoupper((string) ($user->country ?? 'CM'));
+        $cemac = ['CM', 'GA', 'GQ', 'TD', 'CF', 'CG'];
+        $uemoa = ['BJ', 'BF', 'CI', 'GW', 'ML', 'NE', 'SN', 'TG'];
+        $currency = in_array($countryCode, $uemoa, true) ? 'XOF' : 'XAF';
+
         try {
             // Generate unique transaction reference (same format as SaaS)
             $txRef = 'DOSSY-MOBILE-' . $user->id . '-' . time() . '-' . rand(1000, 9999);
@@ -139,7 +148,7 @@ class PaymentController extends Controller
                 'user_id' => $user->id,
                 'mobile_app_plan_id' => $plan->id,
                 'amount' => $amount,
-                'currency' => 'XAF',
+                'currency' => $currency,
                 'payment_method' => 'flutterwave',
                 'status' => 'pending',
                 'transaction_id' => $txRef,
@@ -155,7 +164,8 @@ class PaymentController extends Controller
                     'payment_id' => $payment->id,
                     'tx_ref' => $txRef,
                     'amount' => $amount,
-                    'currency' => 'XAF',
+                    'currency' => $currency,
+                    'country' => $countryCode,
                     'email' => $user->email,
                     'name' => $user->name,
                     'phone' => $user->phone ?? '',
@@ -255,8 +265,13 @@ class PaymentController extends Controller
                 // Activate subscription (same logic as SaaS)
                 $subscription = $this->activateSubscription($payment);
 
+                // Mark referral completed and create commission if eligible
+                ReferralController::completeReferral($payment->user_id);
+                ReferralController::createCommissionForPayment($payment);
+
                 if ($subscription) {
                     $this->sendSubscriptionConfirmationEmail($payment, $subscription);
+                    $this->sendAdminSubscriptionNotificationEmail($payment, $subscription);
                 }
 
                 // Mark coupon as used if present
@@ -332,7 +347,7 @@ class PaymentController extends Controller
             : Carbon::now()->addYear();
 
         // Create or update subscription
-        return MobileAppSubscription::updateOrCreate(
+        $subscription = MobileAppSubscription::updateOrCreate(
             ['user_id' => $payment->user_id],
             [
                 'mobile_app_plan_id' => $plan->id,
@@ -350,6 +365,12 @@ class PaymentController extends Controller
                 'quota_reset_at' => Carbon::now()->addMonth(),
             ]
         );
+
+        $payment->update([
+            'mobile_app_subscription_id' => $subscription->id,
+        ]);
+
+        return $subscription;
     }
 
     /**
@@ -397,6 +418,66 @@ class PaymentController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::warning('Failed to send mobile subscription confirmation email', [
+                'payment_id' => $payment->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Send admin notification email when a mobile subscription payment succeeds.
+     */
+    private function sendAdminSubscriptionNotificationEmail(MobileAppPayment $payment, MobileAppSubscription $subscription): void
+    {
+        try {
+            $subscription->loadMissing('user', 'plan');
+            $user = $subscription->user;
+            $plan = $subscription->plan;
+
+            if (!$user || !$plan) {
+                return;
+            }
+
+            $ownerId = $user->creatorId() ?: 1;
+            Utility::getSMTPDetails($ownerId);
+
+            $mobileSettings = MobileAppSetting::first();
+            $adminEmail = $mobileSettings?->support_email
+                ?: Utility::getValByName('mail_from_address')
+                ?: config('mail.from.address');
+            if (empty($adminEmail)) {
+                Log::warning('Admin subscription notification skipped: no admin email configured', [
+                    'payment_id' => $payment->id,
+                    'user_id' => $user->id,
+                ]);
+                return;
+            }
+
+            $planPrice = number_format($payment->amount, 0) . ' ' . $payment->currency;
+            $paymentMethod = ucfirst((string) $payment->payment_method);
+
+            $adminEmailData = [
+                'type' => 'new',
+                'userName' => $user->name,
+                'userEmail' => $user->email,
+                'planName' => $plan->name,
+                'planPrice' => $planPrice,
+                'expirationDate' => optional($subscription->expires_at)->toDateString(),
+                'paymentMethod' => $paymentMethod,
+                'adminUrl' => route('users.index'),
+            ];
+
+            Mail::to($adminEmail)->send(
+                new AdminSubscriptionNotification($user, $plan, $adminEmailData, 'new')
+            );
+
+            Log::info('Mobile admin subscription notification sent', [
+                'payment_id' => $payment->id,
+                'user_id' => $user->id,
+                'admin_email' => $adminEmail,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to send mobile admin subscription notification', [
                 'payment_id' => $payment->id ?? null,
                 'error' => $e->getMessage(),
             ]);

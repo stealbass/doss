@@ -15,6 +15,23 @@
 
     <div class="card shadow">
         <div class="card-body">
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Erreurs de validation :</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <form action="{{ route('document-templates.update', $template->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
@@ -22,7 +39,7 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <label class="form-label">Titre *</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name', $template->name) }}" required>
+                        <input type="text" name="name" class="form-control" value="{{ old('name', $template->name) }}" maxlength="500" required>
                     </div>
 
                     <div class="col-md-12">

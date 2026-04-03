@@ -43,7 +43,8 @@ class OpenAIService
         string $userMessage,
         string $context = '',
         array $conversationHistory = [],
-        string $model = null
+        string $model = null,
+        ?string $responseLanguage = null
     ): array {
         if (empty($this->apiKey)) {
             return [
@@ -56,7 +57,7 @@ class OpenAIService
 
         try {
             // Build messages array
-            $messages = $this->buildMessages($userMessage, $context, $conversationHistory);
+            $messages = $this->buildMessages($userMessage, $context, $conversationHistory, $responseLanguage);
 
             Log::info('OpenAI: sending request', [
                 'model' => $model,
@@ -146,9 +147,10 @@ class OpenAIService
     public function chat(
         string $message,
         array $conversationHistory = [],
-        string $model = null
+        string $model = null,
+        ?string $responseLanguage = null
     ): array {
-        return $this->chatWithContext($message, '', $conversationHistory, $model);
+        return $this->chatWithContext($message, '', $conversationHistory, $model, $responseLanguage);
     }
 
     /**
@@ -159,12 +161,12 @@ class OpenAIService
      * @param array $history Conversation history
      * @return array Messages array
      */
-    private function buildMessages(string $userMessage, string $context, array $history): array
+    private function buildMessages(string $userMessage, string $context, array $history, ?string $responseLanguage = null): array
     {
         $messages = [];
 
         // System message with RAG context if available
-        $systemMessage = $this->buildSystemMessage($context);
+        $systemMessage = $this->buildSystemMessage($context, $responseLanguage);
         $messages[] = [
             'role' => 'system',
             'content' => $systemMessage,
@@ -195,7 +197,7 @@ class OpenAIService
      * @param string $context RAG context (includes country-specific legal instructions)
      * @return string System message
      */
-    private function buildSystemMessage(string $context): string
+    private function buildSystemMessage(string $context, ?string $responseLanguage = null): string
     {
         // Le contexte contient déjà les instructions spécifiques au pays
         // ajoutées par ChatController::getCountryAIContext()
@@ -226,6 +228,17 @@ class OpenAIService
             $basePrompt .= "8. Si VRAIMENT aucun document ne correspond, alors utilise tes connaissances juridiques générales.";
         } else {
             $basePrompt .= "Réponds en fonction de tes connaissances juridiques générales du droit africain.";
+        }
+
+        $language = strtolower((string) $responseLanguage);
+        if ($language === 'en') {
+            $basePrompt .= "\n\n=== LANGUAGE RULE ===\n";
+            $basePrompt .= "You MUST answer in English because the user language is English. ";
+            $basePrompt .= "Do not answer in French unless the user explicitly requests French.";
+        } else {
+            $basePrompt .= "\n\n=== RÈGLE DE LANGUE ===\n";
+            $basePrompt .= "Tu DOIS répondre en français car la langue utilisateur est le français. ";
+            $basePrompt .= "Ne réponds pas en anglais sauf si l'utilisateur le demande explicitement.";
         }
 
         return $basePrompt;

@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
+import 'core/services/rating_prompt_service.dart';
 import 'data/providers/auth_provider.dart';
 import 'data/providers/chat_provider.dart';
 import 'data/providers/subscription_provider.dart';
@@ -57,6 +60,9 @@ import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Ensure Firebase is initialized before any service accesses Messaging/Analytics.
+  await Firebase.initializeApp();
 
   // Initialize Hive
   await Hive.initFlutter();
@@ -113,8 +119,79 @@ void main() async {
   runApp(const DossyChatIAApp());
 }
 
-class DossyChatIAApp extends StatelessWidget {
+class DossyChatIAApp extends StatefulWidget {
   const DossyChatIAApp({super.key});
+
+  @override
+  State<DossyChatIAApp> createState() => _DossyChatIAAppState();
+}
+
+class _DossyChatIAAppState extends State<DossyChatIAApp>
+    with WidgetsBindingObserver {
+  final RatingPromptService _ratingPromptService = RatingPromptService();
+  Timer? _usageTimer;
+  DateTime? _lastUsageMark;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initRatingPrompt();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _usageTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _initRatingPrompt() async {
+    await _ratingPromptService.initialize();
+    await _ratingPromptService.recordNewSession();
+    _startUsageTimer();
+    _checkAndShowRatingPrompt();
+  }
+
+  void _startUsageTimer() {
+    _lastUsageMark = DateTime.now();
+    _usageTimer?.cancel();
+    _usageTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _flushUsageTime();
+    });
+  }
+
+  void _flushUsageTime() {
+    final lastMark = _lastUsageMark;
+    if (lastMark == null) return;
+    final now = DateTime.now();
+    final elapsedSeconds = now.difference(lastMark).inSeconds;
+    _lastUsageMark = now;
+    _ratingPromptService.addUsageTime(elapsedSeconds);
+  }
+
+  Future<void> _checkAndShowRatingPrompt() async {
+    await Future.delayed(const Duration(seconds: 2));
+    await _ratingPromptService.showRatingPrompt();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _startUsageTimer();
+        _checkAndShowRatingPrompt();
+        break;
+      case AppLifecycleState.paused:
+        _usageTimer?.cancel();
+        _flushUsageTime();
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

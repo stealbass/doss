@@ -182,6 +182,10 @@
         
         <div class="info-box">
             <div class="info-row">
+                <span class="label">🏷️ Titre:</span>
+                <span class="value"><strong>{{ $taskTitle ?? '-' }}</strong></span>
+            </div>
+            <div class="info-row">
                 <span class="label">📝 Description:</span>
                 <span class="value"><strong>{!! $taskDescription !!}</strong></span>
             </div>

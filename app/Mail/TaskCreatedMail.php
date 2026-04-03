@@ -40,10 +40,13 @@ class TaskCreatedMail extends Mailable
     {
         $dueDate = !empty($this->task->due_date) ? \Carbon\Carbon::parse($this->task->due_date)->format('d/m/Y') : 'Non définie';
         
-        return $this->subject('Nouvelle Tâche Créée - ' . $this->task->description)
+        $subjectTitle = trim(strip_tags($this->task->title ?? ''));
+
+        return $this->subject('Nouvelle Tâche Créée - ' . $subjectTitle)
                     ->view('emails.task-created')
                     ->with([
                         'userName' => $this->user->name,
+                        'taskTitle' => $this->task->title,
                         'taskDescription' => $this->task->description,
                         'taskPriority' => $this->task->priority ?? 'normale',
                         'dueDate' => $dueDate,

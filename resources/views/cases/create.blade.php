@@ -37,8 +37,7 @@
                         <div class="col-md-12">
                             <div class="form-group">
                                 {!! Form::label('court', __('Courts/Tribunal'), ['class' => 'form-label']) !!}<x-required></x-required>
-                                <select class="form-control  item multi-select" name="court" id='court' required>
-                                    <option value="" disabled selected>{{ __('Select Court') }}</option>
+                                <select class="form-control  item multi-select" name="court[]" id='court' multiple required>
                                     @foreach ($courts as $key => $court)
                                         <option value="{{ $key }}" data-name="{{ $court }}">
                                             {{ $court }}
@@ -60,8 +59,7 @@
                         <div class="col-md-12">
                             <div class="form-group" id="casenumber_div">
                                 {!! Form::label('casenumber', __('Case Type'), ['class' => 'form-label']) !!}
-                                <select id="casenumber" class="form-control  item multi-select" name="casenumber">
-                                    <option value=""> {{ __('Please select') }} </option>
+                                <select id="casenumber" class="form-control  item multi-select" name="casenumber[]" multiple>
                                     @foreach ($case_typ as $typ)
                                         <option value="{{ $typ }}">{{ $typ }}</option>
                                     @endforeach
@@ -202,10 +200,14 @@
                         <div class="col-md-4 col-sm-12 col-xs-12">
                             <div class="form-group">
                                 {{ Form::label('your_party', __('Your Party'), ['class' => 'col-form-label']) }}
-                                <select name="your_party" id="your_party" class="form-control multi-select" >
+                                <select name="your_party" id="your_party" class="form-control multi-select">
                                     <option value="" disabled selected>{{ __('Please select') }}</option>
-                                    <option value="0">{{ __('Petitioner/Plaintiff') }}</option>
-                                    <option value="1">{{ __('Respondent/Defendant') }}</option>
+                                    <option value="Accusé">Accusé</option>
+                                    <option value="Défendeur">Défendeur</option>
+                                    <option value="Demandeur">Demandeur</option>
+                                    <option value="Plaignant">Plaignant</option>
+                                    <option value="Prévenu">Prévenu</option>
+                                    <option value="Victime">Victime</option>
                                 </select>
                             </div>
                         </div>

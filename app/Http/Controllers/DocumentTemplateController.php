@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
@@ -175,6 +176,21 @@ class DocumentTemplateController extends Controller
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
 
+        // Normalize uploaded files so validation/loop works for both files[] and files payloads.
+        $uploadedFiles = $request->file('files');
+        if ($uploadedFiles instanceof \Illuminate\Http\UploadedFile) {
+            $uploadedFiles = [$uploadedFiles];
+        }
+        if (empty($uploadedFiles) && $request->hasFile('files')) {
+            $singleFile = $request->file('files');
+            if ($singleFile instanceof \Illuminate\Http\UploadedFile) {
+                $uploadedFiles = [$singleFile];
+            }
+        }
+        if (is_array($uploadedFiles)) {
+            $request->merge(['files' => $uploadedFiles]);
+        }
+
         $request->merge([
             'is_mobile_visible' => $request->has('is_mobile_visible'),
             'is_premium' => $request->has('is_premium'),
@@ -187,6 +203,8 @@ class DocumentTemplateController extends Controller
             'allowed_plans' => 'required|in:free,student,professional,enterprise',
             'files' => 'required|array|min:1',
             'files.*' => 'required|file|mimes:doc,docx,pdf,xlsx,xls|max:10240',
+            'titles' => 'nullable|array',
+            'titles.*' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'is_premium' => 'boolean',
             'is_mobile_visible' => 'boolean',
@@ -200,12 +218,16 @@ class DocumentTemplateController extends Controller
         $uploadedCount = 0;
         $errors = [];
 
-        if ($request->hasFile('files')) {
+        if (!empty($uploadedFiles)) {
             $disk = $this->getStorageDisk();
-            foreach ($request->file('files') as $file) {
+            foreach ($uploadedFiles as $index => $file) {
                 try {
                     $baseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                    $title = trim($baseName) !== '' ? $baseName : 'template_' . time();
+                    $customTitle = trim((string) $request->input("titles.$index", ''));
+                    $title = $customTitle !== ''
+                        ? $customTitle
+                        : (trim($baseName) !== '' ? $baseName : 'template_' . time());
+                    $title = mb_substr($title, 0, 500);
                     $fileName = Str::slug($title) . '_' . time() . '_' . Str::random(6) . '.' . $file->getClientOriginalExtension();
                     $filePath = $file->storeAs('templates', $fileName, $disk);
 
@@ -267,7 +289,7 @@ class DocumentTemplateController extends Controller
         ]);
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:500',
             'category_id' => 'required|exists:template_categories,id',
             'template_type' => 'required|in:contract,act,form,letter,calculator,checklist',
             'file' => 'required|file|mimes:doc,docx,pdf,xlsx,xls|max:10240', // 10MB
@@ -367,16 +389,37 @@ class DocumentTemplateController extends Controller
 
         $template = DocumentTemplate::findOrFail($id);
 
+        $request->merge([
+            'is_mobile_visible' => $request->boolean('is_mobile_visible'),
+            'is_premium' => $request->boolean('is_premium'),
+        ]);
+
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:500',
             'category_id' => 'required|exists:template_categories,id',
             'template_type' => 'required|in:contract,act,form,letter,calculator,checklist',
             'file' => 'nullable|file|mimes:doc,docx,pdf,xlsx,xls|max:10240',
             'country' => 'nullable|string|size:2',
+            'language' => 'nullable|string|max:10',
+            'allowed_plans' => 'required|in:free,student,professional,enterprise',
+            'is_premium' => 'boolean',
+            'is_mobile_visible' => 'boolean',
         ]);
 
         try {
             $shouldReindex = false;
+            $newSlugBase = Str::slug($request->name);
+            $newSlug = $template->slug;
+
+            if (!empty($newSlugBase) && $request->name !== $template->name) {
+                $newSlug = $newSlugBase;
+                $suffix = 1;
+                while (DocumentTemplate::where('slug', $newSlug)->where('id', '!=', $template->id)->exists()) {
+                    $newSlug = $newSlugBase . '-' . $suffix;
+                    $suffix++;
+                }
+            }
+
             // Handle file upload if new file provided
             if ($request->hasFile('file')) {
                 $disk = $this->getStorageDisk();
@@ -397,19 +440,22 @@ class DocumentTemplateController extends Controller
                 $shouldReindex = true;
             }
 
-            $template->update([
-                'category_id' => $request->category_id,
-                'name' => $request->name,
-                'description' => $request->description,
-                'country' => $request->country ? strtoupper($request->country) : null,
-                'language' => $request->language ?? 'fr',
-                'template_type' => $request->template_type,
-                'allowed_plans' => $request->allowed_plans ?? null,
-                'is_premium' => $request->has('is_premium'),
-                'is_mobile_visible' => $request->has('is_mobile_visible') ? true : false,
-                'variables' => $request->variables ? json_decode($request->variables, true) : null,
-                'ai_context' => $request->ai_context,
-            ]);
+            DB::transaction(function () use ($template, $request, $newSlug) {
+                $template->update([
+                    'category_id' => $request->category_id,
+                    'name' => $request->name,
+                    'slug' => $newSlug,
+                    'description' => $request->description,
+                    'country' => $request->country ? strtoupper($request->country) : null,
+                    'language' => $request->language ?? 'fr',
+                    'template_type' => $request->template_type,
+                    'allowed_plans' => [$request->allowed_plans],
+                    'is_premium' => $request->boolean('is_premium'),
+                    'is_mobile_visible' => $request->boolean('is_mobile_visible'),
+                    'variables' => $request->variables ? json_decode($request->variables, true) : null,
+                    'ai_context' => $request->ai_context,
+                ]);
+            });
 
             if ($shouldReindex) {
                 ProcessTemplateForRAG::dispatchSync($template->id);
@@ -424,7 +470,7 @@ class DocumentTemplateController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', __('Failed to update template. Please try again.'));
+                ->with('error', __('Failed to update template: :error', ['error' => $e->getMessage()]));
         }
     }
 
